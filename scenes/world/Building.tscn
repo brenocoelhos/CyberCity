@@ -1,0 +1,50 @@
+[gd_scene format=3 uid="uid://btbmmdoy6l56l"]
+
+[ext_resource type="Texture2D" path="res://assets/environment/extracted/house_01.png" id="1"]
+[ext_resource type="Script" path="res://scripts/world/Building.gd" id="3"]
+[ext_resource type="Script" uid="uid://cv76nxxgler8n" path="res://scripts/world/Door.gd" id="2"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
+size = Vector2(96, 89)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_door"]
+size = Vector2(28, 24)
+
+[node name="Building" type="StaticBody2D" unique_id=782892570]
+texture_filter = 1
+script = ExtResource("3")
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1321558159]
+position = Vector2(0, 6.5)
+shape = SubResource("RectangleShape2D_body")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=2043565711]
+position = Vector2(2, 3)
+texture = ExtResource("1")
+
+[node name="NameLabel" type="Label" parent="." unique_id=1603393552]
+offset_left = -48.0
+offset_top = -52.0
+offset_right = 48.0
+offset_bottom = -32.0
+text = "Prédio"
+horizontal_alignment = 1
+
+[node name="Door" type="Area2D" parent="." unique_id=1932909952]
+position = Vector2(0, 32)
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("2")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Door" unique_id=1898913546]
+position = Vector2(0, 0)
+shape = SubResource("RectangleShape2D_door")
+
+[node name="PromptLabel" type="Label" parent="Door" unique_id=1827168220]
+offset_left = -38.0
+offset_top = 25.0
+offset_right = 42.0
+offset_bottom = 48.0
+text = "[E] Entrar"
+horizontal_alignment = 1

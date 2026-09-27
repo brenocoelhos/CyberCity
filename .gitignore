@@ -1,0 +1,35 @@
+# Godot 4: cache local e credenciais de exportacao
+.godot/
+/export_credentials.cfg
+
+# Builds e exports gerados
+/build/
+/builds/
+/export/
+/exports/
+/dist/
+
+# Temporarios e logs
+*.tmp
+*.temp
+*.log
+*.swp
+*.swo
+*~
+
+# Sistema operacional e IDEs
+.DS_Store
+Thumbs.db
+Desktop.ini
+.vscode/
+.idea/
+.vs/
+*.suo
+*.user
+
+# Configuracoes locais com segredos
+.env
+.env.*
+!.env.example
+
+# Manter project.godot, cenas, scripts, assets, .uid e .import.

@@ -1,0 +1,88 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/challenges/ChallengeManager.gd" id="1"]
+
+[node name="ChallengeScreen" type="CanvasLayer"]
+layer = 10
+script = ExtResource("1")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.03, 0.04, 0.06, 1)
+
+[node name="Monitor" type="Panel" parent="."]
+offset_left = 60.0
+offset_top = 30.0
+offset_right = 1220.0
+offset_bottom = 690.0
+
+[node name="ScreenIcon" type="Label" parent="Monitor"]
+offset_left = 24.0
+offset_top = 10.0
+offset_right = 400.0
+offset_bottom = 40.0
+text = "🖥️ PC DE MESA"
+
+[node name="Panel" type="Panel" parent="Monitor"]
+offset_left = 24.0
+offset_top = 44.0
+offset_right = 1136.0
+offset_bottom = 636.0
+
+[node name="TitleLabel" type="Label" parent="Monitor/Panel"]
+offset_left = 24.0
+offset_top = 16.0
+offset_right = 850.0
+offset_bottom = 44.0
+horizontal_alignment = 1
+text = "DESAFIO"
+
+[node name="HintButton" type="Button" parent="Monitor/Panel"]
+offset_left = 860.0
+offset_top = 16.0
+offset_right = 1088.0
+offset_bottom = 44.0
+text = "💡 Pedir dica"
+
+[node name="PromptLabel" type="RichTextLabel" parent="Monitor/Panel"]
+offset_left = 24.0
+offset_top = 56.0
+offset_right = 1088.0
+offset_bottom = 340.0
+focus_mode = 0
+bbcode_enabled = false
+
+[node name="OptionsBox" type="VBoxContainer" parent="Monitor/Panel"]
+offset_left = 24.0
+offset_top = 352.0
+offset_right = 1088.0
+offset_bottom = 520.0
+theme_override_constants/separation = 8
+
+[node name="Option0" type="Button" parent="Monitor/Panel/OptionsBox"]
+text = "Opção 1"
+
+[node name="Option1" type="Button" parent="Monitor/Panel/OptionsBox"]
+text = "Opção 2"
+
+[node name="Option2" type="Button" parent="Monitor/Panel/OptionsBox"]
+text = "Opção 3"
+
+[node name="Option3" type="Button" parent="Monitor/Panel/OptionsBox"]
+text = "Opção 4"
+
+[node name="FeedbackLabel" type="Label" parent="Monitor/Panel"]
+offset_left = 24.0
+offset_top = 530.0
+offset_right = 1088.0
+offset_bottom = 566.0
+autowrap_mode = 3
+text = ""
+
+[node name="HintLabel" type="Label" parent="Monitor/Panel"]
+offset_left = 24.0
+offset_top = 570.0
+offset_right = 1088.0
+offset_bottom = 590.0
+text = "ESC para sair do desafio (você pode voltar depois)"

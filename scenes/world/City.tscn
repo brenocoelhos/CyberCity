@@ -1,0 +1,334 @@
+[gd_scene format=3 uid="uid://1yuamum62x8t"]
+
+[ext_resource type="Script" uid="uid://bgiv2tt0xodit" path="res://scripts/world/City.gd" id="1"]
+[ext_resource type="TileSet" uid="uid://duplmtbry8x6g" path="res://scenes/world/CityTileSet.tres" id="2"]
+[ext_resource type="PackedScene" uid="uid://btbmmdoy6l56l" path="res://scenes/world/Building.tscn" id="3"]
+[ext_resource type="PackedScene" path="res://scenes/player/Player.tscn" id="4"]
+[ext_resource type="Texture2D" uid="uid://caog1l0bji4mw" path="res://assets/environment/extracted/tree_round.png" id="5"]
+[ext_resource type="PackedScene" path="res://scenes/npc/NPC.tscn" id="6"]
+[ext_resource type="Texture2D" uid="uid://dhg6l1ic30wue" path="res://assets/environment/neon_sign.png" id="9"]
+[ext_resource type="Texture2D" uid="uid://bjonb4cnpjdh2" path="res://assets/environment/server_rack.png" id="10"]
+[ext_resource type="Texture2D" uid="uid://c8ho66t2pvv7m" path="res://assets/environment/extracted/bench.png" id="bench"]
+[ext_resource type="Texture2D" uid="uid://b7kjtcxa5jvg0" path="res://assets/environment/extracted/bush.png" id="bush"]
+[ext_resource type="Texture2D" uid="uid://b62oemlhfa02o" path="res://assets/environment/extracted/bush_berries.png" id="bush_berries"]
+[ext_resource type="Texture2D" uid="uid://1ua0rm01uejb" path="res://assets/environment/extracted/bush_flowers.png" id="bush_flowers"]
+[ext_resource type="Texture2D" uid="uid://bxqn0e0dr01xc" path="res://assets/environment/extracted/house_01.png" id="facade_0"]
+[ext_resource type="Texture2D" uid="uid://7nn8x7ec68n3" path="res://assets/environment/extracted/house_02.png" id="facade_1"]
+[ext_resource type="Texture2D" uid="uid://clpmjp2y77e1n" path="res://assets/environment/extracted/house_03.png" id="facade_2"]
+[ext_resource type="Texture2D" uid="uid://trpwnw4vurr3" path="res://assets/environment/extracted/house_04.png" id="facade_3"]
+[ext_resource type="Texture2D" uid="uid://2rntxfi2agmr" path="res://assets/environment/extracted/house_05.png" id="facade_4"]
+[ext_resource type="Texture2D" uid="uid://ejpwy4fe5qye" path="res://assets/environment/extracted/house_06.png" id="facade_5"]
+[ext_resource type="Texture2D" uid="uid://ccvfga3aolyrj" path="res://assets/environment/extracted/house_wide.png" id="facade_6"]
+[ext_resource type="Texture2D" uid="uid://biqbxkgbh13n0" path="res://assets/environment/extracted/shop_02.png" id="facade_7"]
+[ext_resource type="Texture2D" uid="uid://co0ug3vyytytx" path="res://assets/environment/extracted/shop_01.png" id="facade_8"]
+[ext_resource type="Texture2D" uid="uid://d11oda8vsl28x" path="res://assets/environment/extracted/fence.png" id="fence"]
+[ext_resource type="Texture2D" uid="uid://bnp0aekcn4rhb" path="res://assets/environment/extracted/lamp.png" id="lamp"]
+[ext_resource type="Texture2D" uid="uid://cxcws7xwa4swj" path="res://assets/environment/extracted/planter.png" id="planter"]
+[ext_resource type="Texture2D" uid="uid://bqai05r63truv" path="res://assets/environment/extracted/rock.png" id="rock"]
+[ext_resource type="Texture2D" uid="uid://ds3oha022f7fr" path="res://assets/environment/extracted/tree_tall.png" id="tree_tall"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_border_h"]
+size = Vector2(1344, 32)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_border_v"]
+size = Vector2(32, 896)
+
+[node name="City" type="Node2D" unique_id=129680304]
+y_sort_enabled = true
+texture_filter = 1
+script = ExtResource("1")
+
+[node name="CanvasModulate" type="CanvasModulate" parent="." unique_id=1397573811]
+color = Color(0.82, 0.85, 0.96, 1)
+
+[node name="Ground" type="TileMapLayer" parent="." unique_id=101668702]
+z_index = -1
+texture_filter = 1
+tile_set = ExtResource("2")
+
+[node name="Buildings" type="Node2D" parent="." unique_id=685463730]
+y_sort_enabled = true
+
+[node name="Casa1" parent="Buildings" unique_id=771860026 instance=ExtResource("3")]
+position = Vector2(160, 192)
+facade = ExtResource("facade_0")
+building_name = "Casa 1"
+
+[node name="Casa2" parent="Buildings" unique_id=165428548 instance=ExtResource("3")]
+position = Vector2(416, 192)
+facade = ExtResource("facade_1")
+building_name = "Casa 2"
+entrance_x = 12.0
+
+[node name="Casa3" parent="Buildings" unique_id=776396315 instance=ExtResource("3")]
+position = Vector2(160, 640)
+facade = ExtResource("facade_2")
+building_name = "Casa 3"
+
+[node name="Casa4" parent="Buildings" unique_id=744063177 instance=ExtResource("3")]
+position = Vector2(416, 640)
+facade = ExtResource("facade_3")
+building_name = "Casa 4"
+
+[node name="Casa5" parent="Buildings" unique_id=2113393911 instance=ExtResource("3")]
+position = Vector2(160, 800)
+facade = ExtResource("facade_4")
+building_name = "Casa 5"
+entrance_x = -20.0
+
+[node name="Empresa1" parent="Buildings" unique_id=151272654 instance=ExtResource("3")]
+position = Vector2(832, 192)
+facade = ExtResource("facade_5")
+building_name = "TechCorp Ltda."
+interior_path = "res://scenes/interiors/OfficeInterior.tscn"
+
+[node name="PredioTecnologia" parent="Buildings" unique_id=487454252 instance=ExtResource("3")]
+position = Vector2(1088, 192)
+facade = ExtResource("facade_6")
+building_name = "Centro de Tecnologia"
+interior_path = "res://scenes/interiors/TechCenterInterior.tscn"
+starts_locked = true
+unlock_mission = "m01"
+
+[node name="Empresa2" parent="Buildings" unique_id=1046170590 instance=ExtResource("3")]
+position = Vector2(832, 640)
+facade = ExtResource("facade_7")
+building_name = "DataSoft Sistemas"
+interior_path = "res://scenes/interiors/OfficeInterior.tscn"
+
+[node name="Loja" parent="Buildings" unique_id=1843158998 instance=ExtResource("3")]
+position = Vector2(1088, 640)
+facade = ExtResource("facade_8")
+building_name = "Loja Eletrônica"
+interior_path = "res://scenes/interiors/AppInterior.tscn"
+
+[node name="MapBounds" type="Node2D" parent="." unique_id=1336230675]
+
+[node name="BorderTop" type="StaticBody2D" parent="MapBounds" unique_id=380261348]
+position = Vector2(672, 16)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="MapBounds/BorderTop" unique_id=1787058332]
+shape = SubResource("RectangleShape2D_border_h")
+
+[node name="BorderBottom" type="StaticBody2D" parent="MapBounds" unique_id=384461988]
+position = Vector2(672, 880)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="MapBounds/BorderBottom" unique_id=1073291463]
+shape = SubResource("RectangleShape2D_border_h")
+
+[node name="BorderLeft" type="StaticBody2D" parent="MapBounds" unique_id=1720399117]
+position = Vector2(16, 448)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="MapBounds/BorderLeft" unique_id=1548276137]
+shape = SubResource("RectangleShape2D_border_v")
+
+[node name="BorderRight" type="StaticBody2D" parent="MapBounds" unique_id=1067560801]
+position = Vector2(1328, 448)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="MapBounds/BorderRight" unique_id=1335356088]
+shape = SubResource("RectangleShape2D_border_v")
+
+[node name="Decor" type="Node2D" parent="." unique_id=332770405]
+y_sort_enabled = true
+
+[node name="Tree1" type="Sprite2D" parent="Decor" unique_id=1741115653]
+position = Vector2(64, 96)
+texture = ExtResource("5")
+offset = Vector2(0, -32)
+
+[node name="Tree2" type="Sprite2D" parent="Decor" unique_id=2046867956]
+position = Vector2(608, 288)
+texture = ExtResource("5")
+offset = Vector2(0, -32)
+
+[node name="Tree3" type="Sprite2D" parent="Decor" unique_id=1314294478]
+position = Vector2(768, 96)
+texture = ExtResource("5")
+offset = Vector2(0, -32)
+
+[node name="Tree4" type="Sprite2D" parent="Decor" unique_id=1272393501]
+position = Vector2(1280, 340)
+texture = ExtResource("5")
+offset = Vector2(0, -32)
+
+[node name="Tree5" type="Sprite2D" parent="Decor" unique_id=1523062375]
+position = Vector2(50, 530)
+texture = ExtResource("5")
+offset = Vector2(0, -32)
+
+[node name="Tree6" type="Sprite2D" parent="Decor" unique_id=91056744]
+position = Vector2(560, 870)
+texture = ExtResource("5")
+offset = Vector2(0, -32)
+
+[node name="Tree7" type="Sprite2D" parent="Decor" unique_id=1676155621]
+position = Vector2(760, 530)
+texture = ExtResource("5")
+offset = Vector2(0, -32)
+
+[node name="Tree8" type="Sprite2D" parent="Decor" unique_id=940743034]
+position = Vector2(1280, 870)
+texture = ExtResource("5")
+offset = Vector2(0, -32)
+
+[node name="NeonSign1" type="Sprite2D" parent="Decor" unique_id=935784836]
+position = Vector2(736, 256)
+scale = Vector2(2.5, 2.5)
+texture = ExtResource("9")
+
+[node name="NeonSign2" type="Sprite2D" parent="Decor" unique_id=1784033919]
+visible = false
+position = Vector2(950, 600)
+scale = Vector2(2.5, 2.5)
+texture = ExtResource("9")
+
+[node name="ServerRack1" type="Sprite2D" parent="Decor" unique_id=1389861663]
+position = Vector2(1000, 170)
+scale = Vector2(2.5, 2.5)
+texture = ExtResource("10")
+
+[node name="ServerRack2" type="Sprite2D" parent="Decor" unique_id=193143105]
+position = Vector2(1160, 170)
+scale = Vector2(2.5, 2.5)
+texture = ExtResource("10")
+
+[node name="ServerRack3" type="Sprite2D" parent="Decor" unique_id=1918667524]
+position = Vector2(1000, 590)
+scale = Vector2(2.5, 2.5)
+texture = ExtResource("10")
+
+[node name="ServerRack4" type="Sprite2D" parent="Decor" unique_id=1605859214]
+position = Vector2(1160, 590)
+scale = Vector2(2.5, 2.5)
+texture = ExtResource("10")
+
+[node name="Prop0_tree_tall" type="Sprite2D" parent="Decor" unique_id=1066442002]
+position = Vector2(352, 320)
+texture = ExtResource("tree_tall")
+offset = Vector2(0, -32)
+
+[node name="Prop1_tree_tall" type="Sprite2D" parent="Decor" unique_id=1541869589]
+position = Vector2(960, 352)
+texture = ExtResource("tree_tall")
+offset = Vector2(0, -32)
+
+[node name="Prop2_bush" type="Sprite2D" parent="Decor" unique_id=691269409]
+position = Vector2(224, 224)
+texture = ExtResource("bush")
+offset = Vector2(0, -16)
+
+[node name="Prop3_bush_flowers" type="Sprite2D" parent="Decor" unique_id=1388453538]
+position = Vector2(352, 224)
+texture = ExtResource("bush_flowers")
+offset = Vector2(0, -16)
+
+[node name="Prop4_bush_berries" type="Sprite2D" parent="Decor" unique_id=839359224]
+position = Vector2(1152, 672)
+texture = ExtResource("bush_berries")
+offset = Vector2(0, -16)
+
+[node name="Prop5_rock" type="Sprite2D" parent="Decor" unique_id=486981434]
+position = Vector2(512, 736)
+texture = ExtResource("rock")
+offset = Vector2(0, -16)
+
+[node name="Prop6_lamp" type="Sprite2D" parent="Decor" unique_id=1125441139]
+position = Vector2(624, 384)
+texture = ExtResource("lamp")
+offset = Vector2(0, -32)
+
+[node name="Prop7_lamp" type="Sprite2D" parent="Decor" unique_id=1117095255]
+position = Vector2(752, 512)
+texture = ExtResource("lamp")
+offset = Vector2(0, -32)
+
+[node name="Prop8_lamp" type="Sprite2D" parent="Decor" unique_id=982196549]
+position = Vector2(288, 384)
+texture = ExtResource("lamp")
+offset = Vector2(0, -32)
+
+[node name="Prop9_lamp" type="Sprite2D" parent="Decor" unique_id=1255833588]
+position = Vector2(1056, 512)
+texture = ExtResource("lamp")
+offset = Vector2(0, -32)
+
+[node name="Prop10_bench" type="Sprite2D" parent="Decor" unique_id=1659675480]
+position = Vector2(480, 384)
+texture = ExtResource("bench")
+offset = Vector2(0, -16)
+
+[node name="Prop11_bench" type="Sprite2D" parent="Decor" unique_id=1263721307]
+position = Vector2(896, 512)
+texture = ExtResource("bench")
+offset = Vector2(0, -16)
+
+[node name="Prop12_fence" type="Sprite2D" parent="Decor" unique_id=1317848004]
+position = Vector2(288, 736)
+texture = ExtResource("fence")
+offset = Vector2(0, -16)
+
+[node name="Prop13_fence" type="Sprite2D" parent="Decor" unique_id=1346243314]
+position = Vector2(352, 736)
+texture = ExtResource("fence")
+offset = Vector2(0, -16)
+
+[node name="Prop14_planter" type="Sprite2D" parent="Decor" unique_id=1178401623]
+position = Vector2(480, 224)
+texture = ExtResource("planter")
+offset = Vector2(0, -16)
+
+[node name="Prop15_planter" type="Sprite2D" parent="Decor" unique_id=1827002412]
+position = Vector2(1024, 672)
+texture = ExtResource("planter")
+offset = Vector2(0, -16)
+
+[node name="Vizinho" parent="." unique_id=648749458 instance=ExtResource("6")]
+position = Vector2(550, 300)
+
+[node name="Player" parent="." unique_id=279114438 instance=ExtResource("4")]
+position = Vector2(688, 464)
+
+[node name="UI" type="CanvasLayer" parent="." unique_id=1025102966]
+
+[node name="HintLabel" type="Label" parent="UI" unique_id=1126196042]
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 520.0
+offset_bottom = 60.0
+text = "WASD/Setas: mover - E: interagir - TAB: menu"
+
+[node name="MinimapPanel" type="Panel" parent="UI" unique_id=1636327042]
+offset_left = 1008.0
+offset_top = 16.0
+offset_right = 1264.0
+offset_bottom = 192.0
+
+[node name="MinimapLabel" type="Label" parent="UI/MinimapPanel" unique_id=922203583]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 2.0
+offset_right = 248.0
+offset_bottom = 22.0
+text = "MAPA"
+
+[node name="SubViewportContainer" type="SubViewportContainer" parent="UI/MinimapPanel" unique_id=820651818]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 24.0
+offset_right = 248.0
+offset_bottom = 184.0
+stretch = true
+
+[node name="SubViewport" type="SubViewport" parent="UI/MinimapPanel/SubViewportContainer" unique_id=1267952533]
+transparent_bg = true
+handle_input_locally = false
+size = Vector2i(240, 160)
+render_target_update_mode = 4
+
+[node name="MinimapCamera" type="Camera2D" parent="UI/MinimapPanel/SubViewportContainer/SubViewport" unique_id=1099969195]
+position = Vector2(672, 448)
+zoom = Vector2(0.178571, 0.178571)

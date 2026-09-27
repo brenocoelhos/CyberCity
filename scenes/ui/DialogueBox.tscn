@@ -1,0 +1,34 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/dialogue/DialogueManager.gd" id="1"]
+
+[node name="DialogueBox" type="CanvasLayer"]
+script = ExtResource("1")
+
+[node name="Panel" type="Panel" parent="."]
+offset_left = 160.0
+offset_top = 540.0
+offset_right = 1120.0
+offset_bottom = 680.0
+
+[node name="SpeakerLabel" type="Label" parent="Panel"]
+offset_left = 16.0
+offset_top = 8.0
+offset_right = 400.0
+offset_bottom = 30.0
+text = "NPC"
+
+[node name="TextLabel" type="Label" parent="Panel"]
+offset_left = 16.0
+offset_top = 34.0
+offset_right = 944.0
+offset_bottom = 100.0
+autowrap_mode = 3
+text = ""
+
+[node name="HintLabel" type="Label" parent="Panel"]
+offset_left = 16.0
+offset_top = 108.0
+offset_right = 300.0
+offset_bottom = 128.0
+text = "[E] Continuar"
