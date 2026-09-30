@@ -31,6 +31,7 @@ var _firewall_rules: Dictionary = {}
 
 func _ready() -> void:
 	visible = false
+	input_line.keep_editing_on_text_submit = true
 	input_line.text_submitted.connect(_on_command_submitted)
 
 
