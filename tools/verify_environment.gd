@@ -11,10 +11,17 @@ func _run() -> void:
 	await process_frame
 	var ground: TileMapLayer = city.get_node("Ground")
 	assert(ground.tile_set.tile_size == Vector2i(32, 32))
-	assert(ground.get_used_cells().size() == 42 * 28)
-	assert(ground.get_cell_atlas_coords(Vector2i(21, 14)) == Vector2i(4, 2))
-	assert(ground.get_cell_atlas_coords(Vector2i(20, 14)) == Vector2i(1, 2))
-	assert(ground.get_cell_atlas_coords(Vector2i(21, 13)) == Vector2i(0, 2))
+	assert(ground.get_used_cells().size() == city.MAP_WIDTH * city.MAP_HEIGHT)
+	# Cruzamento de 4 vias, T, curva do anel, retas e faixas de pedestre.
+	assert(ground.get_cell_atlas_coords(Vector2i(21, 13)) == Vector2i(4, 2))
+	assert(ground.get_cell_atlas_coords(Vector2i(21, 2)) == Vector2i(6, 2))
+	assert(ground.get_cell_atlas_coords(Vector2i(2, 2)) == Vector2i(2, 4))
+	assert(ground.get_cell_atlas_coords(Vector2i(10, 13)) == Vector2i(1, 2))
+	assert(ground.get_cell_atlas_coords(Vector2i(21, 8)) == Vector2i(0, 2))
+	assert(ground.get_cell_atlas_coords(Vector2i(24, 13)) == Vector2i(7, 2))
+	assert(ground.get_cell_atlas_coords(Vector2i(21, 16)) == Vector2i(7, 2))
+	assert(ground.get_cell_alternative_tile(Vector2i(21, 16)) == TileSetAtlasSource.TRANSFORM_TRANSPOSE)
+	assert(ground.get_cell_atlas_coords(Vector2i(10, 12)) == Vector2i(0, 1))
 	var player: CharacterBody2D = city.get_node("Player")
 	for building in city.get_node("Buildings").get_children():
 		var sprite: Sprite2D = building.get_node("Sprite2D")
@@ -30,26 +37,31 @@ func _run() -> void:
 		await physics_frame
 		assert(door.overlaps_body(player))
 		assert(not player.test_move(player.global_transform, Vector2.ZERO))
+		# Cada porta fica na calçada, de frente para uma rua.
+		var door_cell := ground.local_to_map(door.global_position)
+		assert(ground.get_cell_atlas_coords(door_cell) == Vector2i(0, 1))
+	var building_count: int = city.get_node("Buildings").get_child_count()
 	assert(city.get_node("Buildings/PredioTecnologia/Door").locked)
 	for scene_name in ["HouseInterior", "OfficeInterior", "TechCenterInterior", "AppInterior"]:
 		var interior: Node = load("res://scenes/interiors/" + scene_name + ".tscn").instantiate()
 		assert(interior != null)
 		interior.free()
-	print("PASS: 1176 cells, 32px grid, road junction, 9 facades, accessible doors and 4 interiors.")
+	print("PASS: %d cells, 32px grid, road pieces, %d facades, accessible doors and 4 interiors." % [city.MAP_WIDTH * city.MAP_HEIGHT, building_count])
 	if "--preview" in OS.get_cmdline_user_args():
 		city.get_node("UI").hide()
 		for child in root.get_children():
 			if child is CanvasLayer:
 				child.hide()
-		player.global_position = Vector2(688, 464)
+		player.global_position = Vector2(1024, 320)
 		await physics_frame
 		await physics_frame
 		await physics_frame
 		player.get_node("Camera2D").enabled = false
-		root.size = Vector2i(1344, 896)
-		root.content_scale_size = Vector2i(1344, 896)
+		var map_size := Vector2i(city.MAP_WIDTH * 32, city.MAP_HEIGHT * 32)
+		root.size = map_size
+		root.content_scale_size = map_size
 		var camera := Camera2D.new()
-		camera.position = Vector2(672, 448)
+		camera.position = Vector2(map_size) / 2.0
 		city.add_child(camera)
 		camera.make_current()
 		await process_frame

@@ -95,6 +95,16 @@ func reset() -> void:
 		DialogueManager.closed.disconnect(_run_queued_action)
 
 
+## true se a missão faz parte de um capítulo já começado e ainda não
+## terminado. Usado pelos marcadores "!" dos prédios na cidade.
+func is_mission_in_current_chapter(mission_id: String) -> bool:
+	for chapter_id in chapters.keys():
+		if _chapter_started.get(chapter_id, false) and not _chapter_finished.get(chapter_id, false):
+			if Array(chapters[chapter_id]["missions"]).has(mission_id):
+				return true
+	return false
+
+
 ## Chamado pela cidade (City.gd) toda vez que a cena carrega. Só faz
 ## alguma coisa da primeira vez — é seguro chamar sempre.
 func play_opening() -> void:
