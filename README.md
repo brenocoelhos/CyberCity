@@ -1087,3 +1087,18 @@ um preparado para um grupo de desafios: Bairro Residencial e Vila Residencial
 06), Centro de Tecnologia (04, 05, 07) e Comércio (08, 09, 10). Um "!" amarelo
 marca os prédios com missões do capítulo atual, e o minimapa mostra a cidade.
 Detalhes e como acrescentar prédios/ruas: `docs/TILESET_32.md`.
+
+## Terminal estilo Kali
+
+- Todo computador abre o terminal (`scenes/terminal/Terminal.tscn`) com visual
+  inspirado no Kali Linux: janela com barra de título, prompt de duas linhas
+  `┌──(kali㉿host)-[~]` / `└─$`, texto verde, boot animado, respostas que
+  aparecem "digitando" e efeito de monitor CRT
+  (`assets/shaders/crt_overlay.gdshader`).
+- Na Praça Central há um **Terminal Público** (`scenes/computers/PublicTerminal.tscn`)
+  para treinar comandos: `ls`, `cat`, `whoami`, `pwd`, `date`, `uname`,
+  `echo`, `history`, `neofetch`, `ifconfig`, além de `help` e `clear`.
+- O nome da máquina no prompt vem de **Inspector → Host Name** do computador;
+  se ficar vazio, usa o nome do prédio (ex.: `techcorp-ltda`).
+- Tudo é simulado: nenhum comando real é executado.
+- Não usamos o logo oficial do Kali (marca registrada); só o estilo visual.

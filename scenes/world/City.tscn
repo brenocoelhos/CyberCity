@@ -27,6 +27,7 @@
 [ext_resource type="Texture2D" uid="uid://bqai05r63truv" path="res://assets/environment/extracted/rock.png" id="rock"]
 [ext_resource type="Texture2D" uid="uid://ds3oha022f7fr" path="res://assets/environment/extracted/tree_tall.png" id="tree_tall"]
 [ext_resource type="Texture2D" path="res://assets/environment/extracted/house_07.png" id="facade_9"]
+[ext_resource type="PackedScene" path="res://scenes/computers/PublicTerminal.tscn" id="public_terminal"]
 
 [node name="City" type="Node2D" unique_id=129680304]
 y_sort_enabled = true
@@ -493,12 +494,15 @@ theme_override_constants/line_spacing = -2
 theme_override_font_sizes/font_size = 11
 text = "COMÉRCIO\nMissões 08, 09 e 10"
 
+[node name="TerminalPublico" parent="." instance=ExtResource("public_terminal")]
+position = Vector2(992, 224)
+
 [node name="Vizinho" parent="." unique_id=648749458 instance=ExtResource("6")]
-position = Vector2(960, 256)
+position = Vector2(912, 288)
 
 [node name="Interaction" parent="Vizinho"]
 npc_name = "Guia da Praça"
-dialogue_lines = PackedStringArray("Bem-vindo à Cyber City! Esta é a Praça Central.", "Ao oeste ficam as casas. Um morador está com problemas no computador — comece por lá.", "Ao leste fica o Distrito Empresarial, com a TechCorp e a DataSoft.", "Ao sul ficam o Centro de Tecnologia e a Loja Eletrônica.", "Procure o \"!\" amarelo sobre os prédios: é lá que estão as missões do capítulo atual.")
+dialogue_lines = PackedStringArray("Bem-vindo à Cyber City! Esta é a Praça Central.", "Ao oeste ficam as casas. Um morador está com problemas no computador — comece por lá.", "Ao leste fica o Distrito Empresarial, com a TechCorp e a DataSoft.", "Ao sul ficam o Centro de Tecnologia e a Loja Eletrônica.", "Aquele totem é o Terminal Público: aperte E nele e digite 'help' para treinar comandos.", "Procure o \"!\" amarelo sobre os prédios: é lá que estão as missões do capítulo atual.")
 
 [node name="NameLabel" parent="Vizinho"]
 text = "Guia"
