@@ -61,6 +61,7 @@ func _on_new_game_pressed() -> void:
 	GameManager.reset()
 	MissionManager.reset()
 	CampaignManager.reset()
+	PhoneManager.reset()
 	DialogueManager.force_close()
 	SceneTransition.has_pending_spawn = false
 	SceneTransition.return_scene_path = CITY_SCENE
