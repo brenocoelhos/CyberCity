@@ -136,6 +136,20 @@ var missions: Dictionary = {
 	},
 }
 
+## Estado inicial de cada missão, guardado para o "Novo jogo".
+var _initial_states: Dictionary = {}
+
+
+func _ready() -> void:
+	for mission_id in missions.keys():
+		_initial_states[mission_id] = missions[mission_id]["state"]
+
+
+## Volta todas as missões ao estado inicial (usado por "Novo jogo").
+func reset() -> void:
+	for mission_id in _initial_states.keys():
+		missions[mission_id]["state"] = _initial_states[mission_id]
+
 
 func get_mission(mission_id: String) -> Dictionary:
 	return missions.get(mission_id, {})

@@ -1,37 +1,186 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/GameMenu.gd" id="1"]
+[ext_resource type="PackedScene" path="res://scenes/ui/OptionsPanel.tscn" id="2"]
+
+[sub_resource type="StyleBoxFlat" id="PhoneBody"]
+bg_color = Color(0.08, 0.09, 0.14, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.3, 0.95, 1, 1)
+corner_radius_top_left = 28
+corner_radius_top_right = 28
+corner_radius_bottom_right = 28
+corner_radius_bottom_left = 28
+shadow_color = Color(0, 0, 0, 0.5)
+shadow_size = 12
+
+[sub_resource type="StyleBoxFlat" id="PhoneScreen"]
+bg_color = Color(0.03, 0.04, 0.08, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="HomeButton"]
+bg_color = Color(0.2, 0.22, 0.3, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
 
 [node name="GameMenu" type="CanvasLayer"]
 layer = 3
 script = ExtResource("1")
 
-[node name="Panel" type="Panel" parent="."]
-offset_left = 240.0
-offset_top = 60.0
-offset_right = 1040.0
-offset_bottom = 640.0
+[node name="Phone" type="Panel" parent="."]
+offset_left = 450.0
+offset_top = 20.0
+offset_right = 830.0
+offset_bottom = 700.0
+theme_override_styles/panel = SubResource("PhoneBody")
 
-[node name="TitleLabel" type="Label" parent="Panel"]
-offset_left = 20.0
-offset_top = 12.0
-offset_right = 780.0
-offset_bottom = 38.0
-horizontal_alignment = 1
+[node name="StatusBar" type="Control" parent="Phone"]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 14.0
+offset_right = 356.0
+offset_bottom = 40.0
+
+[node name="NameLabel" type="Label" parent="Phone/StatusBar"]
+layout_mode = 0
+offset_right = 200.0
+offset_bottom = 26.0
+theme_override_colors/font_color = Color(0.3, 0.95, 1, 1)
+theme_override_font_sizes/font_size = 14
 text = "CYBER PHONE"
 
-[node name="Content" type="RichTextLabel" parent="Panel"]
-offset_left = 20.0
-offset_top = 46.0
-offset_right = 780.0
-offset_bottom = 530.0
-focus_mode = 0
-bbcode_enabled = false
+[node name="ClockLabel" type="Label" parent="Phone/StatusBar"]
+layout_mode = 0
+offset_left = 200.0
+offset_right = 332.0
+offset_bottom = 26.0
+theme_override_font_sizes/font_size = 14
+text = "00:00"
+horizontal_alignment = 2
 
-[node name="HintLabel" type="Label" parent="Panel"]
-offset_left = 20.0
-offset_top = 540.0
-offset_right = 780.0
-offset_bottom = 566.0
+[node name="Screen" type="Panel" parent="Phone"]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 44.0
+offset_right = 364.0
+offset_bottom = 622.0
+theme_override_styles/panel = SubResource("PhoneScreen")
+
+[node name="Home" type="Control" parent="Phone/Screen"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Apps" type="GridContainer" parent="Phone/Screen/Home"]
+layout_mode = 0
+offset_left = 14.0
+offset_top = 20.0
+offset_right = 334.0
+offset_bottom = 400.0
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 12
+columns = 2
+
+[node name="MessagesButton" type="Button" parent="Phone/Screen/Home/Apps"]
+custom_minimum_size = Vector2(154, 100)
+layout_mode = 2
+text = "Mensagens"
+
+[node name="CluesButton" type="Button" parent="Phone/Screen/Home/Apps"]
+custom_minimum_size = Vector2(154, 100)
+layout_mode = 2
+text = "Pistas"
+
+[node name="MissionsButton" type="Button" parent="Phone/Screen/Home/Apps"]
+custom_minimum_size = Vector2(154, 100)
+layout_mode = 2
+text = "Missões"
+
+[node name="ProfileButton" type="Button" parent="Phone/Screen/Home/Apps"]
+custom_minimum_size = Vector2(154, 100)
+layout_mode = 2
+text = "Perfil"
+
+[node name="SettingsButton" type="Button" parent="Phone/Screen/Home/Apps"]
+custom_minimum_size = Vector2(154, 100)
+layout_mode = 2
+text = "Ajustes"
+
+[node name="CloseButton" type="Button" parent="Phone/Screen/Home/Apps"]
+custom_minimum_size = Vector2(154, 100)
+layout_mode = 2
+text = "Fechar"
+
+[node name="AppView" type="Control" parent="Phone/Screen"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Header" type="HBoxContainer" parent="Phone/Screen/AppView"]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = 340.0
+offset_bottom = 44.0
+theme_override_constants/separation = 12
+
+[node name="BackButton" type="Button" parent="Phone/Screen/AppView/Header"]
+custom_minimum_size = Vector2(90, 0)
+layout_mode = 2
+text = "< Voltar"
+
+[node name="AppTitle" type="Label" parent="Phone/Screen/AppView/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.3, 0.95, 1, 1)
+text = "APP"
+vertical_alignment = 1
+
+[node name="Scroll" type="ScrollContainer" parent="Phone/Screen/AppView"]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 54.0
+offset_right = 340.0
+offset_bottom = 570.0
+horizontal_scroll_mode = 0
+
+[node name="List" type="VBoxContainer" parent="Phone/Screen/AppView/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="HomeIndicator" type="Panel" parent="Phone"]
+layout_mode = 0
+offset_left = 150.0
+offset_top = 640.0
+offset_right = 230.0
+offset_bottom = 648.0
+theme_override_styles/panel = SubResource("HomeButton")
+
+[node name="HintLabel" type="Label" parent="Phone"]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 650.0
+offset_right = 364.0
+offset_bottom = 674.0
+theme_override_colors/font_color = Color(0.65, 0.7, 0.8, 1)
+theme_override_font_sizes/font_size = 12
+text = "TAB fecha · ESC volta"
 horizontal_alignment = 1
-text = "TAB ou ESC para fechar"
+
+[node name="OptionsPanel" parent="." instance=ExtResource("2")]

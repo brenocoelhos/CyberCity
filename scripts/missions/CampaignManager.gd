@@ -84,6 +84,17 @@ func _ready() -> void:
 	MissionManager.mission_completed.connect(_on_mission_completed)
 
 
+## Volta a campanha ao início (usado por "Novo jogo").
+func reset() -> void:
+	is_game_completed = false
+	_intro_played = false
+	_chapter_started.clear()
+	_chapter_finished.clear()
+	_queued_action = Callable()
+	if DialogueManager.closed.is_connected(_run_queued_action):
+		DialogueManager.closed.disconnect(_run_queued_action)
+
+
 ## Chamado pela cidade (City.gd) toda vez que a cena carrega. Só faz
 ## alguma coisa da primeira vez — é seguro chamar sempre.
 func play_opening() -> void:

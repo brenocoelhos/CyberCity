@@ -1056,3 +1056,25 @@ passos ficam a seu critério — pode ser:
   citado no roteiro original como item futuro);
 - ajustar qualquer coisa que aparecer nos testes;
 - ou considerar o protótipo pronto pra entrega, do jeito que está.
+
+## Menu principal e menu de pausa
+
+- A cena principal agora é `scenes/ui/MainMenu.tscn` (em **Projeto →
+  Configurações do Projeto → Aplicação → Executar → Cena Principal**).
+  Botões: **Continuar** (só aparece com um jogo em andamento), **Novo jogo**,
+  **Opções**, **Controles** e **Sair**.
+- O **celular (Cyber Phone)** abre com TAB/ESC ou clicando em
+  **CELULAR** no canto do HUD. Ele também pausa o jogo. Apps:
+  - **Mensagens**: recados que chegam sozinhos quando um capítulo começa,
+    quando uma missão é aceita e quando ela é concluída. O HUD mostra
+    quantas não foram lidas, e o ícone "vibra" com uma notificação.
+  - **Pistas**: para cada missão em andamento, a 1ª pista vem junto com a
+    missão; as próximas são liberadas no botão **Revelar próxima pista**.
+    A última é a dica do desafio (`ChallengeData`).
+  - **Missões**, **Perfil** (nível, XP, conhecimentos) e **Ajustes**
+    (volume/tela, menu principal, sair).
+  - Textos das pistas e remetentes ficam em
+    `scripts/systems/PhoneManager.gd` (constantes `CLUES` e `CONTACTS`).
+- **Opções** (`scenes/ui/OptionsPanel.tscn`): volume geral e tela cheia,
+  salvos em `user://settings.cfg` pelo autoload `Settings`.
+- Funciona com mouse ou teclado (setas + Enter; ESC volta).
