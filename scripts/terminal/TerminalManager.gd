@@ -117,7 +117,7 @@ func _challenge_hint() -> String:
 		"xss":
 			intro = "Campo de comentário simulado. Digite 'postar <mensagem>' para testar."
 
-	if intro != "" and _challenge.has("hint"):
+	if intro != "" and not PhoneManager.get_all_clues(_hint_mission_id()).is_empty():
 		intro += " Travou? Digite 'dica'."
 	return intro
 
@@ -306,17 +306,44 @@ func _cmd_help() -> void:
 		_print_line("  login <senha>       - tenta autenticar no sistema simulado")
 	elif challenge_type == "xss":
 		_print_line("  postar <mensagem>   - publica um comentário no sistema simulado")
-	if _challenge.has("hint"):
-		_print_line("  dica                - mostra uma dica pra este desafio")
+	if not PhoneManager.get_all_clues(_hint_mission_id()).is_empty():
+		_print_line("  dica                - revela a próxima dica da missão")
 	_print_line("  exit                - fecha o terminal")
 
 
+## Missão cujas dicas o comando 'dica' mostra neste computador: a do
+## desafio, ou a m01 nos computadores das casas (que não têm desafio e onde
+## ela é a única missão possível). "" se não houver missão em andamento.
+func _hint_mission_id() -> String:
+	var mission_id: String = String(_challenge.get("mission", ""))
+	if mission_id != "":
+		return mission_id
+	if MissionManager.is_active("m01"):
+		return "m01"
+	return ""
+
+
 func _cmd_dica() -> void:
-	if not _challenge.has("hint"):
+	var mission_id: String = _hint_mission_id()
+	var hints: PackedStringArray = PhoneManager.get_all_clues(mission_id)
+	if mission_id == "" or hints.is_empty():
 		_print_line("Nenhuma dica disponível neste sistema.")
 		return
 	SoundManager.play("blip")
-	_print_rich("[color=%s][lb]*[rb] Dica:[/color] %s" % [C_YELLOW, _escape(String(_challenge["hint"]))])
+
+	# As dicas são as mesmas do app Pistas do celular. Cada pedido revela a
+	# próxima camada; se não há mais, só avisa.
+	var revealed_before: int = PhoneManager.get_revealed_clues(mission_id).size()
+	if not PhoneManager.reveal_next_clue(mission_id):
+		_print_rich("[color=%s]Você já viu todas as dicas desta missão (%d/%d).[/color]" % [C_DIM, hints.size(), hints.size()])
+		return
+
+	# Mostra o que já estava revelado (apagado) e a camada nova (amarelo).
+	var revealed: PackedStringArray = PhoneManager.get_revealed_clues(mission_id)
+	for i in range(revealed.size()):
+		var is_new: bool = i >= revealed_before
+		var color: String = C_YELLOW if is_new else C_DIM
+		_print_rich("[color=%s][lb]*[rb] Dica %d/%d:[/color] %s" % [color, i + 1, hints.size(), _escape(revealed[i])])
 
 
 func _cmd_desafio() -> void:

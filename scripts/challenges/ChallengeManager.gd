@@ -83,14 +83,30 @@ func _on_option_pressed(index: int) -> void:
 	else:
 		ChallengeSession.record_attempt(_current_id, false)
 		SoundManager.play("error")
-		feedback_label.text = "Não é essa. " + String(_current.get("hint", ""))
+		# Mostra só o que o jogador já revelou; novas camadas só com o botão.
+		var revealed: PackedStringArray = ChallengeSession.get_revealed_hints(_current_id)
+		if revealed.is_empty():
+			feedback_label.text = "Não é essa. Peça uma dica se precisar."
+		else:
+			feedback_label.text = "Não é essa. Última dica: " + revealed[revealed.size() - 1]
 
 
 func _on_hint_pressed() -> void:
 	if not _active or _current.is_empty():
 		return
 	SoundManager.play("blip")
-	feedback_label.text = "💡 Dica: " + String(_current.get("hint", "Sem dica disponível para este desafio."))
+	var hints: PackedStringArray = ChallengeSession.get_hints(_current_id)
+	if hints.is_empty():
+		feedback_label.text = "Sem dica disponível para este desafio."
+		return
+
+	# Cada clique revela a próxima camada; no fim, repete a última.
+	var text: String = ChallengeSession.reveal_next_hint(_current_id)
+	var revealed: PackedStringArray = ChallengeSession.get_revealed_hints(_current_id)
+	if text == "":
+		feedback_label.text = "💡 Dica %d/%d (a última): %s" % [hints.size(), hints.size(), revealed[revealed.size() - 1]]
+	else:
+		feedback_label.text = "💡 Dica %d/%d: %s" % [revealed.size(), hints.size(), text]
 
 
 func _on_correct() -> void:

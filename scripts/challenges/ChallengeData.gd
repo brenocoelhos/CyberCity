@@ -9,8 +9,12 @@ extends Node
 ##   prompt      - enunciado / cenário apresentado ao jogador
 ##   options     - alternativas (2 a 4)
 ##   correct     - índice da alternativa correta (começa em 0)
-##   hint        - dica mostrada quando o jogador pede (comando 'dica'
-##                 no terminal, ou botão de dica no quiz) ou quando erra
+##   hints       - dicas em camadas, da mais vaga para a mais direta:
+##                 1) direção (onde olhar), 2) método (como abordar),
+##                 3) quase-resposta (o padrão exato; o jogador ainda
+##                 precisa executar). A 1ª chega de graça com a missão;
+##                 as outras o jogador pede (comando 'dica', botão de dica
+##                 do quiz ou app Pistas do celular). Ver ChallengeSession.
 ##   mission     - id da missão ligada a este desafio
 
 const CHALLENGES := {
@@ -25,7 +29,11 @@ const CHALLENGES := {
 			"nomedocachorro",
 		],
 		"correct": 2,
-		"hint": "Pense em tamanho e previsibilidade: senhas curtas, com palavras comuns ou dados pessoais são fáceis de adivinhar.",
+		"hints": [
+			"Senhas curtas podem ser descobertas em segundos por um programa.",
+			"Palavras comuns, sequências e dados pessoais estão nas listas de ataque.",
+			"Pense em tamanho e previsibilidade: senhas curtas, com palavras comuns ou dados pessoais são fáceis de adivinhar.",
+		],
 		"mission": "m02",
 	},
 	"c_hash": {
@@ -39,7 +47,11 @@ const CHALLENGES := {
 			"Um número aleatório sem relação com a senha.",
 		],
 		"correct": 1,
-		"hint": "Hash não é o mesmo que criptografia: a ideia é justamente NÃO conseguir voltar ao texto original.",
+		"hints": [
+			"Um hash funciona como uma \"impressão digital\" da senha.",
+			"O sistema compara hashes no login — ele nunca precisa ver a senha original.",
+			"Hash não é o mesmo que criptografia: a ideia é justamente NÃO conseguir voltar ao texto original.",
+		],
 		"mission": "m03",
 	},
 	"c_cripto": {
@@ -53,7 +65,11 @@ const CHALLENGES := {
 			"SERVER",
 		],
 		"correct": 0,
-		"hint": "Volte cada letra 3 posições: V→S, H→E, J→G... e siga o mesmo padrão até o fim.",
+		"hints": [
+			"Na Cifra de César, todas as letras andam o mesmo número de casas no alfabeto.",
+			"A chave é 3. Para decifrar, ande 3 casas para TRÁS.",
+			"Volte cada letra 3 posições: V→S, H→E, J→G... e siga o mesmo padrão até o fim.",
+		],
 		"mission": "m04",
 	},
 	"c_phishing": {
@@ -67,7 +83,11 @@ const CHALLENGES := {
 			"Ele menciona a palavra 'segurança'.",
 		],
 		"correct": 1,
-		"hint": "Compare os remetentes com atenção e veja o que cada mensagem PEDE que você faça.",
+		"hints": [
+			"Leia o endereço do remetente letra por letra.",
+			"Desconfie de mensagens que pedem pressa ou a sua senha.",
+			"Compare os remetentes com atenção e veja o que cada mensagem PEDE que você faça.",
+		],
 		"mission": "m05",
 	},
 
@@ -84,7 +104,11 @@ const CHALLENGES := {
 			"192.168.1.50": {"name": "UNKNOWN", "suspicious": true, "info": "Dispositivo não cadastrado no inventário. Está enviando pacotes para um endereço externo desconhecido, fora do horário comercial."},
 		},
 		"correct_ip": "192.168.1.50",
-		"hint": "Repare em qual dispositivo NÃO tem um nome reconhecível (ROUTER, OFFICE-PC, SERVER) — o UNKNOWN é o candidato certo pra investigar com 'connect <ip>'.",
+		"hints": [
+			"No Servidor, o comando 'scan' mostra todos os dispositivos da rede.",
+			"Todo dispositivo deveria estar no inventário da empresa. Algum não tem nome conhecido?",
+			"Repare em qual dispositivo NÃO tem um nome reconhecível (ROUTER, OFFICE-PC, SERVER) — o UNKNOWN é o candidato certo pra investigar com 'connect <ip>'.",
+		],
 		"explanation": "Todo dispositivo numa rede deveria estar cadastrado no inventário. Um IP desconhecido, sem dono definido e mandando dados pra fora da rede fora de hora é um padrão clássico de dispositivo comprometido (ou até um invasor dentro da rede).",
 	},
 	"c_firewall": {
@@ -97,7 +121,11 @@ const CHALLENGES := {
 			{"port": 23, "service": "TELNET (login remoto sem criptografia)", "recommended": "block"},
 			{"port": 4444, "service": "porta não documentada, tráfego constante para fora", "recommended": "block"},
 		],
-		"hint": "HTTP (80) e HTTPS (443) de um site normal costumam poder ficar liberados. TELNET (23) não é criptografado, e uma porta sem nenhuma explicação (tipo a 4444) é sinal clássico de backdoor — considere bloquear os dois.",
+		"hints": [
+			"No computador de Firewall, 'firewall status' lista as conexões.",
+			"O site da empresa precisa continuar funcionando (HTTP e HTTPS).",
+			"HTTP (80) e HTTPS (443) de um site normal costumam poder ficar liberados. TELNET (23) não é criptografado, e uma porta sem nenhuma explicação (tipo a 4444) é sinal clássico de backdoor — considere bloquear os dois.",
+		],
 		"explanation": "Um firewall bem configurado libera só o que o serviço realmente precisa (aqui, o site em HTTP/HTTPS) e bloqueia o que é arriscado por natureza (Telnet, sem criptografia) ou não tem explicação nenhuma (porta desconhecida com tráfego constante — clássico sinal de backdoor).",
 	},
 
@@ -116,7 +144,11 @@ const CHALLENGES := {
 			{"line": 6, "time": "10:34", "text": "File accessed (contract.pdf)"},
 		],
 		"correct_line": 5,
-		"hint": "Procure a sequência de falhas seguida por um sucesso, tudo bem pertinho no tempo — é aí que a tentativa deu certo.",
+		"hints": [
+			"No Registro de Acessos, 'logs' mostra cada linha numerada.",
+			"Várias falhas de login seguidas, no mesmo minuto, são suspeitas.",
+			"Procure a sequência de falhas seguida por um sucesso, tudo bem pertinho no tempo — é aí que a tentativa deu certo.",
+		],
 		"explanation": "Três tentativas de login falhando seguidas, e logo depois um sucesso — tudo no mesmo minuto — é o padrão clássico de força bruta bem-sucedida: alguém tentou senhas até acertar. A linha 5 é o momento em que o invasor conseguiu entrar.",
 	},
 
@@ -127,7 +159,11 @@ const CHALLENGES := {
 		"type": "sqli",
 		"title": "Login vulnerável",
 		"mission": "m09",
-		"hint": "Pense numa entrada que faça a condição da consulta virar sempre verdadeira — algo como comparar um valor com ele mesmo, usando aspas pra 'fechar' a parte que o sistema espera.",
+		"hints": [
+			"O sistema cola o que você digita direto dentro de uma consulta SQL.",
+			"Aspas simples ( ' ) podem \"fechar\" o texto que o sistema esperava.",
+			"Pense numa entrada que faça a condição da consulta virar sempre verdadeira — algo como comparar um valor com ele mesmo, usando aspas pra 'fechar' a parte que o sistema espera.",
+		],
 		"explanation": "O sistema provavelmente monta a consulta colando a senha direto no SQL (algo como SELECT * FROM usuarios WHERE senha = '<o que você digitou>'). Uma entrada como ' OR '1'='1 faz essa condição virar sempre verdadeira, então o sistema autentica sem saber a senha real. Por isso todo dado que o usuário digita precisa ser validado antes de entrar numa consulta.",
 	},
 
@@ -137,7 +173,11 @@ const CHALLENGES := {
 		"type": "xss",
 		"title": "Campo de comentário vulnerável",
 		"mission": "m10",
-		"hint": "Tente publicar algo que pareça uma tag de código, tipo <script>...</script>, e veja o que o sistema faz com isso sem tratar o conteúdo.",
+		"hints": [
+			"O sistema mostra o comentário na página sem tratar o conteúdo.",
+			"E se o comentário tivesse uma tag HTML, como <b> ou <script>?",
+			"Tente publicar algo que pareça uma tag de código, tipo <script>...</script>, e veja o que o sistema faz com isso sem tratar o conteúdo.",
+		],
 		"explanation": "Se o site pegasse o comentário e mostrasse na página sem tratar o conteúdo, uma tag <script> digitada por qualquer visitante rodaria no navegador de quem lesse o comentário — podendo roubar sessão, redirecionar a página, etc. Por isso todo conteúdo enviado por usuários precisa ser sanitizado antes de ser exibido.",
 	},
 }
@@ -145,6 +185,14 @@ const CHALLENGES := {
 
 func get_challenge(challenge_id: String) -> Dictionary:
 	return CHALLENGES.get(challenge_id, {})
+
+
+## Id do desafio ligado a uma missão ("" se a missão não tem desafio, como a m01).
+func get_challenge_id_for_mission(mission_id: String) -> String:
+	for challenge_id in CHALLENGES.keys():
+		if String(CHALLENGES[challenge_id].get("mission", "")) == mission_id:
+			return String(challenge_id)
+	return ""
 
 
 ## Acha o desafio ligado a uma missão (busca reversa pelo campo "mission").

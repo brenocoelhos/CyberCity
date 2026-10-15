@@ -35,48 +35,14 @@ const CONTACTS := {
 
 const CENTRAL := "Central Cyber City"
 
-## Pistas extras de cada missão, da mais vaga para a mais direta.
+## Pistas das missões que NÃO têm desafio em ChallengeData (só a m01: ler
+## o e-mail). Nas demais, as pistas são as dicas em camadas do desafio
+## ("hints" em ChallengeData), guardadas e reveladas por ChallengeSession.
 const CLUES := {
 	"m01": [
 		"O e-mail está guardado no computador da casa. No terminal, 'files' lista os arquivos.",
 		"Use 'read email_suspeito.eml' para abrir o e-mail.",
 		"Compare o endereço do remetente com o de uma empresa real e repare no tom de urgência.",
-	],
-	"m02": [
-		"Senhas curtas podem ser descobertas em segundos por um programa.",
-		"Palavras comuns, sequências e dados pessoais estão nas listas de ataque.",
-	],
-	"m03": [
-		"Um hash funciona como uma \"impressão digital\" da senha.",
-		"O sistema compara hashes no login — ele nunca precisa ver a senha original.",
-	],
-	"m04": [
-		"Na Cifra de César, todas as letras andam o mesmo número de casas no alfabeto.",
-		"A chave é 3. Para decifrar, ande 3 casas para TRÁS.",
-	],
-	"m05": [
-		"Leia o endereço do remetente letra por letra.",
-		"Desconfie de mensagens que pedem pressa ou a sua senha.",
-	],
-	"m06": [
-		"No Servidor, o comando 'scan' mostra todos os dispositivos da rede.",
-		"Todo dispositivo deveria estar no inventário da empresa. Algum não tem nome conhecido?",
-	],
-	"m07": [
-		"No computador de Firewall, 'firewall status' lista as conexões.",
-		"O site da empresa precisa continuar funcionando (HTTP e HTTPS).",
-	],
-	"m08": [
-		"No Registro de Acessos, 'logs' mostra cada linha numerada.",
-		"Várias falhas de login seguidas, no mesmo minuto, são suspeitas.",
-	],
-	"m09": [
-		"O sistema cola o que você digita direto dentro de uma consulta SQL.",
-		"Aspas simples ( ' ) podem \"fechar\" o texto que o sistema esperava.",
-	],
-	"m10": [
-		"O sistema mostra o comentário na página sem tratar o conteúdo.",
-		"E se o comentário tivesse uma tag HTML, como <b> ou <script>?",
 	],
 }
 
@@ -92,6 +58,7 @@ func _ready() -> void:
 	CampaignManager.game_completed.connect(_on_game_completed)
 	MissionManager.mission_started.connect(_on_mission_started)
 	MissionManager.mission_completed.connect(_on_mission_completed)
+	ChallengeSession.hint_revealed.connect(_on_hint_revealed)
 
 
 ## Apaga mensagens e pistas (usado por "Novo jogo").
@@ -126,22 +93,31 @@ func mark_all_read() -> void:
 
 # --- Pistas ------------------------------------------------------------
 
-## Todas as pistas da missão: as de CLUES + a dica do desafio.
+## As pistas do celular e as dicas do terminal/quiz são a mesma coisa:
+## para missões com desafio, tudo vem de ChallengeSession. Só missões sem
+## desafio (m01) usam CLUES e o contador local abaixo.
+
+## Todas as pistas da missão, da mais vaga para a mais direta.
 func get_all_clues(mission_id: String) -> PackedStringArray:
-	var clues := PackedStringArray(CLUES.get(mission_id, []))
-	var challenge: Dictionary = ChallengeData.get_challenge_for_mission(mission_id)
-	if challenge.has("hint"):
-		clues.append(String(challenge["hint"]))
-	return clues
+	var challenge_id: String = ChallengeData.get_challenge_id_for_mission(mission_id)
+	if challenge_id != "":
+		return ChallengeSession.get_hints(challenge_id)
+	return PackedStringArray(CLUES.get(mission_id, []))
 
 
 func get_revealed_clues(mission_id: String) -> PackedStringArray:
+	var challenge_id: String = ChallengeData.get_challenge_id_for_mission(mission_id)
+	if challenge_id != "":
+		return ChallengeSession.get_revealed_hints(challenge_id)
 	var clues := get_all_clues(mission_id)
 	var count: int = mini(int(_revealed.get(mission_id, 0)), clues.size())
 	return clues.slice(0, count)
 
 
 func has_more_clues(mission_id: String) -> bool:
+	var challenge_id: String = ChallengeData.get_challenge_id_for_mission(mission_id)
+	if challenge_id != "":
+		return ChallengeSession.has_more_hints(challenge_id)
 	return int(_revealed.get(mission_id, 0)) < get_all_clues(mission_id).size()
 
 
@@ -149,9 +125,21 @@ func has_more_clues(mission_id: String) -> bool:
 func reveal_next_clue(mission_id: String) -> bool:
 	if not has_more_clues(mission_id):
 		return false
+	var challenge_id: String = ChallengeData.get_challenge_id_for_mission(mission_id)
+	if challenge_id != "":
+		# ChallengeSession avisa (hint_revealed) e _on_hint_revealed repassa
+		# como clue_revealed, inclusive quando a dica foi pedida no terminal.
+		ChallengeSession.reveal_next_hint(challenge_id)
+		return true
 	_revealed[mission_id] = int(_revealed.get(mission_id, 0)) + 1
 	clue_revealed.emit(mission_id)
 	return true
+
+
+func _on_hint_revealed(challenge_id: String, _layer: int, _total: int) -> void:
+	var mission_id: String = String(ChallengeData.get_challenge(challenge_id).get("mission", ""))
+	if mission_id != "":
+		clue_revealed.emit(mission_id)
 
 
 # --- Reações aos eventos do jogo ---------------------------------------
@@ -169,7 +157,7 @@ func _on_mission_started(mission_id: String) -> void:
 	if mission.is_empty():
 		return
 	# A primeira pista chega junto com o pedido de ajuda.
-	if int(_revealed.get(mission_id, 0)) == 0:
+	if get_revealed_clues(mission_id).is_empty():
 		reveal_next_clue(mission_id)
 	send_message(String(CONTACTS.get(mission_id, CENTRAL)), "%s\n%s\nObjetivo: %s\n(Veja as pistas no app Pistas.)" % [
 		String(mission["title"]),
