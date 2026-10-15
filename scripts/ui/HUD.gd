@@ -79,8 +79,8 @@ func _on_message_received(message: Dictionary) -> void:
 	_toast_tween = create_tween()
 	# "Vibração": o ícone do celular treme para os lados.
 	for i in range(6):
-		var offset: float = 4.0 if i % 2 == 0 else -4.0
-		_toast_tween.tween_property(phone_button, "position:x", _phone_button_x + offset, 0.04)
+		var shake: float = 4.0 if i % 2 == 0 else -4.0
+		_toast_tween.tween_property(phone_button, "position:x", _phone_button_x + shake, 0.04)
 	_toast_tween.tween_property(phone_button, "position:x", _phone_button_x, 0.04)
 	# A notificação some sozinha depois de alguns segundos.
 	_toast_tween.tween_interval(3.0)

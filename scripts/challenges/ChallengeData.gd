@@ -143,13 +143,13 @@ const CHALLENGES := {
 }
 
 
-static func get_challenge(challenge_id: String) -> Dictionary:
+func get_challenge(challenge_id: String) -> Dictionary:
 	return CHALLENGES.get(challenge_id, {})
 
 
 ## Acha o desafio ligado a uma missão (busca reversa pelo campo "mission").
 ## Usado pelo CYBER PHONE para mostrar a dica da missão ativa.
-static func get_challenge_for_mission(mission_id: String) -> Dictionary:
+func get_challenge_for_mission(mission_id: String) -> Dictionary:
 	for challenge in CHALLENGES.values():
 		if String(challenge.get("mission", "")) == mission_id:
 			return challenge

@@ -1078,3 +1078,12 @@ passos ficam a seu critério — pode ser:
 - **Opções** (`scenes/ui/OptionsPanel.tscn`): volume geral e tela cheia,
   salvos em `user://settings.cfg` pelo autoload `Settings`.
 - Funciona com mouse ou teclado (setas + Enter; ESC volta).
+
+## Cidade em quarteirões
+
+A cidade (`scenes/world/City.tscn`) tem 6 quarteirões separados por ruas, cada
+um preparado para um grupo de desafios: Bairro Residencial e Vila Residencial
+(Missão 01), Praça Central (início, com o Guia), Distrito Empresarial (02, 03,
+06), Centro de Tecnologia (04, 05, 07) e Comércio (08, 09, 10). Um "!" amarelo
+marca os prédios com missões do capítulo atual, e o minimapa mostra a cidade.
+Detalhes e como acrescentar prédios/ruas: `docs/TILESET_32.md`.
