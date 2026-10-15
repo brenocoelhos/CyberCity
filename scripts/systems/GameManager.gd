@@ -18,6 +18,23 @@ var total_xp_earned: int = 0
 ## reforçado. Usado na tela de Perfil para mostrar a evolução educativa.
 var knowledge: Dictionary = {}
 
+## true depois que o jogador clica em "Novo jogo" no menu principal.
+## O menu usa isso para mostrar (ou não) o botão "Continuar".
+var game_started: bool = false
+
+## Cena onde o jogador estava ao voltar para o menu principal
+## (usada pelo botão "Continuar").
+var resume_scene_path: String = ""
+
+
+## Volta o progresso ao início (usado por "Novo jogo").
+func reset() -> void:
+	level = 1
+	xp = 0
+	total_xp_earned = 0
+	knowledge.clear()
+	xp_changed.emit(xp, xp_to_next_level(), level)
+
 
 ## XP necessário para passar do nível atual para o próximo.
 ## Fórmula simples e previsível: nível 1 -> 100, nível 2 -> 200, etc.

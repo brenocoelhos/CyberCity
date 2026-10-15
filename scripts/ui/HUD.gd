@@ -30,6 +30,11 @@ func is_popup_active() -> bool:
 	return _popup_active
 
 
+## Atualiza nível, XP e objetivo (usado ao começar um novo jogo).
+func refresh() -> void:
+	_refresh()
+
+
 func _refresh() -> void:
 	_update_xp_display()
 	_update_objective()

@@ -30,6 +30,18 @@ func enter_building(interior_scene_path: String, title: String, city_return_posi
 	await Fade.fade_in()
 
 
+## Troca para qualquer cena com fade (usado pelos menus). Roda aqui no
+## autoload porque a cena que chamou (ex.: o menu principal) é apagada
+## no meio da troca. "before_change" roda com a tela já preta.
+func change_scene(scene_path: String, before_change: Callable = Callable()) -> void:
+	await Fade.fade_out()
+	if before_change.is_valid():
+		before_change.call()
+	get_tree().change_scene_to_file(scene_path)
+	await get_tree().process_frame
+	await Fade.fade_in()
+
+
 ## Chamado pela porta de saída dentro de um interior.
 func exit_to_city() -> void:
 	await Fade.fade_out()

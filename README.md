@@ -1056,3 +1056,15 @@ passos ficam a seu critério — pode ser:
   citado no roteiro original como item futuro);
 - ajustar qualquer coisa que aparecer nos testes;
 - ou considerar o protótipo pronto pra entrega, do jeito que está.
+
+## Menu principal e menu de pausa
+
+- A cena principal agora é `scenes/ui/MainMenu.tscn` (em **Projeto →
+  Configurações do Projeto → Aplicação → Executar → Cena Principal**).
+  Botões: **Continuar** (só aparece com um jogo em andamento), **Novo jogo**,
+  **Opções**, **Controles** e **Sair**.
+- O **Cyber Phone** (TAB/ESC) ganhou os botões **Continuar**, **Opções**,
+  **Menu principal** e **Sair do jogo**.
+- **Opções** (`scenes/ui/OptionsPanel.tscn`): volume geral e tela cheia,
+  salvos em `user://settings.cfg` pelo autoload `Settings`.
+- Funciona com mouse ou teclado (setas + Enter; ESC volta).

@@ -65,6 +65,13 @@ func _advance() -> void:
 		_show_current_line()
 
 
+## Esconde a caixa sem avisar ninguém (sem emitir "closed"). Usado ao
+## sair para o menu principal, para não disparar o próximo capítulo.
+func force_close() -> void:
+	_active = false
+	panel.visible = false
+
+
 func _close() -> void:
 	_active = false
 	panel.visible = false

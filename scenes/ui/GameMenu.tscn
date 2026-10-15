@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/GameMenu.gd" id="1"]
+[ext_resource type="PackedScene" path="res://scenes/ui/OptionsPanel.tscn" id="2"]
 
 [node name="GameMenu" type="CanvasLayer"]
 layer = 3
@@ -24,9 +25,37 @@ text = "CYBER PHONE"
 offset_left = 20.0
 offset_top = 46.0
 offset_right = 780.0
-offset_bottom = 530.0
+offset_bottom = 476.0
 focus_mode = 0
 bbcode_enabled = false
+
+[node name="Buttons" type="HBoxContainer" parent="Panel"]
+offset_left = 20.0
+offset_top = 488.0
+offset_right = 780.0
+offset_bottom = 530.0
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="ResumeButton" type="Button" parent="Panel/Buttons"]
+custom_minimum_size = Vector2(170, 40)
+layout_mode = 2
+text = "Continuar"
+
+[node name="OptionsButton" type="Button" parent="Panel/Buttons"]
+custom_minimum_size = Vector2(170, 40)
+layout_mode = 2
+text = "Opções"
+
+[node name="MainMenuButton" type="Button" parent="Panel/Buttons"]
+custom_minimum_size = Vector2(170, 40)
+layout_mode = 2
+text = "Menu principal"
+
+[node name="QuitButton" type="Button" parent="Panel/Buttons"]
+custom_minimum_size = Vector2(170, 40)
+layout_mode = 2
+text = "Sair do jogo"
 
 [node name="HintLabel" type="Label" parent="Panel"]
 offset_left = 20.0
@@ -35,3 +64,5 @@ offset_right = 780.0
 offset_bottom = 566.0
 horizontal_alignment = 1
 text = "TAB ou ESC para fechar"
+
+[node name="OptionsPanel" parent="." instance=ExtResource("2")]
