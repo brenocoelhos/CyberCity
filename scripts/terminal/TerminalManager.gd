@@ -64,6 +64,9 @@ func _ready() -> void:
 func open(challenge_id: String = "", host: String = "cybercity") -> void:
 	_challenge_id = challenge_id
 	_challenge = ChallengeData.get_challenge(challenge_id)
+	# Abrir o computador de um desafio aceita a missão ligada a ele.
+	if not _challenge.is_empty():
+		ChallengeSession.begin(challenge_id)
 	_firewall_rules = {}
 	_host = host
 	_active = true
@@ -364,12 +367,11 @@ func _cmd_connect(args: PackedStringArray) -> void:
 	_print_line("Conectando a %s (%s)..." % [ip, String(device["name"])])
 	_print_line(String(device["info"]))
 
-	if ip == String(_challenge["correct_ip"]) and MissionManager.is_active(String(_challenge["mission"])):
+	# Conectar num dispositivo normal é exploração, não conta como erro.
+	if ip == String(_challenge["correct_ip"]):
+		ChallengeSession.record_attempt(_challenge_id, true)
 		_print_line("")
-		_print_success("Objetivo cumprido: dispositivo suspeito identificado.")
-		var mission_id: String = String(_challenge["mission"])
-		close()
-		MissionManager.complete_mission(mission_id)
+		_finish_challenge("Objetivo cumprido: dispositivo suspeito identificado.")
 
 
 ## --- Desafio de firewall (status / allow / block) -------------------
@@ -434,11 +436,9 @@ func _check_firewall_complete() -> void:
 			return
 
 	# Todas as portas receberam a regra correta.
+	ChallengeSession.record_attempt(_challenge_id, true)
 	_print_line("")
-	_print_success("Objetivo cumprido: firewall configurado corretamente.")
-	var mission_id: String = String(_challenge["mission"])
-	close()
-	MissionManager.complete_mission(mission_id)
+	_finish_challenge("Objetivo cumprido: firewall configurado corretamente.")
 
 
 ## --- Desafio de logs (logs / report) ---------------------------------
@@ -467,11 +467,10 @@ func _cmd_report(args: PackedStringArray) -> void:
 
 	var line: int = int(args[0])
 	if line == int(_challenge["correct_line"]):
-		_print_success("Objetivo cumprido: comportamento suspeito identificado.")
-		var mission_id: String = String(_challenge["mission"])
-		close()
-		MissionManager.complete_mission(mission_id)
+		ChallengeSession.record_attempt(_challenge_id, true)
+		_finish_challenge("Objetivo cumprido: comportamento suspeito identificado.")
 	else:
+		ChallengeSession.record_attempt(_challenge_id, false)
 		SoundManager.play("error")
 		_print_line("Essa linha, sozinha, não é o problema. Olhe o padrão ao redor dela — o que aconteceu antes?")
 
@@ -491,11 +490,10 @@ func _cmd_login(senha: String) -> void:
 	if _looks_like_sqli_bypass(senha):
 		_print_line("Login aceito. O sistema autenticou sem validar a senha real!")
 		_print_line("")
-		_print_success("Objetivo cumprido: vulnerabilidade de SQL Injection explorada.")
-		var mission_id: String = String(_challenge["mission"])
-		close()
-		MissionManager.complete_mission(mission_id)
+		ChallengeSession.record_attempt(_challenge_id, true)
+		_finish_challenge("Objetivo cumprido: vulnerabilidade de SQL Injection explorada.")
 	else:
+		ChallengeSession.record_attempt(_challenge_id, false)
 		SoundManager.play("error")
 		_print_line("Acesso negado.")
 		_print_line("Dica: pense numa entrada que faça a condição da consulta virar sempre verdadeira.")
@@ -529,11 +527,10 @@ func _cmd_postar(mensagem: String) -> void:
 		_print_line("Como o site não trata o que o usuário digita, esse <script> rodaria")
 		_print_line("de verdade no navegador de quem lesse o comentário.")
 		_print_line("")
-		_print_success("Objetivo cumprido: vulnerabilidade de XSS demonstrada.")
-		var mission_id: String = String(_challenge["mission"])
-		close()
-		MissionManager.complete_mission(mission_id)
+		ChallengeSession.record_attempt(_challenge_id, true)
+		_finish_challenge("Objetivo cumprido: vulnerabilidade de XSS demonstrada.")
 	else:
+		# Um comentário comum é uso normal do sistema, não conta como erro.
 		_print_line("Comentário publicado: " + mensagem)
 		_print_line("(Nada de especial aconteceu. Tente algo que pareça código.)")
 
@@ -560,6 +557,19 @@ func _cmd_read(args: PackedStringArray) -> void:
 		_check_mission_progress(filename)
 	else:
 		_print_error("cat: " + filename + ": arquivo não encontrado")
+
+
+## Conclui o desafio deste computador. Centraliza o que antes se repetia em
+## cada tipo de desafio: mostrar o sucesso, fechar o terminal e entregar a
+## missão (XP, conceito e explicação). Se o desafio já foi concluído antes,
+## só avisa e não entrega nada de novo.
+func _finish_challenge(success_message: String) -> void:
+	if ChallengeSession.is_completed(_challenge_id):
+		_print_rich("[color=%s]Este desafio já foi concluído antes (sem XP novo).[/color]" % C_DIM)
+		return
+	_print_success(success_message)
+	close()
+	ChallengeSession.complete(_challenge_id)
 
 
 ## Ler o e-mail suspeito é o objetivo da Missão 01 — ao ler, a missão

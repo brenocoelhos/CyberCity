@@ -59,10 +59,10 @@ func start(challenge_id: String) -> void:
 	var tween: Tween = create_tween()
 	tween.tween_property(monitor, "modulate:a", 1.0, 0.15)
 
-	# Aceitar a missão automaticamente ao começar o desafio.
-	var mission_id: String = String(challenge["mission"])
-	if MissionManager.get_state(mission_id) == MissionManager.State.AVAILABLE:
-		MissionManager.start_mission(mission_id)
+	# Aceita a missão ligada ao desafio e começa a registrar tentativas.
+	ChallengeSession.begin(challenge_id)
+	if ChallengeSession.is_completed(challenge_id):
+		feedback_label.text = "Você já concluiu este desafio (sem XP novo)."
 
 
 func close() -> void:
@@ -77,9 +77,11 @@ func _on_option_pressed(index: int) -> void:
 		return
 
 	if index == int(_current["correct"]):
+		ChallengeSession.record_attempt(_current_id, true)
 		SoundManager.play("success")
 		_on_correct()
 	else:
+		ChallengeSession.record_attempt(_current_id, false)
 		SoundManager.play("error")
 		feedback_label.text = "Não é essa. " + String(_current.get("hint", ""))
 
@@ -92,10 +94,11 @@ func _on_hint_pressed() -> void:
 
 
 func _on_correct() -> void:
-	var mission_id: String = String(_current["mission"])
+	var challenge_id: String = _current_id
 	close()
-	# Concluir a missão dispara o XP e a tela de explicação do conceito.
-	MissionManager.complete_mission(mission_id)
+	# Concluir o desafio dispara o XP e a tela de explicação do conceito
+	# (via a missão ligada a ele).
+	ChallengeSession.complete(challenge_id)
 
 
 func _unhandled_input(event: InputEvent) -> void:
