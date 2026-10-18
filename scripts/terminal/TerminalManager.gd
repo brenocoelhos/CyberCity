@@ -241,6 +241,8 @@ func _run_command(command: String) -> void:
 			_cmd_files()
 		"read", "cat":
 			_cmd_read(args)
+		"grep":
+			_cmd_grep(args)
 		"whoami":
 			_print_line("kali")
 		"pwd":
@@ -294,6 +296,7 @@ func _cmd_help() -> void:
 	_print_line("  clear               - limpa a tela")
 	_print_line("  ls / files          - lista os arquivos deste sistema")
 	_print_line("  cat / read <arq>    - mostra o conteúdo de um arquivo")
+	_print_line("  grep <termo> <arq>  - mostra só as linhas do arquivo que têm o termo")
 	_print_line("  whoami, pwd, date   - informações do usuário e do sistema")
 	_print_line("  neofetch, ifconfig  - resumo do sistema e da rede")
 	_print_line("  history             - comandos digitados nesta sessão")
@@ -688,6 +691,28 @@ func _cmd_read(args: PackedStringArray) -> void:
 		_check_mission_progress(filename)
 	else:
 		_print_error("cat: " + filename + ": arquivo não encontrado")
+
+
+## grep <termo> <arquivo>: mostra só as linhas que contêm o termo (sem
+## diferenciar maiúsculas de minúsculas). Como o grep de verdade, não
+## escreve nada quando nenhuma linha bate.
+func _cmd_grep(args: PackedStringArray) -> void:
+	if args.size() < 2:
+		_print_line("Uso: grep <termo> <arquivo>")
+		return
+
+	var filename: String = args[args.size() - 1]
+	var term: String = " ".join(args.slice(0, args.size() - 1))
+	term = term.trim_prefix("\"").trim_suffix("\"").to_lower()
+
+	var files: Dictionary = _available_files()
+	if not files.has(filename):
+		_print_error("grep: " + filename + ": arquivo não encontrado")
+		return
+
+	for line in String(files[filename]).split("\n"):
+		if term != "" and line.to_lower().contains(term):
+			_print_line(line)
 
 
 ## Conclui o desafio deste computador. Centraliza o que antes se repetia em

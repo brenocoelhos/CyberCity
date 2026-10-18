@@ -101,6 +101,21 @@ func _initialize() -> void:
 	ok = _check("roteador ainda lista os arquivos comuns", term.output.get_parsed_text().find("readme.txt") != -1) and ok
 	term._on_command_submitted("read manual.txt")
 	ok = _check("ler manual mostra a credencial de fabrica", term.output.get_parsed_text().find("senha:   admin") != -1) and ok
+	term._on_command_submitted("clear")
+	term._on_command_submitted("grep senha manual.txt")
+	var grep_out: String = term.output.get_parsed_text()
+	ok = _check("grep mostra a linha que tem o termo", grep_out.find("senha:   admin") != -1) and ok
+	ok = _check("grep esconde as linhas sem o termo", grep_out.find("Ligue o roteador") == -1) and ok
+	term._on_command_submitted("clear")
+	term._on_command_submitted("grep GUIA manual.txt")
+	ok = _check("grep ignora maiusculas", term.output.get_parsed_text().find("Guia rápido") != -1) and ok
+	term._on_command_submitted("clear")
+	term._on_command_submitted("grep xyz manual.txt")
+	var none_out: String = term.output.get_parsed_text()
+	ok = _check("grep sem resultado nao escreve linhas do arquivo", none_out.find("usuário") == -1 and none_out.find("Guia") == -1 and none_out.find("não encontrado") == -1) and ok
+	term._on_command_submitted("clear")
+	term._on_command_submitted("grep admin nao_existe.txt")
+	ok = _check("grep em arquivo inexistente avisa", term.output.get_parsed_text().find("arquivo não encontrado") != -1) and ok
 	term.close()
 	term.open("c_logs", "loja")
 	term._on_command_submitted("files")
