@@ -77,6 +77,32 @@ func _initialize() -> void:
 	configured.queue_free()
 	await process_frame
 
+	# --- papeis das casas na City.tscn (lidos do arquivo, sem rodar a cidade) ---
+	var state: SceneState = (load("res://scenes/world/City.tscn") as PackedScene).get_state()
+	var houses := {}
+	for i in range(state.get_node_count()):
+		var path := String(state.get_node_path(i))
+		# Os caminhos do SceneState começam em "./" (ex.: "./Buildings/Casa1").
+		if path.begins_with("./Buildings/Casa") and path.count("/") == 2:
+			var props := {}
+			for p in range(state.get_node_property_count(i)):
+				props[String(state.get_node_property_name(i, p))] = state.get_node_property_value(i, p)
+			houses[path.get_file()] = props
+	ok = _check("a cidade tem as 6 casas", houses.size() == 6) and ok
+	var default_houses := 0
+	for house_name in houses.keys():
+		if not bool(houses[house_name].get("configure_interior", false)):
+			default_houses += 1
+	ok = _check("so a Casa 1 usa o interior padrao (m01)", default_houses == 1 and not bool(houses["Casa1"].get("configure_interior", false))) and ok
+	ok = _check("Casa 1 mostra o ! da m01", "m01" in houses["Casa1"].get("mission_ids", PackedStringArray())) and ok
+	ok = _check("Casa 6: roteador, m11 e !", houses["Casa6"].get("interior_computer_challenge") == "c_roteador" and houses["Casa6"].get("interior_npc_mission") == "m11" and "m11" in houses["Casa6"].get("mission_ids", PackedStringArray())) and ok
+	for house_name in ["Casa2", "Casa3", "Casa4", "Casa5"]:
+		var p: Dictionary = houses[house_name]
+		ok = _check("%s: so historia (NPC com falas, sem computador, sem missao)" % house_name, String(p.get("interior_npc_name", "")) != "" and PackedStringArray(p.get("interior_npc_lines", PackedStringArray())).size() >= 1 and String(p.get("interior_computer_challenge", "")) == "" and String(p.get("interior_npc_mission", "")) == "" and not p.has("mission_ids")) and ok
+	ok = _check("Casa 5 trancada ate a m10", bool(houses["Casa5"].get("starts_locked", false)) and houses["Casa5"].get("unlock_mission") == "m10") and ok
+	var challenge_ids: Array = root.get_node("ChallengeData").CHALLENGES.keys()
+	ok = _check("o desafio do computador da Casa 6 existe", houses["Casa6"].get("interior_computer_challenge") in challenge_ids) and ok
+
 	transition.interior_config = {}
 	print("RESULTADO: ", "TUDO OK" if ok else "FALHOU")
 	quit(0 if ok else 1)
