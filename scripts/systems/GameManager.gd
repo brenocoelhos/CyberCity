@@ -13,7 +13,7 @@ signal tool_unlocked(tool_id: String)
 ## apoios de estudo, nunca atalhos para resolver missões: nenhuma missão
 ## depende delas.
 const TOOL_UNLOCK_LEVELS := {
-	"mission_arrow": 3,  # seta que aponta para a missão (opcional nos Ajustes)
+	"mission_arrow": 1,  # seta que aponta para a missão (opcional nos Ajustes). PROVISÓRIO, para teste: o plano é o nível 3
 	"phone_tools": 3,    # app "Ferramentas" do celular
 	"network_map": 4,    # mapa de rede desenhado pelo 'scan'
 	"saved_history": 5,  # histórico de comandos guardado entre terminais e partidas

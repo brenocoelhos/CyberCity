@@ -27,25 +27,41 @@ func _check_unlocks() -> bool:
 	var ok := true
 	game.reset()
 	phone.reset()
-	ok = _check("nivel 1: nenhuma ferramenta liberada", not game.is_tool_unlocked("mission_arrow") and not game.is_tool_unlocked("saved_history")) and ok
+	# Os niveis de cada ferramenta vem de GameManager.TOOL_UNLOCK_LEVELS (a seta
+	# pode ser liberada mais cedo para teste), entao nada aqui fixa esses numeros.
+	var levels: Dictionary = game.TOOL_UNLOCK_LEVELS
+	ok = _check("nivel 1: cada ferramenta so esta liberada se o nivel dela e 1", _unlocked_match_levels(game)) and ok
+	ok = _check("nivel 1: o app Ferramentas, o mapa e o historico ainda estao travados", not game.is_tool_unlocked("phone_tools") and not game.is_tool_unlocked("network_map") and not game.is_tool_unlocked("saved_history")) and ok
 	ok = _check("ferramenta desconhecida nunca e liberada", not game.is_tool_unlocked("nao_existe")) and ok
 
 	var unlocked: Array = []
 	game.tool_unlocked.connect(func(tool_id): unlocked.append(tool_id))
+	var expected_events := 0
 	game.add_xp(100)
-	ok = _check("nivel 2: ainda nada liberado", game.level == 2 and unlocked.is_empty()) and ok
+	ok = _check("nivel 2: libera so o que e do nivel 2", game.level == 2 and _unlocked_match_levels(game)) and ok
 	game.add_xp(200)
-	ok = _check("nivel 3: libera a seta e o app Ferramentas", game.level == 3 and unlocked.has("mission_arrow") and unlocked.has("phone_tools") and unlocked.size() == 2) and ok
-	ok = _check("nivel 3: is_tool_unlocked responde", game.is_tool_unlocked("mission_arrow") and game.is_tool_unlocked("phone_tools") and not game.is_tool_unlocked("network_map")) and ok
-	ok = _check("a Central avisa pelo celular de cada ferramenta liberada", phone.messages.size() == 2 and String(phone.messages[0]["text"]).find("Seta de missão") != -1 and String(phone.messages[1]["text"]).find("Ferramentas do celular") != -1) and ok
+	ok = _check("nivel 3: libera o app Ferramentas", game.level == 3 and unlocked.has("phone_tools") and _unlocked_match_levels(game)) and ok
+	ok = _check("nivel 3: o mapa e o historico continuam travados", not game.is_tool_unlocked("network_map") and not game.is_tool_unlocked("saved_history")) and ok
+	ok = _check("a Central avisa pelo celular da ferramenta do nivel 3", phone.messages.size() >= 1 and String(phone.messages[phone.messages.size() - 1]["text"]).find("Ferramentas do celular") != -1) and ok
 
 	game.add_xp(300 + 400)  # sobe do 3 para o 4 (300) e do 4 para o 5 (400): dois niveis de uma vez
 	ok = _check("subir dois niveis de uma vez libera as duas ferramentas", game.level == 5 and unlocked.has("network_map") and unlocked.has("saved_history")) and ok
-	ok = _check("cada ferramenta e liberada uma unica vez", unlocked.size() == 4) and ok
+	for tool_id in levels.keys():
+		if int(levels[tool_id]) > 1 and int(levels[tool_id]) <= 5:
+			expected_events += 1
+	ok = _check("cada ferramenta e liberada uma unica vez (so as que nao comecam liberadas)", unlocked.size() == expected_events) and ok
 	game.reset()
 	phone.reset()
-	ok = _check("reset volta a travar as ferramentas", not game.is_tool_unlocked("mission_arrow")) and ok
+	ok = _check("reset volta ao estado do nivel 1", _unlocked_match_levels(game) and not game.is_tool_unlocked("saved_history")) and ok
 	return ok
+
+
+## true se is_tool_unlocked bate com a tabela de niveis no nivel atual.
+func _unlocked_match_levels(game) -> bool:
+	for tool_id in game.TOOL_UNLOCK_LEVELS.keys():
+		if game.is_tool_unlocked(tool_id) != (game.level >= int(game.TOOL_UNLOCK_LEVELS[tool_id])):
+			return false
+	return true
 
 
 # Carregado só na hora do teste (depois dos autoloads), porque o script usa MissionManager etc.
@@ -115,10 +131,11 @@ func _check_arrow() -> bool:
 	# --- quando a seta fica ligada ---
 	var arrow = root.get_node("HUD").get_node("MissionArrow")
 	game.reset()
-	ok = _check("seta: desligada no nivel 1", not arrow.is_enabled()) and ok
+	var arrow_level: int = int(game.TOOL_UNLOCK_LEVELS["mission_arrow"])
+	ok = _check("seta: no nivel 1 so liga se a ferramenta ja for do nivel 1", arrow.is_enabled() == (arrow_level <= 1)) and ok
 	game.add_xp(300)
 	dialogue.force_close()
-	ok = _check("seta: ligada no nivel 3", arrow.is_enabled()) and ok
+	ok = _check("seta: ligada no nivel 3 (depois do nivel dela)", arrow.is_enabled() and game.level >= arrow_level) and ok
 	root.get_node("Settings").mission_arrow = false
 	ok = _check("seta: desligada se o jogador a desliga nos Ajustes", not arrow.is_enabled()) and ok
 	root.get_node("Settings").mission_arrow = true
