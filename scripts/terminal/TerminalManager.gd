@@ -567,9 +567,17 @@ func _cmd_clear() -> void:
 	output.visible_characters = 0
 
 
+## Arquivos que este computador mostra: os comuns (VIRTUAL_FILES) mais os
+## que o desafio define em "files", que só existem neste computador.
+func _available_files() -> Dictionary:
+	var files: Dictionary = VIRTUAL_FILES.duplicate()
+	files.merge(Dictionary(_challenge.get("files", {})), true)
+	return files
+
+
 func _cmd_files() -> void:
 	_print_line("Arquivos encontrados:")
-	for filename in VIRTUAL_FILES.keys():
+	for filename in _available_files().keys():
 		_print_line("  " + filename)
 
 
@@ -579,8 +587,9 @@ func _cmd_read(args: PackedStringArray) -> void:
 		return
 
 	var filename: String = args[0]
-	if VIRTUAL_FILES.has(filename):
-		_print_line(VIRTUAL_FILES[filename])
+	var files: Dictionary = _available_files()
+	if files.has(filename):
+		_print_line(String(files[filename]))
 		_check_mission_progress(filename)
 	else:
 		_print_error("cat: " + filename + ": arquivo não encontrado")

@@ -94,6 +94,19 @@ func _initialize() -> void:
 	ok = _check("m01 usa CLUES local: 1 pista na partida", phone.get_revealed_clues("m01").size() == 1) and ok
 	ok = _check("m01 revela a 2a pista", phone.reveal_next_clue("m01") and phone.get_revealed_clues("m01").size() == 2) and ok
 
+	# --- arquivos que existem so em um computador ---
+	term.open("c_roteador", "casa-6")
+	term._on_command_submitted("files")
+	ok = _check("roteador lista manual.txt", term.output.get_parsed_text().find("manual.txt") != -1) and ok
+	ok = _check("roteador ainda lista os arquivos comuns", term.output.get_parsed_text().find("readme.txt") != -1) and ok
+	term._on_command_submitted("read manual.txt")
+	ok = _check("ler manual mostra a credencial de fabrica", term.output.get_parsed_text().find("senha:   admin") != -1) and ok
+	term.close()
+	term.open("c_logs", "loja")
+	term._on_command_submitted("files")
+	ok = _check("outro computador nao lista manual.txt", term.output.get_parsed_text().find("manual.txt") == -1) and ok
+	term.close()
+
 	# --- dica no computador da casa (sem desafio): usa as pistas da m01 ---
 	term.open("", "casa-1")
 	var before: int = phone.get_revealed_clues("m01").size()
