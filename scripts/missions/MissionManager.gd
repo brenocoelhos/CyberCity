@@ -170,6 +170,18 @@ var missions: Dictionary = {
 		"concept": "Phishing em massa",
 		"explanation": "Golpes de phishing combinam um pretexto (encomenda, banco, chefe, TI), pressa e um link ou pedido fora do normal. Confira o domínio do remetente e do link, desconfie de pedidos de dinheiro, cartões ou senha e lembre que um e-mail pode passar na autenticação (SPF) e ainda ser golpe, como um 'diretor' escrevendo de um e-mail pessoal. Mensagens legítimas também têm prazos: o que decide é o conjunto de sinais.",
 	},
+	"m14": {
+		"id": "m14",
+		"title": "Missão 14 — Senha reutilizada",
+		"description": "A LojaFácil avisou que vazou dados de clientes, e o morador da Casa 4 usa a mesma senha em tudo.",
+		"objective": "Na Casa 4, use o computador: leia o aviso, filtre o log com 'grep <termo> acessos_email.log' e aponte pelo menos 4 achados com 'report <achado>'.",
+		"location": "Casa 4 (E-mail)",
+		"state": State.AVAILABLE,
+		"xp": 250,
+		"difficulty": "Difícil",
+		"concept": "Reutilização de senhas",
+		"explanation": "Quando um site vaza senhas, os atacantes testam as mesmas combinações de e-mail e senha em outros serviços: é o credential stuffing, e só dá certo porque muita gente reutiliza a senha. Depois de entrar, costumam criar regras de encaminhamento para manter acesso mesmo se a senha for trocada. Use uma senha diferente em cada serviço (com um gerenciador de senhas), ative a verificação em duas etapas e revise as regras da conta depois de qualquer suspeita.",
+	},
 }
 
 ## Estado inicial de cada missão, guardado para o "Novo jogo".

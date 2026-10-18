@@ -205,6 +205,24 @@ func _initialize() -> void:
 	var ts: Dictionary = session.get_stats("c_triagem")
 	ok = _check("stats triagem: 2 erros e 5 tentativas", ts["errors"] == 2 and ts["attempts"] == 5) and ok
 
+	# --- senha reutilizada (analise de log com grep, 4 de 5 achados) ---
+	term.open("c_vazamento", "casa-4")
+	ok = _check("abrir o computador ativa a m14", missions.is_active("m14")) and ok
+	term._on_command_submitted("ls")
+	ok = _check("lista os arquivos do vazamento", term.output.get_parsed_text().find("acessos_email.log") != -1 and term.output.get_parsed_text().find("lembretes.txt") != -1) and ok
+	term._on_command_submitted("grep 203.0.113.45 acessos_email.log")
+	ok = _check("grep isola as linhas do atacante", term.output.get_parsed_text().find("action=forward_all") != -1 and term.output.get_parsed_text().find("07:50:01") == -1) and ok
+	term._on_command_submitted("report ip do marcos")
+	ok = _check("IP habitual (isca) conta como erro", session.get_stats("c_vazamento")["errors"] == 1) and ok
+	term._on_command_submitted("report 203.0.113.45")
+	term._on_command_submitted("report regra de encaminhamento")
+	term._on_command_submitted("report a mesma senha em tudo")
+	ok = _check("3 de 4 achados: ainda nao conclui", term._report_found.size() == 3 and not missions.is_completed("m14")) and ok
+	term._on_command_submitted("report ativar 2FA")
+	ok = _check("4 achados concluem a m14", missions.is_completed("m14") and not term.is_active()) and ok
+	var vs: Dictionary = session.get_stats("c_vazamento")
+	ok = _check("stats vazamento: 1 erro e 5 tentativas", vs["errors"] == 1 and vs["attempts"] == 5) and ok
+
 	# --- dica no computador da casa (sem desafio): usa as pistas da m01 ---
 	term.open("", "casa-1")
 	var before: int = phone.get_revealed_clues("m01").size()
