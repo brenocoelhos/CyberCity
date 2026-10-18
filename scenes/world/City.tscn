@@ -56,14 +56,21 @@ position = Vector2(336, 384)
 facade = ExtResource("facade_1")
 building_name = "Casa 2"
 entrance_x = 12.0
-mission_ids = PackedStringArray("m01")
+configure_interior = true
+interior_npc_name = "Vizinha"
+interior_npc_lines = PackedStringArray("Você é o hacker ético de quem o pessoal anda falando?", "Ouvi dizer que a DataSoft anda recebendo e-mails estranhos. Fique de olho.", "Se precisar de ajuda, converse com o pessoal da cidade.")
 
 [node name="Casa6" parent="Buildings" instance=ExtResource("3")]
 position = Vector2(496, 384)
 facade = ExtResource("facade_9")
 building_name = "Casa 6"
 entrance_x = 14.0
-mission_ids = PackedStringArray("m01")
+mission_ids = PackedStringArray("m11")
+configure_interior = true
+interior_npc_name = "Moradora"
+interior_npc_lines = PackedStringArray("Meu wi-fi está lento e eu não sei por quê.", "Meu filho disse que o roteador ainda está do jeito que veio da loja.", "Dá uma olhada no computador: leia o manual e veja se está tudo certo.")
+interior_npc_mission = "m11"
+interior_computer_challenge = "c_roteador"
 
 [node name="Empresa1" parent="Buildings" unique_id=151272654 instance=ExtResource("3")]
 position = Vector2(1456, 384)
@@ -83,20 +90,28 @@ mission_ids = PackedStringArray("m02", "m03", "m06")
 position = Vector2(208, 736)
 facade = ExtResource("facade_2")
 building_name = "Casa 3"
-mission_ids = PackedStringArray("m01")
+configure_interior = true
+interior_npc_name = "Morador"
+interior_npc_lines = PackedStringArray("Semana passada recebi um e-mail dizendo que minha conta seria apagada.", "Quase cliquei no link! Depois percebi que o endereço do remetente estava escrito errado.", "Desde então eu leio o remetente letra por letra.")
 
 [node name="Casa4" parent="Buildings" unique_id=744063177 instance=ExtResource("3")]
 position = Vector2(368, 736)
 facade = ExtResource("facade_3")
 building_name = "Casa 4"
-mission_ids = PackedStringArray("m01")
+configure_interior = true
+interior_npc_name = "Vizinho"
+interior_npc_lines = PackedStringArray("Tenho visto uma movimentação estranha na rede da cidade, sempre de madrugada.", "Parece que alguém está testando as portas dos sistemas, uma por uma.", "Quem quer que seja, está bem organizado. Tome cuidado.")
 
 [node name="Casa5" parent="Buildings" unique_id=2113393911 instance=ExtResource("3")]
 position = Vector2(528, 736)
 facade = ExtResource("facade_4")
 building_name = "Casa 5"
 entrance_x = -20.0
-mission_ids = PackedStringArray("m01")
+starts_locked = true
+unlock_mission = "m10"
+configure_interior = true
+interior_npc_name = "Desconhecido"
+interior_npc_lines = PackedStringArray("(Falas provisórias: a equipe de História vai escrever esta casa, que guarda uma pista sobre o hacker.)")
 
 [node name="PredioTecnologia" parent="Buildings" unique_id=487454252 instance=ExtResource("3")]
 position = Vector2(992, 736)
@@ -432,7 +447,7 @@ theme_override_colors/font_outline_color = Color(0.1, 0.08, 0.15, 1)
 theme_override_constants/outline_size = 4
 theme_override_constants/line_spacing = -2
 theme_override_font_sizes/font_size = 11
-text = "BAIRRO RESIDENCIAL\nMissão 01 (casas)"
+text = "BAIRRO RESIDENCIAL\nMissões 01 e 11"
 
 [node name="PlacaPraca" type="Label" parent="Districts"]
 offset_left = 740.0
@@ -468,7 +483,7 @@ theme_override_colors/font_outline_color = Color(0.1, 0.08, 0.15, 1)
 theme_override_constants/outline_size = 4
 theme_override_constants/line_spacing = -2
 theme_override_font_sizes/font_size = 11
-text = "VILA RESIDENCIAL\nMissão 01 (casas)"
+text = "VILA RESIDENCIAL\nMoradores e histórias"
 
 [node name="PlacaTecnologia" type="Label" parent="Districts"]
 offset_left = 740.0
