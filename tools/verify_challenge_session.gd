@@ -44,6 +44,7 @@ func _initialize() -> void:
 		var n: int = session.get_hints(id).size()
 		ok = _check("%s tem 3 camadas" % id, n == 3) and ok
 		ok = _check("%s: id da missao bate" % id, data.get_challenge_id_for_mission(data.get_challenge(id)["mission"]) == id) and ok
+		ok = _check("%s: a missao existe no MissionManager" % id, not missions.get_mission(data.get_challenge(id)["mission"]).is_empty()) and ok
 	ok = _check("id inexistente sem dicas", session.get_hints("nada").is_empty()) and ok
 	ok = _check("missao sem desafio (m01) -> id vazio", data.get_challenge_id_for_mission("m01") == "") and ok
 

@@ -180,6 +180,29 @@ const CHALLENGES := {
 		],
 		"explanation": "Se o site pegasse o comentário e mostrasse na página sem tratar o conteúdo, uma tag <script> digitada por qualquer visitante rodaria no navegador de quem lesse o comentário — podendo roubar sessão, redirecionar a página, etc. Por isso todo conteúdo enviado por usuários precisa ser sanitizado antes de ser exibido.",
 	},
+
+	## Roteador doméstico ainda com a senha de fábrica. Duas etapas: entrar
+	## usando a credencial padrão (que está no manual) e depois trocá-la por
+	## uma senha forte. Tudo simulado em texto.
+	## "files" são os arquivos que só existem neste computador.
+	"c_roteador": {
+		"type": "router",
+		"title": "Roteador de fábrica",
+		"mission": "m11",
+		"device": "NetLink R-200",
+		"files": {
+			"manual.txt": "NetLink R-200 — Guia rápido\n\n1. Ligue o roteador na tomada e na internet.\n2. Acesse o painel de administração com o usuário e a senha de fábrica:\n     usuário: admin\n     senha:   admin\n3. Configure o nome e a senha do seu wi-fi.\n\n(Dica do fabricante: troque a senha de fábrica depois do primeiro acesso.)",
+		},
+		"default_user": "admin",
+		"default_password": "admin",
+		"min_length": 10,
+		"hints": [
+			"O manual do roteador está num arquivo deste computador. Use 'files' e depois 'read manual.txt'.",
+			"Equipamentos saem de fábrica com um usuário e uma senha conhecidos, e o manual os mostra. Tente 'login <usuário> <senha>'.",
+			"Depois de entrar, troque a senha com 'passwd <nova senha>'. Use pelo menos 10 caracteres, misturando letras, números e símbolos, e nada de 'admin'.",
+		],
+		"explanation": "Roteadores e outros equipamentos saem de fábrica com usuário e senha conhecidos (como admin/admin), listados nos manuais. Se ninguém troca, qualquer pessoa entra no painel. Troque sempre a credencial padrão por uma senha longa, única e sem palavras óbvias.",
+	},
 }
 
 

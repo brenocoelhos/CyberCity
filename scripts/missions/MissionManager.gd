@@ -134,6 +134,18 @@ var missions: Dictionary = {
 		"concept": "XSS",
 		"explanation": "Se o site mostrasse o comentário na página sem tratar o conteúdo, uma tag <script> digitada por qualquer visitante rodaria no navegador de quem lesse o comentário. Por isso todo conteúdo enviado por usuários precisa ser sanitizado antes de ser exibido.",
 	},
+	"m11": {
+		"id": "m11",
+		"title": "Missão 11 — O roteador de fábrica",
+		"description": "O wi-fi de uma casa está lento e a moradora desconfia que alguém está usando a rede dela.",
+		"objective": "Na Casa 6, use o computador: leia o manual do roteador, entre com 'login <usuário> <senha>' e troque a senha com 'passwd <nova senha>'.",
+		"location": "Casa 6 (Roteador)",
+		"state": State.AVAILABLE,
+		"xp": 200,
+		"difficulty": "Média",
+		"concept": "Credenciais padrão",
+		"explanation": "Roteadores e outros equipamentos saem de fábrica com usuário e senha conhecidos (como admin/admin), listados nos manuais. Se ninguém troca, qualquer pessoa entra no painel. Troque sempre a credencial padrão por uma senha longa, única e sem palavras óbvias.",
+	},
 }
 
 ## Estado inicial de cada missão, guardado para o "Novo jogo".
