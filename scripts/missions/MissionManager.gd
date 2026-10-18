@@ -194,6 +194,18 @@ var missions: Dictionary = {
 		"concept": "Movimento lateral",
 		"explanation": "Um teste de invasão segue o caminho de um atacante real, mas só dentro do escopo autorizado: reconhecimento, descoberta de um arquivo esquecido, uso de credenciais expostas, reutilização de senha entre sistemas (movimento lateral) e, no fim, um relatório com achados e recomendações. Os problemas foram um backup acessível pela web, credenciais em texto puro, senha reutilizada e falta de segmentação entre o servidor web e o banco.",
 	},
+	"m16": {
+		"id": "m16",
+		"title": "Missão 16 — O site esquecido",
+		"description": "A DataSoft quer saber o que um visitante qualquer consegue descobrir sobre o site da empresa.",
+		"objective": "Na DataSoft, Estação 1: use 'curl' no site (192.168.1.50), siga as pistas do que ele mostra e encontre um arquivo que não deveria estar público.",
+		"location": "DataSoft (Estação 1)",
+		"state": State.AVAILABLE,
+		"xp": 250,
+		"difficulty": "Média",
+		"concept": "Exposição de arquivos",
+		"explanation": "Visitantes comuns podem ler o que o servidor entrega, e o robots.txt não protege nada: ele só pede aos buscadores que ignorem os caminhos, e acaba listando o que a empresa queria esconder. Comentários esquecidos no HTML e arquivos de backup (.bak, .old) com senhas em texto puro são achados clássicos. Remova arquivos antigos do servidor, nunca deixe credenciais em arquivos acessíveis e restrinja o acesso a pastas internas.",
+	},
 }
 
 ## Estado inicial de cada missão, guardado para o "Novo jogo".

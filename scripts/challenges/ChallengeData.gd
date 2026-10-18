@@ -378,6 +378,44 @@ const CHALLENGES := {
 		],
 		"explanation": "Um teste de invasão segue o caminho de um atacante real, mas só dentro do escopo autorizado: reconhecimento, descoberta de um arquivo esquecido, uso de credenciais expostas, reutilização de senha entre sistemas (movimento lateral) e, no fim, um relatório com achados e recomendações. Os problemas foram um backup acessível pela web, credenciais em texto puro, senha reutilizada e falta de segmentação entre o servidor web e o banco.",
 	},
+
+	## Primeiro contato com 'curl' e com o que um visitante qualquer consegue
+	## descobrir num site (Nível 3). Ensina: ler a página inteira (inclusive
+	## comentários), o robots.txt como mapa e arquivos de backup esquecidos.
+	## Termina ao abrir o arquivo exposto ("win_page").
+	"c_site": {
+		"type": "hosts",
+		"title": "Site da DataSoft",
+		"mission": "m16",
+		"guidance": 1,
+		"intro": "Auditoria do site da DataSoft (192.168.1.50). Use 'curl <endereço>' para ver as páginas, começando pela inicial: 'curl http://192.168.1.50/'. Procure algo que não deveria estar público.",
+		"files": {
+			"escopo.txt": "AUDITORIA AUTORIZADA — DataSoft Sistemas\n\nAlvo: o site em 192.168.1.50 (somente leitura, como um visitante comum).\nObjetivo: descobrir se existe algum arquivo interno acessivel publicamente.",
+		},
+		"hosts": {
+			"site-datasoft": {
+				"ip": "192.168.1.50",
+				"ports": "80/http  443/https",
+				"scope": true,
+				"users": {},
+				"web": {
+					"/": "<html>\n<head><title>DataSoft Sistemas</title></head>\n<body>\n  <h1>DataSoft Sistemas</h1>\n  <p>Solucoes em software para o seu negocio.</p>\n  <!-- TODO: remover a pasta /legado/ antes de colocar no ar -->\n</body>\n</html>",
+					"/robots.txt": "User-agent: *\nDisallow: /interno/\nDisallow: /legado/",
+					"/interno/": "403 Forbidden",
+					"/legado/": "Index of /legado/\n  painel_antigo.php    4.0K    2019-03-02\n  config.php.bak       0.6K    2019-03-02",
+					"/legado/config.php.bak": "<?php\n// configuracao do painel antigo (backup)\n$db_host = 'localhost';\n$db_user = 'painel';\n$db_pass = 'Painel@2019';\n?>",
+				},
+			},
+		},
+		"win_page": {"host": "site-datasoft", "path": "/legado/config.php.bak"},
+		"success_message": "Objetivo cumprido: o arquivo de configuração exposto foi encontrado.",
+		"hints": [
+			"Comece pela página inicial: 'curl http://192.168.1.50/'. Leia tudo, inclusive os comentários do HTML (o que fica entre <!-- e -->).",
+			"O arquivo robots.txt diz aos buscadores o que NÃO listar, e por isso vira um mapa do que a empresa quer esconder: 'curl http://192.168.1.50/robots.txt'. Siga os caminhos que ele cita.",
+			"A pasta /legado/ aparece no comentário e no robots.txt. Veja o conteúdo dela com curl e abra o arquivo de backup de configuração (.bak).",
+		],
+		"explanation": "Visitantes comuns podem ler o que o servidor entrega, e o robots.txt não protege nada: ele só pede aos buscadores que ignorem os caminhos, e acaba listando o que a empresa queria esconder. Comentários esquecidos no HTML e arquivos de backup (.bak, .old) com senhas em texto puro são achados clássicos. Remova arquivos antigos do servidor, nunca deixe credenciais em arquivos acessíveis e restrinja o acesso a pastas internas.",
+	},
 }
 
 

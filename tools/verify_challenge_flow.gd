@@ -371,6 +371,20 @@ func _initialize() -> void:
 	ok = _check("curl na pagina-objetivo alcanca o objetivo", term._flag_captured) and ok
 	term.close()
 
+	# --- site da empresa (curl, robots.txt, arquivo de backup exposto) ---
+	term.open("c_site", "datasoft")
+	ok = _check("abrir a estacao ativa a m16", missions.is_active("m16")) and ok
+	ok = _check("guia 1: a abertura ensina o curl", term._challenge_hint().find("curl") != -1) and ok
+	term._on_command_submitted("curl http://192.168.1.50/")
+	ok = _check("a pagina inicial tem o comentario esquecido", term.output.get_parsed_text().find("remover a pasta /legado/") != -1) and ok
+	term._on_command_submitted("curl http://192.168.1.50/interno/")
+	ok = _check("pagina interna da 403", term.output.get_parsed_text().find("403 Forbidden") != -1) and ok
+	term._on_command_submitted("curl http://192.168.1.50/robots.txt")
+	term._on_command_submitted("curl http://192.168.1.50/legado/")
+	ok = _check("a listagem de /legado/ mostra o backup", term.output.get_parsed_text().find("config.php.bak") != -1 and not missions.is_completed("m16")) and ok
+	term._on_command_submitted("curl http://192.168.1.50/legado/config.php.bak")
+	ok = _check("abrir o backup exposto conclui a m16", missions.is_completed("m16") and not term.is_active()) and ok
+
 	# --- dica no computador da casa (sem desafio): usa as pistas da m01 ---
 	term.open("", "casa-1")
 	var before: int = phone.get_revealed_clues("m01").size()
