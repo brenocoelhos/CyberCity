@@ -24,6 +24,21 @@ signal hint_revealed(challenge_id: String, layer: int, total: int)
 ## Emitido uma única vez, quando o desafio é concluído.
 signal challenge_completed(challenge_id: String, stats: Dictionary)
 
+## Rank de cada desafio, pelo jeito de resolver (não pelo tempo): S = sem
+## dicas pedidas e sem erros; A = até 1 dica e até 2 erros; B = o resto.
+## Dá um bônus de XP sobre o XP da missão. Errar e pedir dica continuam
+## permitidos: o rank só premia quem resolveu limpo.
+const RANK_XP_BONUS := {"S": 0.25, "A": 0.10, "B": 0.0}
+const RANK_A_MAX_HINTS := 1
+const RANK_A_MAX_ERRORS := 2
+
+## Resultado da última conclusão ({challenge_id, mission_id, rank, bonus_xp}).
+## O HUD lê isto na tela de "desafio concluído".
+var last_result: Dictionary = {}
+
+## Rank conquistado em cada desafio concluído: id -> "S"/"A"/"B".
+var _ranks: Dictionary = {}
+
 ## id do desafio -> {attempts, errors, hints, revealed, started_msec, time_msec}
 ##   revealed - quantas camadas de dica já foram reveladas (a 1ª é grátis)
 ##   hints    - dicas "pedidas" = revealed menos a camada grátis (nunca < 0)
@@ -34,6 +49,8 @@ var _stats: Dictionary = {}
 ## Apaga o histórico (usado por "Novo jogo").
 func reset() -> void:
 	_stats.clear()
+	_ranks.clear()
+	last_result = {}
 
 
 ## Chamado quando o jogador abre um desafio. Aceita a missão ligada a ele
@@ -122,11 +139,40 @@ func complete(challenge_id: String) -> bool:
 	var stats: Dictionary = _get_stats(challenge_id)
 	stats["time_msec"] = Time.get_ticks_msec() - int(stats["started_msec"])
 
+	# O rank é calculado antes de concluir a missão, porque o HUD o lê
+	# (last_result) quando mostra a tela de "desafio concluído".
+	var mission_id: String = String(challenge.get("mission", ""))
+	var rank: String = rank_for(stats)
+	var mission_xp: int = int(MissionManager.get_mission(mission_id).get("xp", 0))
+	var bonus_xp: int = int(round(float(mission_xp) * float(RANK_XP_BONUS[rank])))
+	stats["rank"] = rank
+	stats["bonus_xp"] = bonus_xp
+	_ranks[challenge_id] = rank
+	last_result = {"challenge_id": challenge_id, "mission_id": mission_id, "rank": rank, "bonus_xp": bonus_xp}
+
 	# A missão é a fonte da verdade sobre "concluído": ela dispara XP, a
 	# tela de explicação no HUD e o avanço dos capítulos.
-	MissionManager.complete_mission(String(challenge.get("mission", "")))
+	MissionManager.complete_mission(mission_id)
+	if bonus_xp > 0:
+		GameManager.add_xp(bonus_xp)
 	challenge_completed.emit(challenge_id, stats.duplicate())
 	return true
+
+
+## Rank S/A/B de um conjunto de números ({errors, hints}).
+func rank_for(stats: Dictionary) -> String:
+	var hints: int = int(stats.get("hints", 0))
+	var errors: int = int(stats.get("errors", 0))
+	if hints == 0 and errors == 0:
+		return "S"
+	if hints <= RANK_A_MAX_HINTS and errors <= RANK_A_MAX_ERRORS:
+		return "A"
+	return "B"
+
+
+## Rank conquistado num desafio concluído ("" se ainda não foi concluído).
+func get_rank(challenge_id: String) -> String:
+	return String(_ranks.get(challenge_id, ""))
 
 
 func is_completed(challenge_id: String) -> bool:

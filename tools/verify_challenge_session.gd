@@ -38,6 +38,40 @@ func _initialize() -> void:
 	# desafio inexistente
 	ok = _check("id inexistente nao quebra", not session.complete("nao_existe") and not session.is_completed("nao_existe")) and ok
 
+	# --- rank S/A/B pelo jeito de resolver, com bonus de XP ---
+	ok = _check("rank: 0 dicas e 0 erros = S", session.rank_for({"hints": 0, "errors": 0}) == "S") and ok
+	ok = _check("rank: 1 dica e 2 erros = A", session.rank_for({"hints": 1, "errors": 2}) == "A") and ok
+	ok = _check("rank: 0 dicas e 3 erros = B", session.rank_for({"hints": 0, "errors": 3}) == "B") and ok
+	ok = _check("rank: 2 dicas = B", session.rank_for({"hints": 2, "errors": 0}) == "B") and ok
+
+	session.reset()
+	var xp_before: int = game.total_xp_earned
+	session.begin("c_senhas")
+	session.complete("c_senhas")
+	ok = _check("S: rank guardado e bonus de 25% (100 -> +25)", session.get_rank("c_senhas") == "S" and session.last_result["bonus_xp"] == 25) and ok
+	ok = _check("S: XP total = XP da missao + bonus", game.total_xp_earned - xp_before == 125) and ok
+	var hud = root.get_node("HUD")
+	ok = _check("HUD mostra o rank e o bonus na tela de conclusao", hud.complete_xp.text.find("RANK S") != -1 and hud.complete_xp.text.find("+25 bônus") != -1) and ok
+
+	xp_before = game.total_xp_earned
+	session.begin("c_hash")
+	session.record_attempt("c_hash", false)
+	session.reveal_next_hint("c_hash")
+	session.complete("c_hash")
+	ok = _check("A: 1 erro e 1 dica, bonus de 10% (150 -> +15)", session.get_rank("c_hash") == "A" and game.total_xp_earned - xp_before == 165) and ok
+
+	xp_before = game.total_xp_earned
+	session.begin("c_cripto")
+	for i in range(3):
+		session.record_attempt("c_cripto", false)
+	session.complete("c_cripto")
+	ok = _check("B: 3 erros, sem bonus (150)", session.get_rank("c_cripto") == "B" and session.last_result["bonus_xp"] == 0 and game.total_xp_earned - xp_before == 150) and ok
+	ok = _check("HUD com rank B nao mostra bonus", hud.complete_xp.text.find("RANK B") != -1 and hud.complete_xp.text.find("bônus") == -1) and ok
+	ok = _check("rank de desafio nao concluido e vazio", session.get_rank("c_phishing") == "") and ok
+	ok = _check("desafio ja concluido nao da bonus de novo", not session.complete("c_senhas") and game.total_xp_earned - xp_before == 150) and ok
+	session.reset()
+	ok = _check("reset limpa os ranks", session.get_rank("c_senhas") == "" and session.last_result.is_empty()) and ok
+
 	# todos os desafios tem 3 camadas e missao valida
 	var data = root.get_node("ChallengeData")
 	for id in data.CHALLENGES.keys():

@@ -132,6 +132,12 @@ func _on_mission_completed(mission_id: String) -> void:
 	complete_text.text = String(mission["explanation"])
 	complete_concept.text = "CONCEITO APRENDIDO: " + String(mission["concept"])
 	complete_xp.text = "+%d XP" % int(mission["xp"])
+	# Desafios mostram também o rank e o bônus de XP (ver ChallengeSession).
+	var result: Dictionary = ChallengeSession.last_result
+	if String(result.get("mission_id", "")) == mission_id:
+		var bonus: int = int(result.get("bonus_xp", 0))
+		var bonus_text: String = "  +%d bônus" % bonus if bonus > 0 else ""
+		complete_xp.text = "+%d XP%s  ·  RANK %s" % [int(mission["xp"]), bonus_text, String(result.get("rank", ""))]
 
 	complete_panel.visible = true
 	_popup_active = true
