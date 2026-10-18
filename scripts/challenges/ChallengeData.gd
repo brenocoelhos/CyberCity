@@ -233,6 +233,41 @@ const CHALLENGES := {
 		],
 		"explanation": "Um e-mail fraudulento costuma se denunciar nos cabeçalhos: SPF, DKIM e DMARC reprovados (o servidor não confirma o remetente), Reply-To em outro domínio, domínio parecido com o real, link cujo destino difere do texto e pressão de tempo. Antes de clicar, confira o remetente real, os cabeçalhos de autenticação e para onde o link realmente aponta.",
 	},
+
+	## Triagem de caixa de entrada: seis mensagens, três golpes. O jogador
+	## reporta pelo número. Reportar uma mensagem legítima conta como erro.
+	## Uma das fraudes passa na autenticação (SPF=pass, vem de um e-mail
+	## pessoal) e uma legítima tem prazo: o conjunto é que decide.
+	"c_triagem": {
+		"type": "report",
+		"title": "Phishing em massa",
+		"mission": "m13",
+		"intro": "Caixa de entrada com 6 mensagens. Leia 'cat inbox.txt', abra cada uma com 'cat msg1.eml' etc. e aponte os golpes com 'report <número>'.",
+		"files": {
+			"inbox.txt": "CAIXA DE ENTRADA — morador@email.example\n\n 1  rastreio@correios-entrega.example      Sua encomenda foi retida\n 2  avisos@meubanco.example                Sua fatura fechou\n 3  roberto.mendes.diretor@gmail.example   Preciso de um favor urgente\n 4  ana.souza@techcorp.example             Reunião de equipe amanhã\n 5  ti-suporte@techcorp-sistemas.example   Sua senha expira hoje\n 6  newsletter@seguranca.example           Dicas da semana\n\n(abra cada mensagem com 'cat msg1.eml', 'cat msg2.eml'...)",
+			"msg1.eml": "From: \"Correios\" <rastreio@correios-entrega.example>\nTo: morador@email.example\nSubject: Sua encomenda foi retida\nAuthentication-Results: spf=fail smtp.mailfrom=correios-entrega.example; dkim=none; dmarc=fail\nDate: Wed, 07 Oct 2026 08:02:11 -0300\n\nSua encomenda BR123456789 esta retida na alfandega.\nPague a taxa de R$ 12,40 hoje para liberar a entrega:\n\n   texto exibido:  https://www.correios.example/rastreio\n   destino real:   http://taxa-correios.example.net/pagar\n\nSe nao pagar em 24 horas ela sera devolvida ao remetente.",
+			"msg2.eml": "From: \"Meu Banco\" <avisos@meubanco.example>\nTo: morador@email.example\nSubject: Sua fatura fechou\nAuthentication-Results: spf=pass smtp.mailfrom=meubanco.example; dkim=pass; dmarc=pass\nDate: Wed, 07 Oct 2026 07:30:00 -0300\n\nSua fatura de outubro fechou em R$ 842,10, com vencimento em 15/10.\nEla ja esta disponivel no aplicativo.\n\n   texto exibido:  https://meubanco.example/fatura\n   destino real:   https://meubanco.example/fatura\n\nEste aviso nunca pede senha, codigos ou dados do cartao.",
+			"msg3.eml": "From: \"Roberto Mendes (Diretor)\" <roberto.mendes.diretor@gmail.example>\nTo: morador@email.example\nSubject: Preciso de um favor urgente\nAuthentication-Results: spf=pass smtp.mailfrom=gmail.example; dkim=pass; dmarc=pass\nDate: Wed, 07 Oct 2026 09:15:40 -0300\n\nEstou em reuniao e nao posso falar. Preciso que voce compre 5 cartoes-presente\nde R$ 200 agora e me envie os codigos por aqui. E confidencial, nao comente\ncom ninguem. Depois eu te reembolso.",
+			"msg4.eml": "From: \"Ana Souza\" <ana.souza@techcorp.example>\nTo: morador@email.example\nSubject: Reuniao de equipe amanha\nAuthentication-Results: spf=pass smtp.mailfrom=techcorp.example; dkim=pass; dmarc=pass\nDate: Tue, 06 Oct 2026 17:40:02 -0300\n\nOi! Lembrando da reuniao de equipe amanha, 10h, na sala 2.\nPauta: revisao de acessos. Ate la!",
+			"msg5.eml": "From: \"TI Suporte\" <ti-suporte@techcorp-sistemas.example>\nTo: morador@email.example\nSubject: Sua senha expira hoje\nAuthentication-Results: spf=fail smtp.mailfrom=techcorp-sistemas.example; dkim=none; dmarc=fail\nDate: Wed, 07 Oct 2026 10:01:55 -0300\n\nSua senha de rede expira hoje as 18h. Para manter o acesso, confirme sua\nsenha atual:\n\n   texto exibido:  https://intranet.techcorp.example/senha\n   destino real:   http://techcorp-login.example.net/confirmar\n\nNao responda a este e-mail.",
+			"msg6.eml": "From: \"Boletim Seguranca\" <newsletter@seguranca.example>\nTo: morador@email.example\nSubject: Dicas da semana: verificacao em duas etapas\nAuthentication-Results: spf=pass smtp.mailfrom=seguranca.example; dkim=pass; dmarc=pass\nDate: Mon, 05 Oct 2026 08:00:00 -0300\n\nEsta semana: como ativar a verificacao em duas etapas nas suas contas.\n\n   Leia no site:   https://seguranca.example/dicas\n   Para sair da lista: https://seguranca.example/sair",
+		},
+		"success_message": "Objetivo cumprido: os três golpes foram identificados.",
+		"targets": [
+			{"hit": true, "keywords": ["1", "msg1", "mensagem 1", "mensagem1"], "message": "Golpe: a taxa de 'encomenda retida' vem de um domínio parecido com o dos Correios (spf=fail), o link leva a outro site e há prazo de 24 horas. Os Correios não cobram taxa por link de e-mail."},
+			{"hit": false, "keywords": ["2", "msg2", "mensagem 2", "mensagem2"], "message": "Essa é legítima: autenticação aprovada (spf, dkim e dmarc passaram), o link leva ao domínio oficial e a mensagem não pede senha. Ter um vencimento não torna uma mensagem golpe."},
+			{"hit": true, "keywords": ["3", "msg3", "mensagem 3", "mensagem3"], "message": "Golpe (fraude do 'chefe'): passou na autenticação, mas vem de um e-mail pessoal e pede cartões-presente com sigilo e urgência. SPF aprovado só prova que o e-mail veio do gmail, não que o diretor o enviou."},
+			{"hit": false, "keywords": ["4", "msg4", "mensagem 4", "mensagem4"], "message": "Essa é legítima: remetente interno com autenticação aprovada, sem link e sem pedir nada fora do normal."},
+			{"hit": true, "keywords": ["5", "msg5", "mensagem 5", "mensagem5"], "message": "Golpe: o domínio 'techcorp-sistemas' imita o da empresa (spf=fail), o link real é outro site e a mensagem pede a sua senha atual. O TI de verdade nunca pede senha por e-mail."},
+			{"hit": false, "keywords": ["6", "msg6", "mensagem 6", "mensagem6"], "message": "Essa é legítima: boletim com autenticação aprovada e links para o próprio domínio."},
+		],
+		"hints": [
+			"A caixa de entrada está no computador da Casa 3. Use 'cat inbox.txt' e abra cada mensagem com 'cat msg1.eml', 'cat msg2.eml'...",
+			"Compare o remetente, o resultado da autenticação, para onde o link realmente leva e o que a mensagem pede (dinheiro, senha, urgência). Aponte o golpe com 'report <número>'.",
+			"São três golpes: uma taxa de encomenda, um 'diretor' pedindo cartões-presente de um e-mail pessoal e um aviso de senha expirando num domínio parecido com o da empresa. Cuidado: nem toda mensagem com prazo é golpe.",
+		],
+		"explanation": "Golpes de phishing combinam um pretexto (encomenda, banco, chefe, TI), pressa e um link ou pedido fora do normal. Confira o domínio do remetente e do link, desconfie de pedidos de dinheiro, cartões ou senha e lembre que um e-mail pode passar na autenticação (SPF) e ainda ser golpe, como um 'diretor' escrevendo de um e-mail pessoal. Mensagens legítimas também têm prazos: o que decide é o conjunto de sinais.",
+	},
 }
 
 

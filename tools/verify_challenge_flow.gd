@@ -177,6 +177,27 @@ func _initialize() -> void:
 	ok = _check("report em desafio de logs continua pedindo numero de linha", term.output.get_parsed_text().find("Uso: report <linha>") != -1) and ok
 	term.close()
 
+	# --- phishing em massa (6 mensagens, 3 golpes) ---
+	term.open("c_triagem", "casa-3")
+	ok = _check("abrir a caixa de entrada ativa a m13", missions.is_active("m13")) and ok
+	term._on_command_submitted("cat inbox.txt")
+	ok = _check("inbox lista as 6 mensagens", term.output.get_parsed_text().find("Sua senha expira hoje") != -1 and term.output.get_parsed_text().find("Dicas da semana") != -1) and ok
+	for n in range(1, 7):
+		term._on_command_submitted("cat msg%d.eml" % n)
+	ok = _check("as 6 mensagens abrem", term.output.get_parsed_text().find("Reuniao de equipe amanha") != -1 and term.output.get_parsed_text().find("cartoes-presente") != -1) and ok
+	term._on_command_submitted("report 2")
+	term._on_command_submitted("report msg4")
+	ok = _check("reportar legitima conta como erro (2 erros)", session.get_stats("c_triagem")["errors"] == 2 and not missions.is_completed("m13")) and ok
+	term._on_command_submitted("report 1")
+	term._on_command_submitted("report mensagem 3")
+	ok = _check("2 de 3 golpes: ainda nao conclui", term._report_found.size() == 2 and not missions.is_completed("m13")) and ok
+	term._on_command_submitted("report 1")
+	ok = _check("golpe repetido nao conta duas vezes", term._report_found.size() == 2) and ok
+	term._on_command_submitted("report 5")
+	ok = _check("3 golpes concluem a m13", missions.is_completed("m13") and not term.is_active()) and ok
+	var ts: Dictionary = session.get_stats("c_triagem")
+	ok = _check("stats triagem: 2 erros e 5 tentativas", ts["errors"] == 2 and ts["attempts"] == 5) and ok
+
 	# --- dica no computador da casa (sem desafio): usa as pistas da m01 ---
 	term.open("", "casa-1")
 	var before: int = phone.get_revealed_clues("m01").size()

@@ -158,6 +158,18 @@ var missions: Dictionary = {
 		"concept": "Cabeçalhos de e-mail",
 		"explanation": "Um e-mail fraudulento costuma se denunciar nos cabeçalhos: SPF, DKIM e DMARC reprovados (o servidor não confirma o remetente), Reply-To em outro domínio, domínio parecido com o real, link cujo destino difere do texto e pressão de tempo. Antes de clicar, confira o remetente real, os cabeçalhos de autenticação e para onde o link realmente aponta.",
 	},
+	"m13": {
+		"id": "m13",
+		"title": "Missão 13 — Caixa de entrada lotada",
+		"description": "O morador da Casa 3 recebeu seis mensagens de uma vez e não sabe em quais confiar.",
+		"objective": "Na Casa 3, use o computador: leia 'cat inbox.txt', abra cada mensagem com 'cat msg1.eml' etc. e aponte os golpes com 'report <número>'.",
+		"location": "Casa 3 (Caixa de entrada)",
+		"state": State.AVAILABLE,
+		"xp": 200,
+		"difficulty": "Média",
+		"concept": "Phishing em massa",
+		"explanation": "Golpes de phishing combinam um pretexto (encomenda, banco, chefe, TI), pressa e um link ou pedido fora do normal. Confira o domínio do remetente e do link, desconfie de pedidos de dinheiro, cartões ou senha e lembre que um e-mail pode passar na autenticação (SPF) e ainda ser golpe, como um 'diretor' escrevendo de um e-mail pessoal. Mensagens legítimas também têm prazos: o que decide é o conjunto de sinais.",
+	},
 }
 
 ## Estado inicial de cada missão, guardado para o "Novo jogo".
