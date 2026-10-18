@@ -11,6 +11,7 @@ func _initialize() -> void:
 	await process_frame
 	var ok := true
 	ok = await _check_unlocks() and ok
+	ok = await _check_arrow() and ok
 	print("RESULTADO: ", "TUDO OK" if ok else "FALHOU")
 	quit(0 if ok else 1)
 
@@ -40,6 +41,93 @@ func _check_unlocks() -> bool:
 	phone.reset()
 	ok = _check("reset volta a travar as ferramentas", not game.is_tool_unlocked("mission_arrow")) and ok
 	return ok
+
+
+# Carregado só na hora do teste (depois dos autoloads), porque o script usa MissionManager etc.
+var MissionTarget: GDScript
+
+
+func _check_arrow() -> bool:
+	var game = root.get_node("GameManager")
+	var missions = root.get_node("MissionManager")
+	var campaign = root.get_node("CampaignManager")
+	var transition = root.get_node("SceneTransition")
+	var dialogue = root.get_node("DialogueManager")
+	var ok := true
+	MissionTarget = load("res://scripts/ui/MissionTarget.gd")
+
+	game.reset()
+	missions.reset()
+	campaign.reset()
+	ok = _check("seta: sem capitulo nem missao ativa, nada a guiar", MissionTarget.mission_to_guide() == "") and ok
+	campaign.play_opening()
+	dialogue.force_close()
+	ok = _check("seta: capitulo 1 comecou, guia a m01", MissionTarget.mission_to_guide() == "m01") and ok
+	missions.start_mission("m11")
+	ok = _check("seta: missao em andamento tem prioridade", MissionTarget.mission_to_guide() == "m11") and ok
+	missions.reset()
+
+	# --- dentro das casas ---
+	transition.interior_config = {}
+	var house: Node = await _open("res://scenes/interiors/HouseInterior.tscn")
+	var target: Node2D = MissionTarget.find_target(house, "m01")
+	ok = _check("seta: na Casa 1 aponta o Morador ou o computador da m01", target != null and target.name in ["Interaction", "Computer"]) and ok
+	house.queue_free()
+	await process_frame
+
+	transition.interior_config = {"npc_name": "Moradora", "npc_lines": PackedStringArray(["oi"]), "npc_mission": "m11", "computer_challenge": "c_roteador"}
+	house = await _open("res://scenes/interiors/HouseInterior.tscn")
+	target = MissionTarget.find_target(house, "m11")
+	ok = _check("seta: na Casa 6 aponta o computador ou a Moradora da m11", target != null and target.name in ["Interaction", "Computer"]) and ok
+	target = MissionTarget.find_target(house, "m12")
+	ok = _check("seta: numa casa que nao tem a missao, aponta a saida", target != null and target.name == "ExitDoor") and ok
+	house.queue_free()
+	await process_frame
+
+	# --- escritorio com varios computadores ---
+	transition.interior_config = {"computers": {"Computer1": "c_site", "Computer2": "c_acesso", "Computer3": ""}}
+	var office: Node = await _open("res://scenes/interiors/OfficeInterior.tscn")
+	target = MissionTarget.find_target(office, "m17")
+	ok = _check("seta: no escritorio aponta o computador certo (m17 = Computer2)", target != null and target.name == "Computer2") and ok
+	target = MissionTarget.find_target(office, "m16")
+	ok = _check("seta: no escritorio aponta o computador certo (m16 = Computer1)", target != null and target.name == "Computer1") and ok
+	office.queue_free()
+	await process_frame
+	transition.interior_config = {}
+
+	# --- cidade: o predio da missao e o Terminal Publico ---
+	var city: Node = await _open("res://scenes/world/City.tscn")
+	dialogue.force_close()
+	target = MissionTarget.find_target(city, "m11")
+	ok = _check("seta: na cidade a m11 aponta a Casa 6", target != null and target.name == "Casa6") and ok
+	target = MissionTarget.find_target(city, "m16")
+	ok = _check("seta: na cidade a m16 aponta a DataSoft", target != null and target.name == "Empresa2") and ok
+	target = MissionTarget.find_target(city, "m15")
+	ok = _check("seta: na cidade a m15 aponta o Terminal Publico", target != null and target.name == "TerminalPublico") and ok
+	city.queue_free()
+	await process_frame
+
+	# --- quando a seta fica ligada ---
+	var arrow = root.get_node("HUD").get_node("MissionArrow")
+	game.reset()
+	ok = _check("seta: desligada no nivel 1", not arrow.is_enabled()) and ok
+	game.add_xp(300)
+	dialogue.force_close()
+	ok = _check("seta: ligada no nivel 3", arrow.is_enabled()) and ok
+	root.get_node("Settings").mission_arrow = false
+	ok = _check("seta: desligada se o jogador a desliga nos Ajustes", not arrow.is_enabled()) and ok
+	root.get_node("Settings").mission_arrow = true
+	game.reset()
+	missions.reset()
+	campaign.reset()
+	return ok
+
+
+func _open(scene_path: String) -> Node:
+	var scene: Node = (load(scene_path) as PackedScene).instantiate()
+	root.add_child(scene)
+	await process_frame
+	return scene
 
 
 func _check(label: String, cond: bool) -> bool:

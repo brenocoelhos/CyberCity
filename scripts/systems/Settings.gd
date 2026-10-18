@@ -10,6 +10,8 @@ const SETTINGS_PATH := "user://settings.cfg"
 ## Volume geral de 0.0 (mudo) a 1.0 (máximo).
 var master_volume: float = 1.0
 var fullscreen: bool = false
+## Seta de missão ligada (só aparece depois de liberada pelo nível).
+var mission_arrow: bool = true
 
 
 func _ready() -> void:
@@ -29,6 +31,11 @@ func set_fullscreen(value: bool) -> void:
 	_save()
 
 
+func set_mission_arrow(value: bool) -> void:
+	mission_arrow = value
+	_save()
+
+
 func _apply() -> void:
 	var bus: int = AudioServer.get_bus_index("Master")
 	AudioServer.set_bus_volume_db(bus, linear_to_db(master_volume))
@@ -45,10 +52,12 @@ func _load() -> void:
 		return
 	master_volume = clampf(float(config.get_value("audio", "master_volume", 1.0)), 0.0, 1.0)
 	fullscreen = bool(config.get_value("video", "fullscreen", false))
+	mission_arrow = bool(config.get_value("gameplay", "mission_arrow", true))
 
 
 func _save() -> void:
 	var config := ConfigFile.new()
 	config.set_value("audio", "master_volume", master_volume)
 	config.set_value("video", "fullscreen", fullscreen)
+	config.set_value("gameplay", "mission_arrow", mission_arrow)
 	config.save(SETTINGS_PATH)

@@ -37,7 +37,17 @@ func _ready() -> void:
 	PhoneManager.unread_changed.connect(_on_unread_changed)
 	phone_button.pressed.connect(_on_phone_button_pressed)
 	_phone_button_x = phone_button.position.x
+	_add_mission_arrow()
 	_refresh()
+
+
+## A seta que aponta para a missão (liberada pelo nível, ver MissionArrow.gd)
+## é criada por código, sem mexer na cena do HUD.
+func _add_mission_arrow() -> void:
+	var arrow := Control.new()
+	arrow.name = "MissionArrow"
+	arrow.set_script(preload("res://scripts/ui/MissionArrow.gd"))
+	add_child(arrow)
 
 
 func is_popup_active() -> bool:

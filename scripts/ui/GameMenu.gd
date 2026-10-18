@@ -247,6 +247,11 @@ func _render_profile() -> void:
 
 func _render_settings() -> void:
 	_add_button("Volume e tela", _on_options_pressed)
+	# A seta de missão é liberada pelo nível; depois dela dá para desligar.
+	if GameManager.is_tool_unlocked("mission_arrow"):
+		_add_button("Seta de missão: %s" % ("ligada" if Settings.mission_arrow else "desligada"), _on_arrow_toggled)
+	else:
+		_add_label("Seta de missão: libera no nível %d" % int(GameManager.TOOL_UNLOCK_LEVELS["mission_arrow"]), COLOR_DIM)
 	_add_button("Menu principal", _on_main_menu_pressed)
 	# No navegador (exportação Web) não existe "fechar o jogo".
 	if not OS.has_feature("web"):
@@ -254,6 +259,13 @@ func _render_settings() -> void:
 
 
 # --- Ajustes -----------------------------------------------------------
+
+func _on_arrow_toggled() -> void:
+	SoundManager.play("blip")
+	Settings.set_mission_arrow(not Settings.mission_arrow)
+	_render_current_app()
+	_focus_first_button()
+
 
 func _on_options_pressed() -> void:
 	SoundManager.play("blip")
