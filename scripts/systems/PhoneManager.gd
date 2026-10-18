@@ -66,6 +66,7 @@ func _ready() -> void:
 	MissionManager.mission_started.connect(_on_mission_started)
 	MissionManager.mission_completed.connect(_on_mission_completed)
 	ChallengeSession.hint_revealed.connect(_on_hint_revealed)
+	GameManager.tool_unlocked.connect(_on_tool_unlocked)
 
 
 ## Apaga mensagens e pistas (usado por "Novo jogo").
@@ -181,6 +182,12 @@ func _on_mission_completed(mission_id: String) -> void:
 		String(mission["concept"]),
 		int(mission["xp"]),
 	])
+
+
+## Subir de nível pode liberar uma ferramenta: a Central avisa pelo celular.
+func _on_tool_unlocked(tool_id: String) -> void:
+	var texts: Array = GameManager.TOOL_TEXTS.get(tool_id, [tool_id, ""])
+	send_message(CENTRAL, "Nível %d alcançado. Ferramenta liberada: %s — %s" % [GameManager.level, String(texts[0]), String(texts[1])])
 
 
 func _on_game_completed() -> void:
