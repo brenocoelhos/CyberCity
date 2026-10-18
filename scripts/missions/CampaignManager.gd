@@ -51,11 +51,12 @@ var chapters: Dictionary = {
 	},
 	"ch4": {
 		"title": "CAPÍTULO 4 — CRIPTOGRAFIA E FRAUDE",
-		"missions": ["m04", "m05", "m12"],
+		"missions": ["m04", "m05", "m12", "m13"],
 		"intro": PackedStringArray([
 			"O Centro de Tecnologia guarda uma mensagem cifrada e um caso de phishing por resolver.",
 			"Explore as estações do Centro de Tecnologia.",
 			"Uma vizinha da Casa 2 também recebeu um e-mail que parece golpe.",
+			"E o morador da Casa 3 recebeu seis mensagens de uma vez e não sabe em quais confiar.",
 		]),
 		"outro": PackedStringArray([
 			"Cifra decifrada, fraude identificada. Só falta a loja.",

@@ -93,9 +93,12 @@ mission_ids = PackedStringArray("m02", "m03", "m06")
 position = Vector2(208, 736)
 facade = ExtResource("facade_2")
 building_name = "Casa 3"
+mission_ids = PackedStringArray("m13")
 configure_interior = true
 interior_npc_name = "Morador"
-interior_npc_lines = PackedStringArray("Semana passada recebi um e-mail dizendo que minha conta seria apagada.", "Quase cliquei no link! Depois percebi que o endereço do remetente estava escrito errado.", "Desde então eu leio o remetente letra por letra.")
+interior_npc_lines = PackedStringArray("Recebi seis mensagens de uma vez e não sei em quais confiar.", "Tem uma de entrega, uma do banco, uma do \"diretor\" da empresa, uma do TI...", "Dá uma olhada na caixa de entrada do computador e me diz quais são golpe.")
+interior_npc_mission = "m13"
+interior_computer_challenge = "c_triagem"
 
 [node name="Casa4" parent="Buildings" unique_id=744063177 instance=ExtResource("3")]
 position = Vector2(368, 736)
