@@ -17,6 +17,11 @@ const CITY_SCENE := "res://scenes/world/City.tscn"
 
 const StudyTools := preload("res://scripts/systems/StudyTools.gd")
 
+## Missão que precisa estar concluída para o decifrador de César abrir (para
+## não entregar a resposta da m04). PROVISÓRIO, para teste: vazio libera o
+## decifrador desde o início; o plano é "m04".
+const CAESAR_REQUIRES_MISSION := ""
+
 const COLOR_TITLE := Color(0.3, 0.95, 1.0)
 const COLOR_DIM := Color(0.65, 0.7, 0.8)
 const COLOR_UNREAD := Color(1.0, 0.8, 0.3)
@@ -277,7 +282,7 @@ func _render_tools() -> void:
 	_add_label("Apoios de estudo. Digite e veja o resultado na hora.", COLOR_DIM)
 
 	_add_label("Cifra de César", COLOR_TITLE)
-	if MissionManager.is_completed("m04"):
+	if CAESAR_REQUIRES_MISSION == "" or MissionManager.is_completed(CAESAR_REQUIRES_MISSION):
 		var text_input: LineEdit = _add_input("Texto (ex.: VHJXUR)")
 		var shift_input: LineEdit = _add_input("Deslocamento (ex.: 3)", "3")
 		var caesar_out: Label = _add_output()

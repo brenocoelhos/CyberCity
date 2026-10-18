@@ -14,7 +14,7 @@ signal tool_unlocked(tool_id: String)
 ## depende delas.
 const TOOL_UNLOCK_LEVELS := {
 	"mission_arrow": 1,  # seta que aponta para a missão (opcional nos Ajustes). PROVISÓRIO, para teste: o plano é o nível 3
-	"phone_tools": 3,    # app "Ferramentas" do celular
+	"phone_tools": 1,    # app "Ferramentas" do celular. PROVISÓRIO, para teste: o plano é o nível 3
 	"network_map": 4,    # mapa de rede desenhado pelo 'scan'
 	"saved_history": 5,  # histórico de comandos guardado entre terminais e partidas
 }

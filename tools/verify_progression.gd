@@ -31,7 +31,7 @@ func _check_unlocks() -> bool:
 	# pode ser liberada mais cedo para teste), entao nada aqui fixa esses numeros.
 	var levels: Dictionary = game.TOOL_UNLOCK_LEVELS
 	ok = _check("nivel 1: cada ferramenta so esta liberada se o nivel dela e 1", _unlocked_match_levels(game)) and ok
-	ok = _check("nivel 1: o app Ferramentas, o mapa e o historico ainda estao travados", not game.is_tool_unlocked("phone_tools") and not game.is_tool_unlocked("network_map") and not game.is_tool_unlocked("saved_history")) and ok
+	ok = _check("nivel 1: o mapa de rede e o historico ainda estao travados", not game.is_tool_unlocked("network_map") and not game.is_tool_unlocked("saved_history")) and ok
 	ok = _check("ferramenta desconhecida nunca e liberada", not game.is_tool_unlocked("nao_existe")) and ok
 
 	var unlocked: Array = []
@@ -40,9 +40,13 @@ func _check_unlocks() -> bool:
 	game.add_xp(100)
 	ok = _check("nivel 2: libera so o que e do nivel 2", game.level == 2 and _unlocked_match_levels(game)) and ok
 	game.add_xp(200)
-	ok = _check("nivel 3: libera o app Ferramentas", game.level == 3 and unlocked.has("phone_tools") and _unlocked_match_levels(game)) and ok
+	ok = _check("nivel 3: o evento do app Ferramentas so existe se ele nao comeca liberado", game.level == 3 and unlocked.has("phone_tools") == (int(game.TOOL_UNLOCK_LEVELS["phone_tools"]) > 1) and _unlocked_match_levels(game)) and ok
 	ok = _check("nivel 3: o mapa e o historico continuam travados", not game.is_tool_unlocked("network_map") and not game.is_tool_unlocked("saved_history")) and ok
-	ok = _check("a Central avisa pelo celular da ferramenta do nivel 3", phone.messages.size() >= 1 and String(phone.messages[phone.messages.size() - 1]["text"]).find("Ferramentas do celular") != -1) and ok
+	var expected_messages := 0
+	for tool_id in levels.keys():
+		if int(levels[tool_id]) > 1 and int(levels[tool_id]) <= 3:
+			expected_messages += 1
+	ok = _check("a Central manda uma mensagem por ferramenta liberada ao subir de nivel (ate o 3)", phone.messages.size() == expected_messages) and ok
 
 	game.add_xp(300 + 400)  # sobe do 3 para o 4 (300) e do 4 para o 5 (400): dois niveis de uma vez
 	ok = _check("subir dois niveis de uma vez libera as duas ferramentas", game.level == 5 and unlocked.has("network_map") and unlocked.has("saved_history")) and ok
@@ -335,17 +339,18 @@ func _check_phone_tools() -> bool:
 	game.reset()
 	missions.reset()
 	menu.open()
-	ok = _check("celular: app Ferramentas escondido no nivel 1", not menu.tools_button.visible) and ok
+	ok = _check("celular: no nivel 1 o app Ferramentas so aparece se ele ja for do nivel 1", menu.tools_button.visible == (int(game.TOOL_UNLOCK_LEVELS["phone_tools"]) <= 1)) and ok
 	menu.close()
 
 	game.add_xp(300)
 	menu.open()
-	ok = _check("celular: app Ferramentas aparece no nivel 3", menu.tools_button.visible) and ok
+	ok = _check("celular: app Ferramentas aparece depois do nivel dele", menu.tools_button.visible) and ok
 	ok = _check("celular: o botao fica antes do 'Fechar'", menu.tools_button.get_index() < menu.close_button.get_index()) and ok
 
 	menu._open_app("tools")
 	var inputs: Array = menu.list.find_children("*", "LineEdit", true, false)
-	ok = _check("celular: sem a m04, so hash e senha (2 campos) e o Cesar fica bloqueado", inputs.size() == 2) and ok
+	var caesar_open_at_start: bool = menu.CAESAR_REQUIRES_MISSION == ""
+	ok = _check("celular: o Cesar so abre antes da missao se o requisito estiver vazio", inputs.size() == (4 if caesar_open_at_start else 2)) and ok
 
 	missions.start_mission("m04")
 	missions.complete_mission("m04")
