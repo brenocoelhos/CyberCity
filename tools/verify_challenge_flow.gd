@@ -122,6 +122,13 @@ func _initialize() -> void:
 	ok = _check("outro computador nao lista manual.txt", term.output.get_parsed_text().find("manual.txt") == -1) and ok
 	term.close()
 
+	# --- palavras-chave do report: curtas so valem como palavra inteira ---
+	var kw_targets := [{"keywords": ["2fa", "3"]}, {"keywords": ["senha"]}]
+	ok = _check("keyword curta como palavra inteira: 'ativar 2FA'", term._find_report_target("ativar 2FA", kw_targets) == 0) and ok
+	ok = _check("keyword curta com pontuacao: 'mensagem 3.'", term._find_report_target("mensagem 3.", kw_targets) == 0) and ok
+	ok = _check("keyword curta nao vale dentro de outra palavra: '23' e 'x2fax'", term._find_report_target("23", kw_targets) == -1 and term._find_report_target("x2fax", kw_targets) == -1) and ok
+	ok = _check("keyword longa vale dentro do texto: 'trocar a senha'", term._find_report_target("trocar a senha", kw_targets) == 1) and ok
+
 	# --- roteador domestico (login + passwd) ---
 	term.open("c_roteador", "casa-6")
 	ok = _check("abrir o roteador ativa a m11", missions.is_active("m11")) and ok

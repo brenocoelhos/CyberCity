@@ -616,16 +616,30 @@ func _report_required() -> int:
 
 
 ## Acha o alvo cuja palavra-chave bate com o que o jogador digitou. Palavra
-## curta (até 3 letras ou um número) só vale se for igual ao texto inteiro;
-## as maiores valem se estiverem contidas nele. -1 se nenhum bater.
+## curta (até 3 letras ou um número, como "2fa" ou "3") só vale se aparecer
+## como palavra inteira no texto; as maiores valem se estiverem contidas
+## nele. -1 se nenhum bater.
 func _find_report_target(answer: String, targets: Array) -> int:
 	var text: String = answer.strip_edges().to_lower()
+	var words: PackedStringArray = _split_words(text)
 	for i in range(targets.size()):
 		for keyword in targets[i]["keywords"]:
 			var word: String = String(keyword).to_lower()
-			if word == text or (word.length() > 3 and text.contains(word)):
+			if word == text:
+				return i
+			if word.length() > 3:
+				if text.contains(word):
+					return i
+			elif words.has(word):
 				return i
 	return -1
+
+
+## Quebra o texto em palavras (letras e números), ignorando pontuação.
+func _split_words(text: String) -> PackedStringArray:
+	var regex := RegEx.new()
+	regex.compile("[^\\p{L}\\p{N}]+")
+	return regex.sub(text, " ", true).split(" ", false)
 
 
 ## --- Roteador doméstico (login / passwd) ------------------------------
