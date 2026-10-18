@@ -15,6 +15,7 @@ func _initialize() -> void:
 	ok = _check_study_tools() and ok
 	ok = _check_phone_tools() and ok
 	ok = _check_network_map() and ok
+	ok = _check_saved_history() and ok
 	print("RESULTADO: ", "TUDO OK" if ok else "FALHOU")
 	quit(0 if ok else 1)
 
@@ -182,6 +183,56 @@ func _check_network_map() -> bool:
 	term._on_command_submitted("scan")
 	ok = _check("scan do desafio de rede tambem desenha o mapa no nivel 4", term.output.get_parsed_text().find("Mapa de rede") != -1 and term.output.get_parsed_text().find("UNKNOWN") != -1) and ok
 	term.close()
+	game.reset()
+	return ok
+
+
+func _check_saved_history() -> bool:
+	var game = root.get_node("GameManager")
+	var term = root.get_node("TerminalManager")
+	var ok := true
+	var test_file := "user://teste_historico_terminal.cfg"
+	term.history_path = test_file
+	DirAccess.remove_absolute(test_file)
+
+	# Sem a ferramenta: cada computador comeca sem historico e nada vai para o disco.
+	game.reset()
+	term._command_history = PackedStringArray(["velho"])
+	term.open("c_logs", "loja")
+	ok = _check("historico: antes do nivel 5 o terminal abre com o historico vazio", term._command_history.is_empty()) and ok
+	term._on_command_submitted("ls")
+	ok = _check("historico: antes do nivel 5 nada e gravado em disco", not FileAccess.file_exists(test_file)) and ok
+	term.close()
+
+	# Com a ferramenta: o historico vai para o arquivo e volta em qualquer computador.
+	term._command_history = PackedStringArray()
+	game.add_xp(100 + 200 + 300 + 400)
+	term.open("c_logs", "loja")
+	term._on_command_submitted("ls")
+	term._on_command_submitted("whoami")
+	ok = _check("historico: no nivel 5 os comandos sao gravados", game.level == 5 and FileAccess.file_exists(test_file)) and ok
+	term.close()
+	term._command_history = PackedStringArray()
+	term.open("c_senhas", "estacao-1")
+	ok = _check("historico: ao abrir outro computador, os comandos voltam do arquivo", Array(term._command_history) == ["ls", "whoami"]) and ok
+	ok = _check("historico: a seta para cima ja alcanca o ultimo comando guardado", term._history_index == 2) and ok
+	term._history_prev()
+	ok = _check("historico: seta para cima mostra 'whoami'", term.input_line.text == "whoami") and ok
+	term.close()
+
+	# O limite de comandos guardados.
+	term._command_history = PackedStringArray()
+	for i in range(term.MAX_SAVED_HISTORY + 20):
+		term._command_history.append("cmd%d" % i)
+	term._save_history()
+	var config := ConfigFile.new()
+	config.load(test_file)
+	var saved: PackedStringArray = config.get_value("terminal", "history", PackedStringArray())
+	ok = _check("historico: guarda no maximo os ultimos 200", saved.size() == term.MAX_SAVED_HISTORY and saved[saved.size() - 1] == "cmd%d" % (term.MAX_SAVED_HISTORY + 19)) and ok
+
+	DirAccess.remove_absolute(test_file)
+	term.history_path = "user://terminal_history.cfg"
+	term._command_history = PackedStringArray()
 	game.reset()
 	return ok
 

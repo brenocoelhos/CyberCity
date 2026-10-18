@@ -35,6 +35,11 @@ const VIRTUAL_FILES := {
 	"email_suspeito.eml": "De: suporte@empresaa-seguranca.com\nAssunto: URGENTE!!!\nMensagem: Clique imediatamente no link para nao perder o acesso a sua conta.\n\n(Isso te parece confiável? Vale desconfiar de remetentes estranhos e mensagens com urgência forçada.)",
 }
 
+## Onde fica guardado o histórico de comandos (ferramenta do nível 5). É uma
+## variável para os testes usarem outro arquivo, sem mexer no do jogador.
+var history_path: String = "user://terminal_history.cfg"
+const MAX_SAVED_HISTORY := 200
+
 var _active: bool = false
 var _command_history: PackedStringArray = PackedStringArray()
 var _history_index: int = -1
@@ -89,6 +94,7 @@ func open(challenge_id: String = "", host: String = "cybercity") -> void:
 	_firewall_rules = {}
 	_router_logged_in = false
 	_report_found = []
+	_prepare_history()
 	_sim.setup(_challenge)
 	_ssh_pending = {}
 	_flag_captured = false
@@ -154,6 +160,29 @@ func _challenge_hint() -> String:
 	if intro != "" and not PhoneManager.get_all_clues(_hint_mission_id()).is_empty():
 		intro += " Travou? Digite 'dica'."
 	return intro
+
+
+## Histórico de comandos ao abrir um terminal. Sem a ferramenta "Histórico
+## salvo" (nível 5), cada computador começa com o histórico vazio; com ela, o
+## histórico vem do arquivo, igual em todos os computadores e partidas.
+func _prepare_history() -> void:
+	_history_index = -1
+	if not GameManager.is_tool_unlocked("saved_history"):
+		_command_history = PackedStringArray()
+		return
+	var config := ConfigFile.new()
+	if config.load(history_path) == OK:
+		_command_history = PackedStringArray(config.get_value("terminal", "history", PackedStringArray()))
+	_history_index = _command_history.size()
+
+
+func _save_history() -> void:
+	if not GameManager.is_tool_unlocked("saved_history"):
+		return
+	var config := ConfigFile.new()
+	var start: int = maxi(0, _command_history.size() - MAX_SAVED_HISTORY)
+	config.set_value("terminal", "history", _command_history.slice(start))
+	config.save(history_path)
 
 
 ## Nível de guia do desafio ("guidance" no ChallengeData, padrão 1):
@@ -260,6 +289,7 @@ func _on_command_submitted(text: String) -> void:
 
 	_command_history.append(command)
 	_history_index = _command_history.size()
+	_save_history()
 
 	# Repete o prompt de duas linhas com o comando digitado, como no Kali.
 	_print_rich(_prompt_top_bbcode())
