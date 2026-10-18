@@ -126,12 +126,28 @@ func _challenge_hint() -> String:
 			intro = "Campo de comentário simulado. Digite 'postar <mensagem>' para testar."
 		"router":
 			intro = "Roteador doméstico detectado. Digite 'files' e leia o manual com 'read manual.txt'."
-		"report":
+		"report", "hosts":
 			intro = String(_challenge.get("intro", ""))
+
+	# Quanto o terminal explica depende do nível de guia do desafio.
+	var guidance: int = _guidance()
+	if guidance >= 3:
+		return ""
+	if guidance == 2:
+		intro = "Computador aberto. Digite 'ls' para ver os arquivos e 'help' para ver os comandos."
 
 	if intro != "" and not PhoneManager.get_all_clues(_hint_mission_id()).is_empty():
 		intro += " Travou? Digite 'dica'."
 	return intro
+
+
+## Nível de guia do desafio ("guidance" no ChallengeData, padrão 1):
+##   1 - o terminal diz o que o computador tem e quais comandos usar
+##   2 - só diz que o computador está aberto
+##   3 - não explica nada (nem a abertura, nem a lista de comandos do
+##       desafio, nem a lista do 'report'); a ajuda vem só pelas dicas
+func _guidance() -> int:
+	return clampi(int(_challenge.get("guidance", 1)), 1, 3)
 
 
 ## Mensagens de "inicialização" mostradas a cada vez que o terminal abre.
@@ -307,6 +323,8 @@ func _cmd_help() -> void:
 	_print_line("  neofetch, ifconfig  - resumo do sistema e da rede")
 	_print_line("  history             - comandos digitados nesta sessão")
 	var challenge_type: String = String(_challenge.get("type", ""))
+	if _guidance() >= 3:
+		challenge_type = ""
 	if challenge_type == "quiz":
 		_print_line("  desafio             - inicia o desafio de segurança deste sistema")
 	elif challenge_type == "network":
@@ -587,7 +605,8 @@ func _cmd_report_evidence(answer: String) -> void:
 	if index == -1:
 		# Palavra que não bate com nada: não conta como erro, só pede para reler.
 		_print_line(String(_challenge.get("unknown_message", "Isso não bate com nada do material. Releia os arquivos e tente outro indício.")))
-		_print_rich("[color=%s]Dica: digite 'report' sozinho para ver o que procurar.[/color]" % C_DIM)
+		if _guidance() < 3:
+			_print_rich("[color=%s]Dica: digite 'report' sozinho para ver o que procurar.[/color]" % C_DIM)
 		return
 
 	var target: Dictionary = targets[index]
@@ -604,11 +623,14 @@ func _cmd_report_evidence(answer: String) -> void:
 	ChallengeSession.record_attempt(_challenge_id, true)
 	var required: int = _report_required()
 	_print_success(String(target["message"]))
-	_print_line("Indícios encontrados: %d/%d" % [mini(_report_found.size(), required), required])
+	if _guidance() >= 3:
+		_print_line("Indícios encontrados: %d" % _report_found.size())
+	else:
+		_print_line("Indícios encontrados: %d/%d" % [mini(_report_found.size(), required), required])
 	if _report_found.size() >= required:
 		_print_line("")
 		_finish_challenge(String(_challenge.get("success_message", "Objetivo cumprido.")))
-	else:
+	elif _guidance() < 3:
 		_print_rich("[color=%s]Digite 'report' sozinho para ver o que falta.[/color]" % C_DIM)
 
 
@@ -617,6 +639,13 @@ func _cmd_report_evidence(answer: String) -> void:
 ## respostas, e as iscas não aparecem.
 func _print_report_checklist() -> void:
 	var required: int = _report_required()
+	# Quanto a lista mostra depende do nível de guia (ver _guidance).
+	if _guidance() >= 3:
+		_print_line("Indícios reportados até agora: %d. Neste nível o terminal não diz o que procurar." % _report_found.size())
+		return
+	if _guidance() == 2:
+		_print_line("Indícios reportados: %d de %d necessários." % [mini(_report_found.size(), required), required])
+		return
 	_print_rich("[color=%s][b]O que procurar[/b][/color] (precisa de %d de %d):" % [C_WHITE, required, _report_hits_total()])
 	var number := 0
 	for i in range(_challenge["targets"].size()):
