@@ -39,3 +39,15 @@ func _apply_config(config: Dictionary) -> void:
 			computer.queue_free()
 		else:
 			computer.challenge_id = challenge_id
+
+	# Interiores com vários computadores (escritórios): nó -> desafio.
+	var computers: Dictionary = Dictionary(config.get("computers", {}))
+	for node_name in computers.keys():
+		var node := get_node_or_null(String(node_name))
+		if node == null:
+			continue
+		var wanted: String = String(computers[node_name])
+		if wanted == "":
+			node.queue_free()
+		else:
+			node.challenge_id = wanted

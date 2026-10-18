@@ -55,6 +55,23 @@ func _initialize() -> void:
 	house.queue_free()
 	await process_frame
 
+	# --- escritorio com varios computadores: cada no recebe o seu desafio ---
+	transition.interior_config = {"computers": {"Computer1": "c_senhas", "Computer2": "c_hash", "Computer3": ""}}
+	var office: Node = (load("res://scenes/interiors/OfficeInterior.tscn") as PackedScene).instantiate()
+	root.add_child(office)
+	await process_frame
+	ok = _check("escritorio: Computer1 recebe o desafio pedido", office.get_node("Computer1").challenge_id == "c_senhas") and ok
+	ok = _check("escritorio: Computer3 vazio e removido", office.get_node_or_null("Computer3") == null) and ok
+	office.queue_free()
+	await process_frame
+	transition.interior_config = {}
+	office = (load("res://scenes/interiors/OfficeInterior.tscn") as PackedScene).instantiate()
+	root.add_child(office)
+	await process_frame
+	ok = _check("escritorio sem pedido: tres computadores como na cena", office.get_node("Computer3").challenge_id == "c_rede" and office.get_node("Computer1").challenge_id == "c_senhas") and ok
+	office.queue_free()
+	await process_frame
+
 	# --- Building monta o pedido e a Door o guarda ---
 	var scene: PackedScene = load(BUILDING)
 	var plain = scene.instantiate()

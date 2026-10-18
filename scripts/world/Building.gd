@@ -31,6 +31,11 @@ extends StaticBody2D
 @export var interior_npc_mission := ""
 ## Desafio do computador (id do ChallengeData). Vazio = a casa fica sem computador.
 @export var interior_computer_challenge := ""
+## Para interiores com vários computadores (o escritório): nome do nó do
+## computador -> id do desafio. Id vazio remove o computador. Ex.:
+## {"Computer1": "c_site", "Computer3": ""}. Computadores que não aparecem
+## aqui ficam como estão na cena.
+@export var interior_computers: Dictionary = {}
 @export_group("")
 
 var _marker_tween: Tween
@@ -74,6 +79,7 @@ func _build_interior_config() -> Dictionary:
 		"npc_lines": interior_npc_lines,
 		"npc_mission": interior_npc_mission,
 		"computer_challenge": interior_computer_challenge,
+		"computers": interior_computers,
 	}
 
 func _on_missions_changed(_id: String) -> void:
