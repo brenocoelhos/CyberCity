@@ -15,6 +15,8 @@ extends CanvasLayer
 const MAIN_MENU_SCENE := "res://scenes/ui/MainMenu.tscn"
 const CITY_SCENE := "res://scenes/world/City.tscn"
 
+const StudyTools := preload("res://scripts/systems/StudyTools.gd")
+
 const COLOR_TITLE := Color(0.3, 0.95, 1.0)
 const COLOR_DIM := Color(0.65, 0.7, 0.8)
 const COLOR_UNREAD := Color(1.0, 0.8, 0.3)
@@ -28,6 +30,7 @@ const COLOR_UNREAD := Color(1.0, 0.8, 0.3)
 @onready var profile_button: Button = $Phone/Screen/Home/Apps/ProfileButton
 @onready var settings_button: Button = $Phone/Screen/Home/Apps/SettingsButton
 @onready var close_button: Button = $Phone/Screen/Home/Apps/CloseButton
+@onready var apps_grid: GridContainer = $Phone/Screen/Home/Apps
 @onready var app_view: Control = $Phone/Screen/AppView
 @onready var back_button: Button = $Phone/Screen/AppView/Header/BackButton
 @onready var app_title: Label = $Phone/Screen/AppView/Header/AppTitle
@@ -38,6 +41,10 @@ const COLOR_UNREAD := Color(1.0, 0.8, 0.3)
 var _active: bool = false
 ## App aberto no momento ("" = tela inicial).
 var _current_app: String = ""
+
+## Botão do app "Ferramentas": criado por código (copiando o estilo dos outros
+## botões) e só aparece depois que o nível libera a ferramenta.
+var tools_button: Button
 
 
 func _ready() -> void:
@@ -51,6 +58,9 @@ func _ready() -> void:
 	close_button.pressed.connect(toggle)
 	back_button.pressed.connect(_on_back_pressed)
 	options_panel.closed.connect(_on_options_closed)
+
+	_setup_tools_button()
+	GameManager.tool_unlocked.connect(func(_id: String): _update_home_labels())
 
 	PhoneManager.unread_changed.connect(func(_count: int): _update_home_labels())
 	PhoneManager.clue_revealed.connect(func(_id: String): _update_home_labels())
@@ -105,7 +115,19 @@ func _show_home() -> void:
 	messages_button.grab_focus()
 
 
+func _setup_tools_button() -> void:
+	# duplicate(0): copia o visual do botão de Perfil sem copiar as conexões.
+	tools_button = profile_button.duplicate(0) as Button
+	tools_button.name = "ToolsButton"
+	tools_button.text = "Ferramentas"
+	tools_button.pressed.connect(_open_app.bind("tools"))
+	apps_grid.add_child(tools_button)
+	apps_grid.move_child(tools_button, close_button.get_index())
+	tools_button.visible = GameManager.is_tool_unlocked("phone_tools")
+
+
 func _update_home_labels() -> void:
+	tools_button.visible = GameManager.is_tool_unlocked("phone_tools")
 	var unread: int = PhoneManager.unread_count()
 	messages_button.text = "Mensagens\n(%d nova%s)" % [unread, "" if unread == 1 else "s"] if unread > 0 else "Mensagens"
 
@@ -153,6 +175,9 @@ func _render_current_app() -> void:
 		"profile":
 			app_title.text = "PERFIL"
 			_render_profile()
+		"tools":
+			app_title.text = "FERRAMENTAS"
+			_render_tools()
 		"settings":
 			app_title.text = "AJUSTES"
 			_render_settings()
@@ -245,6 +270,45 @@ func _render_profile() -> void:
 		_add_label("%s  %s" % [String(concept), "■".repeat(mini(reinforced, 5)) + "□".repeat(maxi(0, 5 - reinforced))])
 
 
+## App Ferramentas: apoios de estudo (liberado no nível 3). O decifrador de
+## César só abre depois da missão de criptografia (m04), para não entregar a
+## resposta dela; nenhuma missão depende destas ferramentas.
+func _render_tools() -> void:
+	_add_label("Apoios de estudo. Digite e veja o resultado na hora.", COLOR_DIM)
+
+	_add_label("Cifra de César", COLOR_TITLE)
+	if MissionManager.is_completed("m04"):
+		var text_input: LineEdit = _add_input("Texto (ex.: VHJXUR)")
+		var shift_input: LineEdit = _add_input("Deslocamento (ex.: 3)", "3")
+		var caesar_out: Label = _add_output()
+		var update_caesar := func():
+			var shift: int = int(shift_input.text) if shift_input.text.is_valid_int() else 0
+			caesar_out.text = "Decifrar (−%d): %s\nCifrar (+%d): %s" % [shift, StudyTools.caesar(text_input.text, -shift), shift, StudyTools.caesar(text_input.text, shift)]
+		text_input.text_changed.connect(func(_t: String): update_caesar.call())
+		shift_input.text_changed.connect(func(_t: String): update_caesar.call())
+		update_caesar.call()
+	else:
+		_add_label("Libera depois da missão de criptografia.", COLOR_DIM)
+
+	_add_label("Hash (MD5 e SHA-256)", COLOR_TITLE)
+	var hash_input: LineEdit = _add_input("Texto para calcular o hash")
+	var hash_out: Label = _add_output()
+	hash_input.text_changed.connect(func(value: String):
+		hash_out.text = "MD5: %s\nSHA-256: %s" % [StudyTools.md5(value), StudyTools.sha256(value)] if value != "" else "")
+
+	_add_label("Força de senha", COLOR_TITLE)
+	var password_input: LineEdit = _add_input("Digite uma senha para avaliar")
+	var password_out: Label = _add_output()
+	password_input.text_changed.connect(func(value: String):
+		if value == "":
+			password_out.text = ""
+			return
+		var problems: PackedStringArray = StudyTools.password_problems(value)
+		password_out.text = "Força: %s" % StudyTools.password_strength(value)
+		for problem in problems:
+			password_out.text += "\n- " + problem)
+
+
 func _render_settings() -> void:
 	_add_button("Volume e tela", _on_options_pressed)
 	# A seta de missão é liberada pelo nível; depois dela dá para desligar.
@@ -319,6 +383,24 @@ func _add_label(text: String, color: Color = Color.WHITE) -> void:
 	list.add_child(label)
 
 
+func _add_input(placeholder: String, initial: String = "") -> LineEdit:
+	var input := LineEdit.new()
+	input.placeholder_text = placeholder
+	input.text = initial
+	input.custom_minimum_size = Vector2(0, 32)
+	list.add_child(input)
+	return input
+
+
+## Rótulo onde uma ferramenta mostra o resultado (quebra até hashes longos).
+func _add_output() -> Label:
+	var label := Label.new()
+	label.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+	label.add_theme_font_size_override("font_size", 13)
+	list.add_child(label)
+	return label
+
+
 func _add_button(text: String, callback: Callable) -> void:
 	var button := Button.new()
 	button.text = text
@@ -329,7 +411,7 @@ func _add_button(text: String, callback: Callable) -> void:
 
 func _focus_first_button() -> void:
 	for child in list.get_children():
-		if child is Button:
+		if child is Button or child is LineEdit:
 			child.grab_focus()
 			return
 	back_button.grab_focus()

@@ -13,6 +13,7 @@ func _initialize() -> void:
 	ok = await _check_unlocks() and ok
 	ok = await _check_arrow() and ok
 	ok = _check_study_tools() and ok
+	ok = _check_phone_tools() and ok
 	print("RESULTADO: ", "TUDO OK" if ok else "FALHOU")
 	quit(0 if ok else 1)
 
@@ -139,6 +140,63 @@ func _check_study_tools() -> bool:
 	ok = _check("senha sem simbolo e media", tools.password_strength("CasaSegura2026x") == "média") and ok
 	ok = _check("palavra extra a evitar e respeitada", not tools.password_problems("Roteador#2026ok", 10, ["roteador"]).is_empty()) and ok
 	ok = _check("senha vazia nao tem classificacao", tools.password_strength("") == "") and ok
+	return ok
+
+
+func _check_phone_tools() -> bool:
+	var game = root.get_node("GameManager")
+	var missions = root.get_node("MissionManager")
+	var menu = root.get_node("GameMenu")
+	var ok := true
+
+	game.reset()
+	missions.reset()
+	menu.open()
+	ok = _check("celular: app Ferramentas escondido no nivel 1", not menu.tools_button.visible) and ok
+	menu.close()
+
+	game.add_xp(300)
+	menu.open()
+	ok = _check("celular: app Ferramentas aparece no nivel 3", menu.tools_button.visible) and ok
+	ok = _check("celular: o botao fica antes do 'Fechar'", menu.tools_button.get_index() < menu.close_button.get_index()) and ok
+
+	menu._open_app("tools")
+	var inputs: Array = menu.list.find_children("*", "LineEdit", true, false)
+	ok = _check("celular: sem a m04, so hash e senha (2 campos) e o Cesar fica bloqueado", inputs.size() == 2) and ok
+
+	missions.start_mission("m04")
+	missions.complete_mission("m04")
+	menu._open_app("tools")
+	inputs = menu.list.find_children("*", "LineEdit", true, false)
+	ok = _check("celular: depois da m04 o Cesar abre (4 campos)", inputs.size() == 4) and ok
+
+	inputs[0].text = "VHJXUR"
+	inputs[0].text_changed.emit("VHJXUR")
+	var labels: Array = menu.list.find_children("*", "Label", true, false)
+	var found_caesar := false
+	for label in labels:
+		if String(label.text).find("Decifrar (−3): SEGURO") != -1:
+			found_caesar = true
+	ok = _check("celular: o decifrador mostra SEGURO para VHJXUR com deslocamento 3", found_caesar) and ok
+
+	inputs[2].text = "marcos2020"
+	inputs[2].text_changed.emit("marcos2020")
+	inputs[3].text = "admin"
+	inputs[3].text_changed.emit("admin")
+	labels = menu.list.find_children("*", "Label", true, false)
+	var found_hash := false
+	var found_weak := false
+	for label in labels:
+		if String(label.text).find("MD5: 159e70e5dfbf44e74b2b20257657db3c") != -1:
+			found_hash = true
+		if String(label.text).find("Força: fraca") != -1:
+			found_weak = true
+	ok = _check("celular: a calculadora mostra o MD5 certo", found_hash) and ok
+	ok = _check("celular: o verificador chama 'admin' de fraca", found_weak) and ok
+
+	menu.close()
+	game.reset()
+	missions.reset()
 	return ok
 
 
