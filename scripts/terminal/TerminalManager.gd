@@ -651,11 +651,11 @@ func _report_required() -> int:
 ## como palavra inteira no texto; as maiores valem se estiverem contidas
 ## nele. -1 se nenhum bater.
 func _find_report_target(answer: String, targets: Array) -> int:
-	var text: String = answer.strip_edges().to_lower()
+	var text: String = _fold(answer)
 	var words: PackedStringArray = _split_words(text)
 	for i in range(targets.size()):
 		for keyword in targets[i]["keywords"]:
-			var word: String = String(keyword).to_lower()
+			var word: String = _fold(String(keyword))
 			if word == text:
 				return i
 			if word.length() > 3:
@@ -664,6 +664,15 @@ func _find_report_target(answer: String, targets: Array) -> int:
 			elif words.has(word):
 				return i
 	return -1
+
+
+## Minúsculas e sem acentos, para "urgência" e "urgencia" serem a mesma coisa.
+func _fold(text: String) -> String:
+	var folded: String = text.strip_edges().to_lower()
+	var map := {"á": "a", "à": "a", "â": "a", "ã": "a", "é": "e", "ê": "e", "í": "i", "ó": "o", "ô": "o", "õ": "o", "ú": "u", "ç": "c"}
+	for accented in map.keys():
+		folded = folded.replace(accented, map[accented])
+	return folded
 
 
 ## Quebra o texto em palavras (letras e números), ignorando pontuação.
