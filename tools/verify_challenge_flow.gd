@@ -166,11 +166,23 @@ func _initialize() -> void:
 	ok = _check("e-mail mostra os cabecalhos reais", term.output.get_parsed_text().find("Authentication-Results") != -1 and term.output.get_parsed_text().find("Reply-To") != -1) and ok
 	term._on_command_submitted("grep spf email.eml")
 	ok = _check("grep acha o resultado do SPF no cabecalho", term.output.get_parsed_text().find("spf=fail") != -1) and ok
+	term._on_command_submitted("clear")
+	term._on_command_submitted("report")
+	var list_out: String = term.output.get_parsed_text()
+	ok = _check("'report' sozinho lista o que procurar (3 de 5)", list_out.find("O que procurar") != -1 and list_out.find("precisa de 3 de 5") != -1) and ok
+	ok = _check("a lista tem 5 perguntas e nenhuma isca", list_out.find("A autenticação do remetente") != -1 and list_out.find("A pressão no texto") != -1 and list_out.find("Message-ID") == -1) and ok
+	ok = _check("a lista nao entrega a resposta (sem 'spf=fail')", list_out.find("spf=fail") == -1) and ok
+	ok = _check("listar nao conta como tentativa", session.get_stats("c_email")["attempts"] == 0) and ok
+	term._on_command_submitted("clear")
 	term._on_command_submitted("report xyzabc")
+	ok = _check("palavra desconhecida sugere o 'report' sozinho", term.output.get_parsed_text().find("'report' sozinho") != -1) and ok
 	ok = _check("palavra desconhecida nao conta como erro", session.get_stats("c_email")["errors"] == 0) and ok
 	term._on_command_submitted("report message-id")
 	ok = _check("campo normal (isca) conta como erro", session.get_stats("c_email")["errors"] == 1 and not missions.is_completed("m12")) and ok
 	term._on_command_submitted("report SPF")
+	term._on_command_submitted("clear")
+	term._on_command_submitted("report")
+	ok = _check("a lista marca o achado ja reportado com [x]", term.output.get_parsed_text().find("[x] A autenticação do remetente") != -1 and term.output.get_parsed_text().find("[ ] Para onde vai a resposta") != -1) and ok
 	term._on_command_submitted("report dkim")
 	ok = _check("mesmo indicio duas vezes nao conta duas", term._report_found.size() == 1) and ok
 	term._on_command_submitted("report reply-to")
@@ -192,12 +204,17 @@ func _initialize() -> void:
 	for n in range(1, 7):
 		term._on_command_submitted("cat msg%d.eml" % n)
 	ok = _check("as 6 mensagens abrem", term.output.get_parsed_text().find("Reuniao de equipe amanha") != -1 and term.output.get_parsed_text().find("cartoes-presente") != -1) and ok
+	term._on_command_submitted("report")
+	ok = _check("triagem: a lista pede o numero da mensagem e nao revela quais", term.output.get_parsed_text().find("pelo número da mensagem") != -1 and term.output.get_parsed_text().find("Golpe: mensagem") == -1) and ok
 	term._on_command_submitted("report 2")
 	term._on_command_submitted("report msg4")
 	ok = _check("reportar legitima conta como erro (2 erros)", session.get_stats("c_triagem")["errors"] == 2 and not missions.is_completed("m13")) and ok
 	term._on_command_submitted("report 1")
 	term._on_command_submitted("report mensagem 3")
 	ok = _check("2 de 3 golpes: ainda nao conclui", term._report_found.size() == 2 and not missions.is_completed("m13")) and ok
+	term._on_command_submitted("clear")
+	term._on_command_submitted("report")
+	ok = _check("triagem: a lista mostra os golpes ja achados", term.output.get_parsed_text().find("[x] Golpe: mensagem 1") != -1 and term.output.get_parsed_text().find("[x] Golpe: mensagem 3") != -1) and ok
 	term._on_command_submitted("report 1")
 	ok = _check("golpe repetido nao conta duas vezes", term._report_found.size() == 2) and ok
 	term._on_command_submitted("report 5")
@@ -212,6 +229,11 @@ func _initialize() -> void:
 	ok = _check("lista os arquivos do vazamento", term.output.get_parsed_text().find("acessos_email.log") != -1 and term.output.get_parsed_text().find("lembretes.txt") != -1) and ok
 	term._on_command_submitted("grep 203.0.113.45 acessos_email.log")
 	ok = _check("grep isola as linhas do atacante", term.output.get_parsed_text().find("action=forward_all") != -1 and term.output.get_parsed_text().find("07:50:01") == -1) and ok
+	term._on_command_submitted("clear")
+	term._on_command_submitted("report")
+	var leak_list: String = term.output.get_parsed_text()
+	ok = _check("vazamento: a lista tem 5 perguntas (4 de 5)", leak_list.find("precisa de 4 de 5") != -1 and leak_list.find("Quem atacou") != -1 and leak_list.find("A defesa que barraria o login") != -1) and ok
+	ok = _check("vazamento: a lista nao mostra o IP nem a isca", leak_list.find("203.0.113.45") == -1 and leak_list.find("198.51.100.23") == -1) and ok
 	term._on_command_submitted("report ip do marcos")
 	ok = _check("IP habitual (isca) conta como erro", session.get_stats("c_vazamento")["errors"] == 1) and ok
 	term._on_command_submitted("report 203.0.113.45")

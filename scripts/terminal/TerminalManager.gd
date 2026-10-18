@@ -327,7 +327,8 @@ func _cmd_help() -> void:
 		_print_line("  login <usuário> <senha> - entra no painel do roteador")
 		_print_line("  passwd <nova senha>     - troca a senha do painel (depois do login)")
 	elif challenge_type == "report":
-		_print_line("  report <indício>    - aponta um indício do problema que você encontrou")
+		_print_line("  report              - mostra o que você precisa achar neste desafio")
+		_print_line("  report <achado>     - aponta, em poucas palavras, algo que você encontrou")
 	if not PhoneManager.get_all_clues(_hint_mission_id()).is_empty():
 		_print_line("  dica                - revela a próxima dica da missão")
 	_print_line("  exit                - fecha o terminal")
@@ -576,8 +577,9 @@ func _looks_like_sqli_bypass(senha: String) -> bool:
 ## mensagem mostrada. O desafio termina ao reportar "required" indícios.
 
 func _cmd_report_evidence(answer: String) -> void:
+	# 'report' sozinho mostra o que falta achar, sem entregar as respostas.
 	if answer.strip_edges() == "":
-		_print_line("Uso: report <indício que você encontrou>")
+		_print_report_checklist()
 		return
 
 	var targets: Array = _challenge["targets"]
@@ -585,6 +587,7 @@ func _cmd_report_evidence(answer: String) -> void:
 	if index == -1:
 		# Palavra que não bate com nada: não conta como erro, só pede para reler.
 		_print_line(String(_challenge.get("unknown_message", "Isso não bate com nada do material. Releia os arquivos e tente outro indício.")))
+		_print_rich("[color=%s]Dica: digite 'report' sozinho para ver o que procurar.[/color]" % C_DIM)
 		return
 
 	var target: Dictionary = targets[index]
@@ -605,15 +608,42 @@ func _cmd_report_evidence(answer: String) -> void:
 	if _report_found.size() >= required:
 		_print_line("")
 		_finish_challenge(String(_challenge.get("success_message", "Objetivo cumprido.")))
+	else:
+		_print_rich("[color=%s]Digite 'report' sozinho para ver o que falta.[/color]" % C_DIM)
 
 
-## Quantos indícios o jogador precisa reportar (padrão: todos os "hit").
-func _report_required() -> int:
+## Lista o que o jogador precisa achar, uma pergunta por indício verdadeiro
+## ("label" no alvo), marcando os que já foram reportados. Não mostra as
+## respostas, e as iscas não aparecem.
+func _print_report_checklist() -> void:
+	var required: int = _report_required()
+	_print_rich("[color=%s][b]O que procurar[/b][/color] (precisa de %d de %d):" % [C_WHITE, required, _report_hits_total()])
+	var number := 0
+	for i in range(_challenge["targets"].size()):
+		var target: Dictionary = _challenge["targets"][i]
+		if not bool(target.get("hit", false)):
+			continue
+		number += 1
+		var label: String = String(target.get("label", "Achado %d" % number))
+		if _report_found.has(i):
+			label = String(target.get("found_label", label))
+			_print_rich("  [color=%s][lb]x[rb] %s[/color]" % [C_GREEN, _escape(label)])
+		else:
+			_print_rich("  [lb] [rb] %s" % _escape(label))
+	_print_line(String(_challenge.get("report_help", "Escreva em poucas palavras o que achou: report <achado>. O jogo entende sinônimos; se não reconhecer, tente outra palavra.")))
+
+
+func _report_hits_total() -> int:
 	var hits := 0
 	for target in _challenge["targets"]:
 		if bool(target.get("hit", false)):
 			hits += 1
-	return int(_challenge.get("required", hits))
+	return hits
+
+
+## Quantos indícios o jogador precisa reportar (padrão: todos os "hit").
+func _report_required() -> int:
+	return int(_challenge.get("required", _report_hits_total()))
 
 
 ## Acha o alvo cuja palavra-chave bate com o que o jogador digitou. Palavra
