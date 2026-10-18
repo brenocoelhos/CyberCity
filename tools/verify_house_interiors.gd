@@ -144,6 +144,29 @@ func _initialize() -> void:
 				in_chapter = true
 		ok = _check("%s esta em algum capitulo" % mission_id, in_chapter) and ok
 
+	# Cada missao esta em exatamente um capitulo, e os capitulos seguem a curva
+	# de dificuldade (nivel mais alto de cada capitulo nunca diminui).
+	var difficulty := {"m01": 1, "m02": 1, "m03": 1, "m04": 1, "m05": 1, "m06": 2, "m12": 2, "m07": 3, "m08": 3, "m11": 3, "m13": 3, "m16": 3,
+		"m09": 4, "m10": 4, "m14": 4, "m17": 4, "m15": 5}
+	var seen := {}
+	var previous_peak: int = 0
+	var curve_ok: bool = true
+	for chapter_id in campaign.chapters.keys():
+		var peak: int = 0
+		for mission_id in campaign.chapters[chapter_id]["missions"]:
+			seen[mission_id] = int(seen.get(mission_id, 0)) + 1
+			peak = maxi(peak, int(difficulty.get(mission_id, 99)))
+		if peak < previous_peak:
+			curve_ok = false
+		previous_peak = peak
+	var missions_manager = root.get_node("MissionManager")
+	var each_once: bool = seen.size() == missions_manager.missions.size()
+	for mission_id in missions_manager.missions.keys():
+		if int(seen.get(mission_id, 0)) != 1:
+			each_once = false
+	ok = _check("campanha: cada uma das 17 missoes esta em exatamente um capitulo", each_once and campaign.chapters.size() == 7) and ok
+	ok = _check("campanha: os capitulos seguem a curva de dificuldade (m15, a invasao, e o ultimo)", curve_ok and campaign.chapters["ch7"]["missions"] == ["m15"]) and ok
+
 	transition.interior_config = {}
 	print("RESULTADO: ", "TUDO OK" if ok else "FALHOU")
 	quit(0 if ok else 1)

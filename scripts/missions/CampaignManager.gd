@@ -1,14 +1,15 @@
 extends Node
 ## CampaignManager.gd — Autoload
-## Camada narrativa fina por cima do que já existe: agrupa as 10
-## missões em 5 capítulos + um capítulo final, mostrando uma pequena
-## introdução quando o capítulo começa e uma mensagem de fechamento
-## quando termina. Não cria nenhum sistema novo — só encadeia diálogos
-## (DialogueManager) reagindo a missões concluídas (MissionManager).
+## Camada narrativa fina por cima do que já existe: agrupa as 17 missões em
+## 7 capítulos + um capítulo final, mostrando uma pequena introdução quando o
+## capítulo começa e uma mensagem de fechamento quando termina. Não cria
+## nenhum sistema novo: só encadeia diálogos (DialogueManager) reagindo a
+## missões concluídas (MissionManager).
 ##
-## O mapeamento dos capítulos segue os locais onde cada missão já
-## acontece no jogo (casa → empresa → rede/firewall → centro de
-## tecnologia → loja), então nenhuma missão precisou mudar de lugar.
+## A ORDEM dos capítulos segue a curva de dificuldade/realismo do jogo: os
+## quizzes de conceitos primeiro, depois fraude e rede, depois exploração e
+## acessos, e por fim o teste de invasão completo (m15). Cada missão continua
+## no lugar do mapa onde acontece, então nenhuma missão mudou de local.
 
 signal chapter_unlocked(chapter_id: String)
 signal game_completed
@@ -28,31 +29,17 @@ var chapters: Dictionary = {
 	},
 	"ch2": {
 		"title": "CAPÍTULO 2 — A EMPRESA",
-		"missions": ["m02", "m03", "m14"],
+		"missions": ["m02", "m03"],
 		"intro": PackedStringArray([
 			"Uma empresa da cidade pediu ajuda com segurança básica de acesso.",
 			"Vá até uma empresa e use os computadores das estações de trabalho.",
-			"Um morador da Casa 4 também está preocupado: uma loja vazou senhas e ele usa a mesma em tudo.",
 		]),
 		"outro": PackedStringArray([
 			"Senhas e hash não têm mais segredo pra você.",
 		]),
 	},
 	"ch3": {
-		"title": "CAPÍTULO 3 — REDE E PERÍMETRO",
-		"missions": ["m06", "m07", "m11", "m16", "m17"],
-		"intro": PackedStringArray([
-			"A mesma empresa suspeita de um dispositivo estranho na rede.",
-			"Investigue o Servidor da empresa e configure o Firewall do Centro de Tecnologia.",
-			"Uma moradora da Casa 6 também reclama que o wi-fi de casa está estranho.",
-			"E a DataSoft quer saber o que um visitante qualquer descobre sobre o site dela e até onde um acesso emprestado a um estagiário chegaria.",
-		]),
-		"outro": PackedStringArray([
-			"Rede mapeada e perímetro protegido. A cidade está mais segura.",
-		]),
-	},
-	"ch4": {
-		"title": "CAPÍTULO 4 — CRIPTOGRAFIA E FRAUDE",
+		"title": "CAPÍTULO 3 — CRIPTOGRAFIA E FRAUDE",
 		"missions": ["m04", "m05", "m12", "m13"],
 		"intro": PackedStringArray([
 			"O Centro de Tecnologia guarda uma mensagem cifrada e um caso de phishing por resolver.",
@@ -61,19 +48,53 @@ var chapters: Dictionary = {
 			"E o morador da Casa 3 recebeu seis mensagens de uma vez e não sabe em quais confiar.",
 		]),
 		"outro": PackedStringArray([
-			"Cifra decifrada, fraude identificada. Só falta a loja.",
+			"Cifra decifrada, fraudes identificadas. Agora é hora de olhar a rede.",
+		]),
+	},
+	"ch4": {
+		"title": "CAPÍTULO 4 — REDE E PERÍMETRO",
+		"missions": ["m06", "m07", "m11", "m16"],
+		"intro": PackedStringArray([
+			"A mesma empresa suspeita de um dispositivo estranho na rede.",
+			"Investigue o Servidor da empresa e configure o Firewall do Centro de Tecnologia.",
+			"Uma moradora da Casa 6 também reclama que o wi-fi de casa está estranho.",
+			"E a DataSoft quer saber o que um visitante qualquer descobre sobre o site dela.",
+		]),
+		"outro": PackedStringArray([
+			"Rede mapeada e perímetro protegido. A cidade está mais segura.",
 		]),
 	},
 	"ch5": {
 		"title": "CAPÍTULO 5 — A APLICAÇÃO",
-		"missions": ["m08", "m09", "m10", "m15"],
+		"missions": ["m08", "m09", "m10"],
 		"intro": PackedStringArray([
 			"A Loja Eletrônica tem um sistema interno cheio de falhas.",
 			"Analise os logs e teste as vulnerabilidades dos computadores da loja.",
-			"Por fim, a Orion Logística pede um teste de invasão completo, feito no Terminal Público da praça.",
 		]),
 		"outro": PackedStringArray([
 			"Todas as falhas da aplicação foram documentadas e explicadas.",
+		]),
+	},
+	"ch6": {
+		"title": "CAPÍTULO 6 — ACESSOS E SEGREDOS",
+		"missions": ["m14", "m17"],
+		"intro": PackedStringArray([
+			"Um morador da Casa 4 está preocupado: uma loja vazou senhas e ele usa a mesma em tudo.",
+			"E a DataSoft emprestou um acesso comum a um estagiário e quer saber até onde ele chegaria.",
+		]),
+		"outro": PackedStringArray([
+			"Senhas repetidas e segredos esquecidos: pequenos descuidos abrem portas grandes.",
+		]),
+	},
+	"ch7": {
+		"title": "CAPÍTULO 7 — O TESTE DE INVASÃO",
+		"missions": ["m15"],
+		"intro": PackedStringArray([
+			"A Orion Logística pede um teste de invasão completo, feito no Terminal Público da praça.",
+			"Use tudo o que aprendeu: reconhecimento, credenciais achadas, movimento entre máquinas e, no fim, um relatório.",
+		]),
+		"outro": PackedStringArray([
+			"Teste concluído e documentado. A Orion agora sabe onde estava vulnerável.",
 		]),
 	},
 }
