@@ -129,6 +129,26 @@ func _initialize() -> void:
 	ok = _check("keyword curta nao vale dentro de outra palavra: '23' e 'x2fax'", term._find_report_target("23", kw_targets) == -1 and term._find_report_target("x2fax", kw_targets) == -1) and ok
 	ok = _check("keyword longa vale dentro do texto: 'trocar a senha'", term._find_report_target("trocar a senha", kw_targets) == 1) and ok
 
+	# --- frases naturais devem achar o alvo certo (indice do alvo em "targets") ---
+	var data = root.get_node("ChallengeData")
+	var mail_targets: Array = data.CHALLENGES["c_email"]["targets"]
+	var mail_cases := {
+		"a autenticação falhou": 0, "o servidor reprovou o SPF": 0, "o reply-to é outro": 1, "manda a resposta para outro lugar": 1,
+		"o domínio é falso": 2, "o remetente imita o banco": 2, "o link leva a outro site": 3, "o endereço do botão": 3,
+		"tem urgência": 4, "ameaça de bloqueio em 24 horas": 4, "message-id": 5, "a data": 5,
+	}
+	for phrase in mail_cases.keys():
+		ok = _check("e-mail: '%s' -> alvo %d" % [phrase, mail_cases[phrase]], term._find_report_target(phrase, mail_targets) == mail_cases[phrase]) and ok
+	var leak_targets: Array = data.CHALLENGES["c_vazamento"]["targets"]
+	var leak_cases := {
+		"ele usa a mesma senha em tudo": 0, "senha repetida": 0, "reutilização de senha": 0, "credential stuffing": 0,
+		"o ip 203.0.113.45": 1, "o atacante da Romênia": 1, "uma regra de encaminhamento": 2, "ele redirecionou os e-mails": 2,
+		"verificação em duas etapas": 3, "ativar o MFA": 3, "autenticação de dois fatores": 3, "usar um gerenciador de senhas": 4,
+		"uma senha única para cada site": 4, "ip habitual do marcos": 5,
+	}
+	for phrase in leak_cases.keys():
+		ok = _check("vazamento: '%s' -> alvo %d" % [phrase, leak_cases[phrase]], term._find_report_target(phrase, leak_targets) == leak_cases[phrase]) and ok
+
 	# --- roteador domestico (login + passwd) ---
 	term.open("c_roteador", "casa-6")
 	ok = _check("abrir o roteador ativa a m11", missions.is_active("m11")) and ok
