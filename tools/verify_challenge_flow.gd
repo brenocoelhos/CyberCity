@@ -385,6 +385,28 @@ func _initialize() -> void:
 	term._on_command_submitted("curl http://192.168.1.50/legado/config.php.bak")
 	ok = _check("abrir o backup exposto conclui a m16", missions.is_completed("m16") and not term.is_active()) and ok
 
+	# --- acesso emprestado (ssh, ls -a, senha no historico de comandos) ---
+	term.open("c_acesso", "datasoft")
+	ok = _check("abrir a estacao ativa a m17", missions.is_active("m17")) and ok
+	ok = _check("guia 1: a abertura ensina ssh, ls -a e exit", term._challenge_hint().find("ssh usuário@máquina") != -1 and term._challenge_hint().find("ls -a") != -1) and ok
+	term._on_command_submitted("cat chamado.txt")
+	ok = _check("o chamado traz o acesso emprestado", term.output.get_parsed_text().find("Estagio#01") != -1) and ok
+	term._on_command_submitted("ssh estagio@dev01")
+	term._on_command_submitted("Estagio#01")
+	ok = _check("o acesso emprestado entra na dev01", term._sim.current_host == "dev01" and term._sim.current_user == "estagio") and ok
+	term._on_command_submitted("clear")
+	term._on_command_submitted("ls")
+	ok = _check("ls comum esconde o historico", term.output.get_parsed_text().find("leiame.txt") != -1 and term.output.get_parsed_text().find(".bash_history") == -1) and ok
+	term._on_command_submitted("ls -a")
+	ok = _check("ls -a mostra o .bash_history", term.output.get_parsed_text().find(".bash_history") != -1) and ok
+	term._on_command_submitted("grep ssh .bash_history")
+	ok = _check("grep acha a senha esquecida no historico", term.output.get_parsed_text().find("Bkp#2024!") != -1) and ok
+	term._on_command_submitted("ssh backup@arquivos01")
+	term._on_command_submitted("Bkp#2024!")
+	ok = _check("a senha do historico abre o arquivos01", term._sim.current_host == "arquivos01") and ok
+	term._on_command_submitted("cat flag.txt")
+	ok = _check("ler a flag conclui a m17 (sem relatorio) e fecha o terminal", missions.is_completed("m17") and not term.is_active()) and ok
+
 	# --- dica no computador da casa (sem desafio): usa as pistas da m01 ---
 	term.open("", "casa-1")
 	var before: int = phone.get_revealed_clues("m01").size()

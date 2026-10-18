@@ -416,6 +416,51 @@ const CHALLENGES := {
 		],
 		"explanation": "Visitantes comuns podem ler o que o servidor entrega, e o robots.txt não protege nada: ele só pede aos buscadores que ignorem os caminhos, e acaba listando o que a empresa queria esconder. Comentários esquecidos no HTML e arquivos de backup (.bak, .old) com senhas em texto puro são achados clássicos. Remova arquivos antigos do servidor, nunca deixe credenciais em arquivos acessíveis e restrinja o acesso a pastas internas.",
 	},
+
+	## Primeiro contato com 'ssh' e com arquivos ocultos (Nível 4): a partir de
+	## um acesso comum, o jogador encontra uma senha esquecida no histórico de
+	## comandos e chega ao servidor de arquivos. Ensina 'ssh usuário@máquina',
+	## 'ls -a' e que .bash_history guarda tudo o que foi digitado.
+	"c_acesso": {
+		"type": "hosts",
+		"title": "Acesso emprestado",
+		"mission": "m17",
+		"guidance": 1,
+		"intro": "Teste interno da DataSoft. Leia o chamado com 'cat chamado.txt'. Para entrar em outra máquina use 'ssh usuário@máquina'; dentro dela, 'ls -a' lista também os arquivos ocultos; 'exit' sai.",
+		"files": {
+			"chamado.txt": "CHAMADO 4471 — Acesso emprestado\n\nO estagiario deixou o usuario 'estagio' (senha: Estagio#01) na maquina dev01\npara um teste.\n\nEscopo autorizado: dev01 e arquivos01 (somente leitura).\nObjetivo: verificar se um acesso comum chega aos dados do servidor de arquivos.",
+		},
+		"hosts": {
+			"dev01": {
+				"ip": "192.168.1.60",
+				"ports": "22/ssh",
+				"scope": true,
+				"users": {"estagio": "Estagio#01"},
+				"files": {
+					"leiame.txt": "Maquina de desenvolvimento. Nao guarde segredos aqui.",
+					".bash_history": "ls\ncd projetos\ngit pull\nsshpass -p 'Bkp#2024!' ssh backup@arquivos01\nexit\nclear",
+				},
+			},
+			"arquivos01": {
+				"ip": "192.168.1.61",
+				"ports": "22/ssh",
+				"scope": true,
+				"users": {"backup": "Bkp#2024!"},
+				"files": {
+					"financeiro_2024.csv": "mes,receita\njan,120000\nfev,134500\nmar,129800",
+					"flag.txt": "FLAG{datasoft-arquivos01-71c2}",
+				},
+			},
+		},
+		"win_file": {"host": "arquivos01", "file": "flag.txt"},
+		"success_message": "Objetivo cumprido: um acesso comum chegou ao servidor de arquivos.",
+		"hints": [
+			"Leia o chamado ('cat chamado.txt') e entre na máquina dev01 com o acesso emprestado: 'ssh estagio@dev01'. A senha pedida está no chamado.",
+			"Dentro da máquina, 'ls -a' lista também os arquivos ocultos (os que começam com ponto). O shell guarda tudo o que foi digitado num arquivo de histórico: quem digita uma senha na linha de comando a deixa lá.",
+			"O arquivo .bash_history do dev01 tem um comando com a senha do usuário backup do arquivos01. Use-a: 'ssh backup@arquivos01', e leia o flag.txt.",
+		],
+		"explanation": "O shell guarda os comandos digitados num arquivo de histórico (.bash_history), então qualquer senha escrita na linha de comando fica gravada ali, à vista de quem ganhar acesso à conta. Um acesso comum e emprestado já bastou para chegar a um servidor com dados importantes. Evite senhas em comandos (use chaves SSH ou peça a senha de forma interativa), limpe o histórico e remova acessos que não são mais necessários.",
+	},
 }
 
 

@@ -206,6 +206,18 @@ var missions: Dictionary = {
 		"concept": "Exposição de arquivos",
 		"explanation": "Visitantes comuns podem ler o que o servidor entrega, e o robots.txt não protege nada: ele só pede aos buscadores que ignorem os caminhos, e acaba listando o que a empresa queria esconder. Comentários esquecidos no HTML e arquivos de backup (.bak, .old) com senhas em texto puro são achados clássicos. Remova arquivos antigos do servidor, nunca deixe credenciais em arquivos acessíveis e restrinja o acesso a pastas internas.",
 	},
+	"m17": {
+		"id": "m17",
+		"title": "Missão 17 — Acesso emprestado",
+		"description": "A DataSoft emprestou um acesso comum a um estagiário e quer saber até onde ele chegaria.",
+		"objective": "Na DataSoft, Estação 2: leia o chamado, entre na máquina com 'ssh usuário@máquina', procure o que ficou esquecido (inclusive arquivos ocultos com 'ls -a') e chegue à flag do servidor de arquivos.",
+		"location": "DataSoft (Estação 2)",
+		"state": State.AVAILABLE,
+		"xp": 300,
+		"difficulty": "Difícil",
+		"concept": "Segredos no histórico",
+		"explanation": "O shell guarda os comandos digitados num arquivo de histórico (.bash_history), então qualquer senha escrita na linha de comando fica gravada ali, à vista de quem ganhar acesso à conta. Um acesso comum e emprestado já bastou para chegar a um servidor com dados importantes. Evite senhas em comandos (use chaves SSH ou peça a senha de forma interativa), limpe o histórico e remova acessos que não são mais necessários.",
+	},
 }
 
 ## Estado inicial de cada missão, guardado para o "Novo jogo".
