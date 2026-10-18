@@ -134,9 +134,10 @@ func _initialize() -> void:
 	ok = _check("DataSoft configura os computadores do escritorio", bool(company.get("configure_interior", false)) and Dictionary(company.get("interior_computers", {})).get("Computer1") == "c_site") and ok
 	ok = _check("DataSoft nao repete m02, m03 e m06 da TechCorp", not ("m02" in company.get("mission_ids", PackedStringArray()))) and ok
 	ok = _check("o desafio do Computer1 da DataSoft existe", Dictionary(company.get("interior_computers", {})).get("Computer1") in challenge_ids) and ok
+	ok = _check("DataSoft Computer2 abre o acesso emprestado (m17)", Dictionary(company.get("interior_computers", {})).get("Computer2") == "c_acesso" and "m17" in company.get("mission_ids", PackedStringArray())) and ok
 	# Toda missao de casa pertence a um capitulo (senao o jogo nunca a exige).
 	var campaign = root.get_node("CampaignManager")
-	for mission_id in ["m11", "m12", "m13", "m14"]:
+	for mission_id in ["m11", "m12", "m13", "m14", "m15", "m16", "m17"]:
 		var in_chapter := false
 		for chapter in campaign.chapters.values():
 			if mission_id in chapter["missions"]:

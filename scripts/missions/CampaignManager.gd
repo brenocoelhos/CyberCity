@@ -40,12 +40,12 @@ var chapters: Dictionary = {
 	},
 	"ch3": {
 		"title": "CAPÍTULO 3 — REDE E PERÍMETRO",
-		"missions": ["m06", "m07", "m11", "m16"],
+		"missions": ["m06", "m07", "m11", "m16", "m17"],
 		"intro": PackedStringArray([
 			"A mesma empresa suspeita de um dispositivo estranho na rede.",
 			"Investigue o Servidor da empresa e configure o Firewall do Centro de Tecnologia.",
 			"Uma moradora da Casa 6 também reclama que o wi-fi de casa está estranho.",
-			"E a DataSoft quer saber o que um visitante qualquer descobre sobre o site dela.",
+			"E a DataSoft quer saber o que um visitante qualquer descobre sobre o site dela e até onde um acesso emprestado a um estagiário chegaria.",
 		]),
 		"outro": PackedStringArray([
 			"Rede mapeada e perímetro protegido. A cidade está mais segura.",
@@ -66,10 +66,11 @@ var chapters: Dictionary = {
 	},
 	"ch5": {
 		"title": "CAPÍTULO 5 — A APLICAÇÃO",
-		"missions": ["m08", "m09", "m10"],
+		"missions": ["m08", "m09", "m10", "m15"],
 		"intro": PackedStringArray([
 			"A Loja Eletrônica tem um sistema interno cheio de falhas.",
 			"Analise os logs e teste as vulnerabilidades dos computadores da loja.",
+			"Por fim, a Orion Logística pede um teste de invasão completo, feito no Terminal Público da praça.",
 		]),
 		"outro": PackedStringArray([
 			"Todas as falhas da aplicação foram documentadas e explicadas.",

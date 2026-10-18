@@ -87,11 +87,11 @@ position = Vector2(1680, 384)
 facade = ExtResource("facade_7")
 building_name = "DataSoft Sistemas"
 interior_path = "res://scenes/interiors/OfficeInterior.tscn"
-mission_ids = PackedStringArray("m16")
+mission_ids = PackedStringArray("m16", "m17")
 configure_interior = true
 interior_computers = {
 "Computer1": "c_site",
-"Computer2": "",
+"Computer2": "c_acesso",
 "Computer3": ""
 }
 
