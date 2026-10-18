@@ -28,10 +28,11 @@ var chapters: Dictionary = {
 	},
 	"ch2": {
 		"title": "CAPÍTULO 2 — A EMPRESA",
-		"missions": ["m02", "m03"],
+		"missions": ["m02", "m03", "m14"],
 		"intro": PackedStringArray([
 			"Uma empresa da cidade pediu ajuda com segurança básica de acesso.",
 			"Vá até uma empresa e use os computadores das estações de trabalho.",
+			"Um morador da Casa 4 também está preocupado: uma loja vazou senhas e ele usa a mesma em tudo.",
 		]),
 		"outro": PackedStringArray([
 			"Senhas e hash não têm mais segredo pra você.",

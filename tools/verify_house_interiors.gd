@@ -98,7 +98,8 @@ func _initialize() -> void:
 	ok = _check("Casa 6: roteador, m11 e !", houses["Casa6"].get("interior_computer_challenge") == "c_roteador" and houses["Casa6"].get("interior_npc_mission") == "m11" and "m11" in houses["Casa6"].get("mission_ids", PackedStringArray())) and ok
 	ok = _check("Casa 2: e-mail, m12 e !", houses["Casa2"].get("interior_computer_challenge") == "c_email" and houses["Casa2"].get("interior_npc_mission") == "m12" and "m12" in houses["Casa2"].get("mission_ids", PackedStringArray())) and ok
 	ok = _check("Casa 3: triagem, m13 e !", houses["Casa3"].get("interior_computer_challenge") == "c_triagem" and houses["Casa3"].get("interior_npc_mission") == "m13" and "m13" in houses["Casa3"].get("mission_ids", PackedStringArray())) and ok
-	for house_name in ["Casa4", "Casa5"]:
+	ok = _check("Casa 4: vazamento, m14 e !", houses["Casa4"].get("interior_computer_challenge") == "c_vazamento" and houses["Casa4"].get("interior_npc_mission") == "m14" and "m14" in houses["Casa4"].get("mission_ids", PackedStringArray())) and ok
+	for house_name in ["Casa5"]:
 		var p: Dictionary = houses[house_name]
 		ok = _check("%s: so historia (NPC com falas, sem computador, sem missao)" % house_name, String(p.get("interior_npc_name", "")) != "" and PackedStringArray(p.get("interior_npc_lines", PackedStringArray())).size() >= 1 and String(p.get("interior_computer_challenge", "")) == "" and String(p.get("interior_npc_mission", "")) == "" and not p.has("mission_ids")) and ok
 	ok = _check("Casa 5 trancada ate a m10", bool(houses["Casa5"].get("starts_locked", false)) and houses["Casa5"].get("unlock_mission") == "m10") and ok
@@ -106,6 +107,15 @@ func _initialize() -> void:
 	ok = _check("o desafio do computador da Casa 6 existe", houses["Casa6"].get("interior_computer_challenge") in challenge_ids) and ok
 	ok = _check("o desafio do computador da Casa 2 existe", houses["Casa2"].get("interior_computer_challenge") in challenge_ids) and ok
 	ok = _check("o desafio do computador da Casa 3 existe", houses["Casa3"].get("interior_computer_challenge") in challenge_ids) and ok
+	ok = _check("o desafio do computador da Casa 4 existe", houses["Casa4"].get("interior_computer_challenge") in challenge_ids) and ok
+	# Toda missao de casa pertence a um capitulo (senao o jogo nunca a exige).
+	var campaign = root.get_node("CampaignManager")
+	for mission_id in ["m11", "m12", "m13", "m14"]:
+		var in_chapter := false
+		for chapter in campaign.chapters.values():
+			if mission_id in chapter["missions"]:
+				in_chapter = true
+		ok = _check("%s esta em algum capitulo" % mission_id, in_chapter) and ok
 
 	transition.interior_config = {}
 	print("RESULTADO: ", "TUDO OK" if ok else "FALHOU")

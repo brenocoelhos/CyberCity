@@ -104,9 +104,12 @@ interior_computer_challenge = "c_triagem"
 position = Vector2(368, 736)
 facade = ExtResource("facade_3")
 building_name = "Casa 4"
+mission_ids = PackedStringArray("m14")
 configure_interior = true
 interior_npc_name = "Vizinho"
-interior_npc_lines = PackedStringArray("Tenho visto uma movimentação estranha na rede da cidade, sempre de madrugada.", "Parece que alguém está testando as portas dos sistemas, uma por uma.", "Quem quer que seja, está bem organizado. Tome cuidado.")
+interior_npc_lines = PackedStringArray("Recebi um aviso: a LojaFácil foi invadida e vazaram os dados dos clientes.", "Eu uso a mesma senha em quase tudo, porque assim não esqueço.", "Dá uma olhada no computador: veja se alguém entrou no meu e-mail e o que fizeram lá.")
+interior_npc_mission = "m14"
+interior_computer_challenge = "c_vazamento"
 
 [node name="Casa5" parent="Buildings" unique_id=2113393911 instance=ExtResource("3")]
 position = Vector2(528, 736)
