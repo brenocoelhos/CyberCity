@@ -125,6 +125,15 @@ func _initialize() -> void:
 	ok = _check("o desafio do computador da Casa 2 existe", houses["Casa2"].get("interior_computer_challenge") in challenge_ids) and ok
 	ok = _check("o desafio do computador da Casa 3 existe", houses["Casa3"].get("interior_computer_challenge") in challenge_ids) and ok
 	ok = _check("o desafio do computador da Casa 4 existe", houses["Casa4"].get("interior_computer_challenge") in challenge_ids) and ok
+	# --- DataSoft: computadores proprios (nao repete o que a TechCorp tem) ---
+	var company := {}
+	for i in range(state.get_node_count()):
+		if String(state.get_node_path(i)) == "./Buildings/Empresa2":
+			for p in range(state.get_node_property_count(i)):
+				company[String(state.get_node_property_name(i, p))] = state.get_node_property_value(i, p)
+	ok = _check("DataSoft configura os computadores do escritorio", bool(company.get("configure_interior", false)) and Dictionary(company.get("interior_computers", {})).get("Computer1") == "c_site") and ok
+	ok = _check("DataSoft nao repete m02, m03 e m06 da TechCorp", not ("m02" in company.get("mission_ids", PackedStringArray()))) and ok
+	ok = _check("o desafio do Computer1 da DataSoft existe", Dictionary(company.get("interior_computers", {})).get("Computer1") in challenge_ids) and ok
 	# Toda missao de casa pertence a um capitulo (senao o jogo nunca a exige).
 	var campaign = root.get_node("CampaignManager")
 	for mission_id in ["m11", "m12", "m13", "m14"]:

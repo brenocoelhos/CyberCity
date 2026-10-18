@@ -40,11 +40,12 @@ var chapters: Dictionary = {
 	},
 	"ch3": {
 		"title": "CAPÍTULO 3 — REDE E PERÍMETRO",
-		"missions": ["m06", "m07", "m11"],
+		"missions": ["m06", "m07", "m11", "m16"],
 		"intro": PackedStringArray([
 			"A mesma empresa suspeita de um dispositivo estranho na rede.",
 			"Investigue o Servidor da empresa e configure o Firewall do Centro de Tecnologia.",
 			"Uma moradora da Casa 6 também reclama que o wi-fi de casa está estranho.",
+			"E a DataSoft quer saber o que um visitante qualquer descobre sobre o site dela.",
 		]),
 		"outro": PackedStringArray([
 			"Rede mapeada e perímetro protegido. A cidade está mais segura.",
