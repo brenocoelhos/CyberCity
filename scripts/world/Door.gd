@@ -13,6 +13,9 @@ extends Area2D
 ## indicada for concluída (demonstra o desbloqueio de áreas).
 @export var unlock_after_mission: String = ""
 
+## O que o interior deve ter (preenchido pelo Building). Ver SceneTransition.
+var interior_config: Dictionary = {}
+
 @onready var prompt: Label = $PromptLabel
 
 var _player_in_range: bool = false
@@ -55,4 +58,4 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event.is_action_pressed("interact"):
 		SoundManager.play("interact")
-		SceneTransition.enter_building(interior_scene_path, building_title, global_position + Vector2(0, 40))
+		SceneTransition.enter_building(interior_scene_path, building_title, global_position + Vector2(0, 40), interior_config)

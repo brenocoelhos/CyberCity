@@ -19,6 +19,20 @@ extends StaticBody2D
 ## capítulo atual (ou está em andamento), aparece um "!" sobre o prédio.
 @export var mission_ids: PackedStringArray = PackedStringArray()
 
+@export_group("Dentro da casa")
+## Marque para escolher o que existe dentro do interior desta casa. Desmarcado,
+## o interior fica como está na cena (a Arte cuida do visual; aqui só se diz
+## o que funciona lá dentro).
+@export var configure_interior := false
+## Nome do NPC. Vazio = a casa fica sem NPC.
+@export var interior_npc_name := ""
+@export var interior_npc_lines: PackedStringArray = PackedStringArray()
+## Missão aceita ao conversar com o NPC (vazio = nenhuma).
+@export var interior_npc_mission := ""
+## Desafio do computador (id do ChallengeData). Vazio = a casa fica sem computador.
+@export var interior_computer_challenge := ""
+@export_group("")
+
 var _marker_tween: Tween
 
 func _ready() -> void:
@@ -28,6 +42,7 @@ func _ready() -> void:
 		$Door.building_title = building_name
 		$Door.locked = starts_locked
 		$Door.unlock_after_mission = unlock_mission
+		$Door.interior_config = _build_interior_config()
 		MissionManager.mission_started.connect(_on_missions_changed)
 		MissionManager.mission_completed.connect(_on_missions_changed)
 		CampaignManager.chapter_unlocked.connect(_on_missions_changed)
@@ -49,6 +64,17 @@ func _update_building() -> void:
 	$Door.position = Vector2(entrance_x, 10)
 	$MissionMarker.position = Vector2(-10, -size.y - 52)
 	$MissionMarker.visible = false
+
+## O que o interior deve ter. Dicionário vazio = não mexer no interior.
+func _build_interior_config() -> Dictionary:
+	if not configure_interior:
+		return {}
+	return {
+		"npc_name": interior_npc_name,
+		"npc_lines": interior_npc_lines,
+		"npc_mission": interior_npc_mission,
+		"computer_challenge": interior_computer_challenge,
+	}
 
 func _on_missions_changed(_id: String) -> void:
 	_update_marker()

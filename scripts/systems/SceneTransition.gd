@@ -18,10 +18,15 @@ var has_pending_spawn: bool = false
 ## Título mostrado dentro do interior (ex.: "Casa 2", "TechCorp Ltda").
 var interior_title: String = ""
 
+## O que o prédio pede para ter dentro do interior (NPC, computador...).
+## Vazio = o interior fica como está na cena. Ver Building.gd e InteriorBase.gd.
+var interior_config: Dictionary = {}
+
 
 ## Chamado pela porta de um prédio na cidade.
-func enter_building(interior_scene_path: String, title: String, city_return_position: Vector2) -> void:
+func enter_building(interior_scene_path: String, title: String, city_return_position: Vector2, config: Dictionary = {}) -> void:
 	interior_title = title
+	interior_config = config
 	return_spawn_position = city_return_position
 	has_pending_spawn = true
 	await Fade.fade_out()
