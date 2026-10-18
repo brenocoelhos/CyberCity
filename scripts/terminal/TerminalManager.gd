@@ -47,6 +47,9 @@ var _challenge: Dictionary = {}
 ## Estado do desafio de firewall em andamento: porta (int) -> "allow"/"block".
 var _firewall_rules: Dictionary = {}
 
+## Desafio do roteador: true depois que o jogador entrou no painel.
+var _router_logged_in: bool = false
+
 ## Nome da máquina mostrado no prompt (kali㉿<host>).
 var _host: String = "cybercity"
 ## Acumulador do efeito de digitação (frações de caractere por frame).
@@ -68,6 +71,7 @@ func open(challenge_id: String = "", host: String = "cybercity") -> void:
 	if not _challenge.is_empty():
 		ChallengeSession.begin(challenge_id)
 	_firewall_rules = {}
+	_router_logged_in = false
 	_host = host
 	_active = true
 	visible = true
@@ -116,6 +120,8 @@ func _challenge_hint() -> String:
 			intro = "Formulário de login simulado. Digite 'login <algo>' para testar."
 		"xss":
 			intro = "Campo de comentário simulado. Digite 'postar <mensagem>' para testar."
+		"router":
+			intro = "Roteador doméstico detectado. Digite 'files' e leia o manual com 'read manual.txt'."
 
 	if intro != "" and not PhoneManager.get_all_clues(_hint_mission_id()).is_empty():
 		intro += " Travou? Digite 'dica'."
@@ -273,6 +279,8 @@ func _run_command(command: String) -> void:
 			_cmd_login(rest)
 		"postar":
 			_cmd_postar(rest)
+		"passwd":
+			_cmd_passwd(rest)
 		"exit", "sair":
 			close()
 		_:
@@ -306,6 +314,9 @@ func _cmd_help() -> void:
 		_print_line("  login <senha>       - tenta autenticar no sistema simulado")
 	elif challenge_type == "xss":
 		_print_line("  postar <mensagem>   - publica um comentário no sistema simulado")
+	elif challenge_type == "router":
+		_print_line("  login <usuário> <senha> - entra no painel do roteador")
+		_print_line("  passwd <nova senha>     - troca a senha do painel (depois do login)")
 	if not PhoneManager.get_all_clues(_hint_mission_id()).is_empty():
 		_print_line("  dica                - revela a próxima dica da missão")
 	_print_line("  exit                - fecha o terminal")
@@ -505,6 +516,10 @@ func _cmd_report(args: PackedStringArray) -> void:
 ## --- Laboratório fictício de SQL Injection ---------------------------
 
 func _cmd_login(senha: String) -> void:
+	# 'login' existe em dois desafios: o SQL Injection e o roteador.
+	if String(_challenge.get("type", "")) == "router":
+		_cmd_login_router(senha)
+		return
 	if String(_challenge.get("type", "")) != "sqli":
 		_print_error("Comando não disponível neste sistema.")
 		return
@@ -535,6 +550,86 @@ func _looks_like_sqli_bypass(senha: String) -> bool:
 	var has_or: bool = s.find(" or ") != -1 or s.find("'or'") != -1
 	var always_true: bool = s.find("1=1") != -1 or s.find("1='1") != -1 or s.find("'1'='1") != -1
 	return has_quote and has_or and always_true
+
+
+## --- Roteador doméstico (login / passwd) ------------------------------
+## Duas etapas: entrar com a credencial de fábrica (está no manual) e depois
+## trocá-la por uma senha forte. Tudo simulado em texto.
+
+func _cmd_login_router(args_text: String) -> void:
+	var parts: PackedStringArray = args_text.split(" ", false)
+	if parts.size() < 2:
+		_print_line("Uso: login <usuário> <senha>")
+		return
+
+	_print_line("Autenticando em %s como '%s'..." % [String(_challenge["device"]), parts[0]])
+	if parts[0] == String(_challenge["default_user"]) and parts[1] == String(_challenge["default_password"]):
+		_router_logged_in = true
+		ChallengeSession.record_attempt(_challenge_id, true)
+		_print_success("Acesso concedido: o roteador ainda usa a senha de fábrica!")
+		_print_line("Qualquer pessoa com o manual entraria aqui. Troque a senha: passwd <nova senha>")
+	else:
+		ChallengeSession.record_attempt(_challenge_id, false)
+		SoundManager.play("error")
+		_print_error("Acesso negado: usuário ou senha incorretos.")
+
+
+func _cmd_passwd(nova_senha: String) -> void:
+	if String(_challenge.get("type", "")) != "router":
+		_print_error("Comando não disponível neste sistema.")
+		return
+	if not _router_logged_in:
+		_print_error("Acesso negado: entre no painel do roteador primeiro (login <usuário> <senha>).")
+		return
+	if nova_senha == "":
+		_print_line("Uso: passwd <nova senha>")
+		return
+
+	var problems: PackedStringArray = _password_problems(nova_senha)
+	if not problems.is_empty():
+		ChallengeSession.record_attempt(_challenge_id, false)
+		SoundManager.play("error")
+		_print_error("Senha recusada: ainda está fraca.")
+		for problem in problems:
+			_print_line("  - " + problem)
+		return
+
+	ChallengeSession.record_attempt(_challenge_id, true)
+	_print_line("Senha do painel alterada.")
+	_print_line("")
+	_finish_challenge("Objetivo cumprido: roteador protegido com uma senha forte.")
+
+
+## O que falta para a senha ser considerada forte (lista vazia = forte).
+func _password_problems(password: String) -> PackedStringArray:
+	var problems := PackedStringArray()
+	var min_length: int = int(_challenge.get("min_length", 10))
+	if password.length() < min_length:
+		problems.append("precisa ter pelo menos %d caracteres" % min_length)
+
+	var has_letter := false
+	var has_digit := false
+	var has_symbol := false
+	for character in password:
+		if character.to_upper() != character.to_lower():
+			has_letter = true
+		elif "0123456789".contains(character):
+			has_digit = true
+		elif character != " ":
+			has_symbol = true
+	if not has_letter:
+		problems.append("precisa de letras")
+	if not has_digit:
+		problems.append("precisa de pelo menos um número")
+	if not has_symbol:
+		problems.append("precisa de pelo menos um símbolo (como ! # $ %)")
+
+	var lowered: String = password.to_lower()
+	for obvious in [String(_challenge.get("default_password", "")), "admin", "senha", "1234"]:
+		if obvious != "" and lowered.contains(obvious):
+			problems.append("não use palavras óbvias como '%s'" % obvious)
+			break
+	return problems
 
 
 ## --- Laboratório fictício de XSS --------------------------------------

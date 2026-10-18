@@ -107,6 +107,36 @@ func _initialize() -> void:
 	ok = _check("outro computador nao lista manual.txt", term.output.get_parsed_text().find("manual.txt") == -1) and ok
 	term.close()
 
+	# --- roteador domestico (login + passwd) ---
+	term.open("c_roteador", "casa-6")
+	ok = _check("abrir o roteador ativa a m11", missions.is_active("m11")) and ok
+	term._on_command_submitted("passwd Qualquer#Coisa2026")
+	ok = _check("passwd sem login e recusado", not missions.is_completed("m11")) and ok
+	term._on_command_submitted("login admin 1234")
+	term._on_command_submitted("login root root")
+	ok = _check("login errado nao entra", not term._router_logged_in) and ok
+	term._on_command_submitted("login admin")
+	ok = _check("login sem senha nao entra", not term._router_logged_in) and ok
+	term._on_command_submitted("login admin admin")
+	ok = _check("credencial de fabrica entra", term._router_logged_in and not missions.is_completed("m11")) and ok
+	for weak in ["admin", "curta1!", "somenteletrasmuitolongas", "SemSimbolo12345", "Senha#Forte2026"]:
+		term._on_command_submitted("passwd " + weak)
+		ok = _check("senha fraca recusada: " + weak, not missions.is_completed("m11")) and ok
+	ok = _check("senha fraca nao fecha o terminal", term.is_active()) and ok
+	term._on_command_submitted("passwd Casa#Segura2026!")
+	ok = _check("senha forte conclui a m11 e fecha o terminal", missions.is_completed("m11") and not term.is_active()) and ok
+	var rs: Dictionary = session.get_stats("c_roteador")
+	ok = _check("stats roteador: 7 erros (2 logins + 5 senhas fracas) e 9 tentativas", rs["errors"] == 7 and rs["attempts"] == 9) and ok
+	term.open("c_roteador", "casa-6")
+	term._on_command_submitted("login admin admin")
+	term._on_command_submitted("passwd Casa#Segura2026!")
+	ok = _check("repetir o roteador nao fecha nem da XP", term.is_active()) and ok
+	term.close()
+	term.open("c_logs", "loja")
+	term._on_command_submitted("passwd Qualquer#Coisa2026")
+	ok = _check("passwd em outro desafio nao existe", not term._router_logged_in) and ok
+	term.close()
+
 	# --- dica no computador da casa (sem desafio): usa as pistas da m01 ---
 	term.open("", "casa-1")
 	var before: int = phone.get_revealed_clues("m01").size()
