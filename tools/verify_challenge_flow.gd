@@ -13,6 +13,8 @@ extends SceneTree
 func _initialize() -> void:
 	await process_frame
 	var term = root.get_node("TerminalManager")
+	# O historico salvo (nivel 5) nao deve gravar no arquivo do jogador durante o teste.
+	term.history_path = "user://teste_fluxo_historico.cfg"
 	var quiz = root.get_node("ChallengeManager")
 	var session = root.get_node("ChallengeSession")
 	var missions = root.get_node("MissionManager")
@@ -442,6 +444,8 @@ func _initialize() -> void:
 	session.reset()
 	ok = _check("reset limpa estatisticas", session.get_stats("c_logs")["attempts"] == 0) and ok
 
+	DirAccess.remove_absolute("user://teste_fluxo_historico.cfg")
+	term.history_path = "user://terminal_history.cfg"
 	print("RESULTADO: ", "TUDO OK" if ok else "FALHOU")
 	quit(0 if ok else 1)
 
