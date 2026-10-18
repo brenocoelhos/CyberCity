@@ -303,6 +303,81 @@ const CHALLENGES := {
 		],
 		"explanation": "Quando um site vaza senhas, os atacantes testam as mesmas combinações de e-mail e senha em outros serviços: é o credential stuffing, e só dá certo porque muita gente reutiliza a senha. Depois de entrar, costumam criar regras de encaminhamento para manter acesso mesmo se a senha for trocada. Use uma senha diferente em cada serviço (com um gerenciador de senhas), ative a verificação em duas etapas e revise as regras da conta depois de qualquer suspeita.",
 	},
+
+	## Teste de invasão autorizado em cadeia (visão do atacante). Tipo "hosts":
+	## máquinas simuladas ("hosts") com portas, usuários, arquivos e páginas.
+	## Não há etapas na tela: o que se descobre numa máquina libera a próxima.
+	## "guidance" 1 por enquanto (a abertura cita as ferramentas): é o desafio
+	## mais difícil e o jogo ainda não ensinou todas as peças antes dele. Quando
+	## a rampa de missões estiver testada, pode subir para 2 ou 3.
+	## "win_file": ler esse arquivo naquela máquina captura a flag;
+	## "final_report": depois disso o jogador entrega o 'relatorio'.
+	"c_cadeia": {
+		"type": "hosts",
+		"title": "Orion Logística",
+		"mission": "m15",
+		"guidance": 1,
+		"intro": "Terminal de teste de invasão aberto. O escopo autorizado está em notas_pentest.txt. Ferramentas: 'scan' (mapear a rede), 'curl <endereço>' (ver páginas), 'ssh usuário@máquina' (entrar), 'ls -a' (listar inclusive arquivos ocultos) e 'relatorio' (entregar no fim).",
+		"files": {
+			"notas_pentest.txt": "TESTE DE INVASAO AUTORIZADO — Orion Logistica\n\nEscopo autorizado: 192.168.1.30 (web01) e 192.168.1.40 (db01)\nFORA DO ESCOPO: 192.168.1.1 (gateway) e qualquer outro sistema\n\nObjetivo: chegar a flag do servidor de banco de dados e documentar o caminho.\nRegra: somente leitura. Nao altere nem apague nada.",
+		},
+		"hosts": {
+			"web01": {
+				"ip": "192.168.1.30",
+				"ports": "22/ssh  80/http",
+				"scope": true,
+				"users": {"deploy": "Orion@2023"},
+				"web": {
+					"/": "Orion Logistica - Portal de Rastreamento\n(site em construcao)",
+					"/robots.txt": "User-agent: *\nDisallow: /backup/",
+					"/backup/": "Index of /backup/\n  config.old    2.1K    2023-05-14",
+					"/backup/config.old": "# configuracao antiga do deploy (nao apagar)\nssh_user=deploy\nssh_pass=Orion@2023",
+				},
+				"files": {
+					"leiame.txt": "Servidor web da Orion. Deploy feito pelo usuario deploy.\nO acesso ao banco usa o usuario reports (mesma senha na maquina db01).",
+					".pgpass": "192.168.1.40:5432:orion:reports:Rep0rt#db",
+				},
+			},
+			"db01": {
+				"ip": "192.168.1.40",
+				"ports": "22/ssh  5432/postgres",
+				"scope": true,
+				"users": {"reports": "Rep0rt#db"},
+				"files": {
+					"clientes_export.csv": "id,cliente,cidade\n1,Mercado Aurora,Recife\n2,Farmacia Sol,Natal\n3,Casa Verde,Fortaleza",
+					"flag.txt": "FLAG{orion-db01-a8f3}",
+				},
+			},
+			"gateway": {
+				"ip": "192.168.1.1",
+				"ports": "53/dns  80/http",
+				"scope": false,
+				"users": {},
+				"files": {},
+			},
+		},
+		"win_file": {"host": "db01", "file": "flag.txt"},
+		"final_report": true,
+		"report_findings": [
+			"O site expunha um diretório de backup (/backup/) citado no robots.txt, com a configuração antiga do deploy.",
+			"Essa configuração tinha o usuário e a senha do SSH do web01 em texto puro.",
+			"O web01 guardava a senha do banco no arquivo oculto .pgpass, e a mesma senha servia no db01 (reutilização).",
+			"O banco de dados com os dados dos clientes ficou acessível a partir do servidor web (sem segmentação de rede).",
+		],
+		"report_recommendations": [
+			"Remover o diretório /backup/ do site e não listar arquivos sensíveis no robots.txt.",
+			"Nunca guardar credenciais em arquivos de configuração acessíveis; usar um cofre de segredos.",
+			"Usar senhas diferentes por sistema e chaves SSH em vez de senha.",
+			"Separar a rede do banco de dados da do servidor web e limitar quem pode acessá-lo.",
+		],
+		"success_message": "Objetivo cumprido: o teste de invasão foi concluído e documentado.",
+		"hints": [
+			"Comece lendo as notas do teste ('cat notas_pentest.txt') e mapeando a rede com 'scan'. Só ataque o que está no escopo autorizado.",
+			"Sites costumam esconder arquivos esquecidos: use 'curl' nas páginas do site e olhe o robots.txt. Uma credencial achada num lugar costuma abrir outro (ssh). Dentro de uma máquina, 'ls -a' mostra também os arquivos ocultos.",
+			"O caminho: o robots.txt do web01 aponta um diretório de backup com uma configuração antiga e uma senha; com ela você entra no web01; lá um arquivo oculto guarda a senha do banco, que também vale no db01. A flag está no db01. Depois entregue o 'relatorio'.",
+		],
+		"explanation": "Um teste de invasão segue o caminho de um atacante real, mas só dentro do escopo autorizado: reconhecimento, descoberta de um arquivo esquecido, uso de credenciais expostas, reutilização de senha entre sistemas (movimento lateral) e, no fim, um relatório com achados e recomendações. Os problemas foram um backup acessível pela web, credenciais em texto puro, senha reutilizada e falta de segmentação entre o servidor web e o banco.",
+	},
 }
 
 

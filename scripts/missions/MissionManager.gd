@@ -182,6 +182,18 @@ var missions: Dictionary = {
 		"concept": "Reutilização de senhas",
 		"explanation": "Quando um site vaza senhas, os atacantes testam as mesmas combinações de e-mail e senha em outros serviços: é o credential stuffing, e só dá certo porque muita gente reutiliza a senha. Depois de entrar, costumam criar regras de encaminhamento para manter acesso mesmo se a senha for trocada. Use uma senha diferente em cada serviço (com um gerenciador de senhas), ative a verificação em duas etapas e revise as regras da conta depois de qualquer suspeita.",
 	},
+	"m15": {
+		"id": "m15",
+		"title": "Missão 15 — Invasão em cadeia",
+		"description": "A Orion Logística contratou um teste de invasão autorizado: mostrar até onde um atacante chegaria a partir do site da empresa.",
+		"objective": "No Terminal Público da praça: leia as notas do teste, avance de máquina em máquina até a flag e entregue o relatório com 'relatorio'.",
+		"location": "Praça Central (Terminal Público)",
+		"state": State.AVAILABLE,
+		"xp": 400,
+		"difficulty": "Difícil",
+		"concept": "Movimento lateral",
+		"explanation": "Um teste de invasão segue o caminho de um atacante real, mas só dentro do escopo autorizado: reconhecimento, descoberta de um arquivo esquecido, uso de credenciais expostas, reutilização de senha entre sistemas (movimento lateral) e, no fim, um relatório com achados e recomendações. Os problemas foram um backup acessível pela web, credenciais em texto puro, senha reutilizada e falta de segmentação entre o servidor web e o banco.",
+	},
 }
 
 ## Estado inicial de cada missão, guardado para o "Novo jogo".

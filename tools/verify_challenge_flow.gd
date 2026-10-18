@@ -265,6 +265,96 @@ func _initialize() -> void:
 	var vs: Dictionary = session.get_stats("c_vazamento")
 	ok = _check("stats vazamento: 1 erro e 5 tentativas", vs["errors"] == 1 and vs["attempts"] == 5) and ok
 
+	# --- nivel de guia (guidance): quanto o terminal explica ---
+	term.open("c_email", "casa-2")
+	ok = _check("guia 1: a abertura diz o que fazer", term._challenge_hint().find("cat email.eml") != -1) and ok
+	var tweaked: Dictionary = data.get_challenge("c_email").duplicate(true)
+	tweaked["guidance"] = 2
+	term._challenge = tweaked
+	ok = _check("guia 2: abertura neutra, sem os comandos do desafio", term._challenge_hint().find("Computador aberto") != -1 and term._challenge_hint().find("email.eml") == -1) and ok
+	term._on_command_submitted("clear")
+	term._on_command_submitted("report")
+	ok = _check("guia 2: 'report' so mostra a contagem", term.output.get_parsed_text().find("0 de 3 necessários") != -1 and term.output.get_parsed_text().find("A autenticação do remetente") == -1) and ok
+	tweaked["guidance"] = 3
+	term._challenge = tweaked
+	ok = _check("guia 3: sem abertura nenhuma", term._challenge_hint() == "") and ok
+	term._on_command_submitted("clear")
+	term._on_command_submitted("report")
+	ok = _check("guia 3: 'report' nao diz o que procurar nem o total", term.output.get_parsed_text().find("não diz o que procurar") != -1 and term.output.get_parsed_text().find("necessários") == -1) and ok
+	term._on_command_submitted("clear")
+	term._on_command_submitted("help")
+	ok = _check("guia 3: o help nao lista os comandos do desafio", term.output.get_parsed_text().find("report <achado>") == -1 and term.output.get_parsed_text().find("grep <termo>") != -1) and ok
+	term.close()
+
+	# --- maquinas simuladas: scan, curl, ssh com senha, ls -a, exit, relatorio ---
+	var errors_before: int = session.get_stats("c_cadeia")["errors"]
+	term.open("c_cadeia", "praca-central")
+	ok = _check("abrir o terminal publico ativa a m15", missions.is_active("m15")) and ok
+	ok = _check("guia 1 no desafio da cadeia: a abertura cita as ferramentas", term._challenge_hint().find("'scan'") != -1 and term._challenge_hint().find("'ssh usuário@máquina'") != -1) and ok
+	term._on_command_submitted("ls")
+	ok = _check("ls local mostra as notas do teste", term.output.get_parsed_text().find("notas_pentest.txt") != -1) and ok
+	term._on_command_submitted("scan")
+	var scan_out: String = term.output.get_parsed_text()
+	ok = _check("scan lista as 3 maquinas com portas", scan_out.find("192.168.1.30") != -1 and scan_out.find("db01") != -1 and scan_out.find("5432/postgres") != -1 and scan_out.find("gateway") != -1) and ok
+	term._on_command_submitted("curl http://web01/robots.txt")
+	ok = _check("curl mostra o robots.txt", term.output.get_parsed_text().find("Disallow: /backup/") != -1) and ok
+	term._on_command_submitted("curl 192.168.1.30/backup/config.old")
+	ok = _check("curl por IP acha a configuracao exposta", term.output.get_parsed_text().find("ssh_pass=Orion@2023") != -1) and ok
+	term._on_command_submitted("curl http://web01/nada")
+	ok = _check("curl de caminho inexistente da 404", term.output.get_parsed_text().find("404 Not Found") != -1) and ok
+	term._on_command_submitted("ssh root@gateway")
+	ok = _check("ssh fora do escopo e recusado e conta como erro", term._ssh_pending.is_empty() and session.get_stats("c_cadeia")["errors"] == errors_before + 1) and ok
+	term._on_command_submitted("curl http://gateway/")
+	ok = _check("curl fora do escopo tambem conta como erro", session.get_stats("c_cadeia")["errors"] == errors_before + 2) and ok
+	term._on_command_submitted("ssh deploy@web01")
+	ok = _check("ssh pede a senha com o campo mascarado", not term._ssh_pending.is_empty() and term.input_line.secret) and ok
+	term._on_command_submitted("senha-errada-123")
+	ok = _check("senha errada: nao entra, campo volta ao normal e conta erro", term._sim.current_host == "" and not term.input_line.secret and session.get_stats("c_cadeia")["errors"] == errors_before + 3) and ok
+	ok = _check("a senha digitada nao vai para o historico", not "senha-errada-123" in term._command_history) and ok
+	term._on_command_submitted("ssh deploy@web01")
+	term._on_command_submitted("Orion@2023")
+	ok = _check("senha certa entra em web01 como deploy", term._sim.current_host == "web01" and term._sim.current_user == "deploy") and ok
+	term._on_command_submitted("whoami")
+	term._on_command_submitted("hostname")
+	ok = _check("whoami e hostname refletem a maquina", term.output.get_parsed_text().find("deploy") != -1 and term.title_label.text == "deploy@web01: ~") and ok
+	term._on_command_submitted("clear")
+	term._on_command_submitted("ls")
+	ok = _check("ls no web01 nao mostra o arquivo oculto", term.output.get_parsed_text().find("leiame.txt") != -1 and term.output.get_parsed_text().find(".pgpass") == -1) and ok
+	term._on_command_submitted("ls -a")
+	ok = _check("ls -a mostra o arquivo oculto", term.output.get_parsed_text().find(".pgpass") != -1) and ok
+	term._on_command_submitted("cat notas_pentest.txt")
+	ok = _check("no web01 nao ha os arquivos da maquina local", term.output.get_parsed_text().find("arquivo não encontrado") != -1) and ok
+	term._on_command_submitted("cat .pgpass")
+	ok = _check("cat .pgpass mostra a senha do banco", term.output.get_parsed_text().find("Rep0rt#db") != -1) and ok
+	term._on_command_submitted("relatorio")
+	ok = _check("relatorio antes do objetivo nao conclui", not missions.is_completed("m15") and term.output.get_parsed_text().find("Ainda não há o que relatar") != -1) and ok
+	term._on_command_submitted("ssh reports@192.168.1.40")
+	term._on_command_submitted("Rep0rt#db")
+	ok = _check("a senha achada abre o db01 (por IP)", term._sim.current_host == "db01" and term._sim.current_user == "reports") and ok
+	term._on_command_submitted("cat flag.txt")
+	ok = _check("ler a flag no db01 nao conclui sozinho (falta o relatorio)", term._flag_captured and not missions.is_completed("m15") and term.is_active()) and ok
+	term._on_command_submitted("exit")
+	ok = _check("exit volta para a maquina anterior sem fechar o terminal", term._sim.current_host == "web01" and term.is_active()) and ok
+	term._on_command_submitted("ssh reports@db01")
+	term._on_command_submitted("Rep0rt#db")
+	term._on_command_submitted("relatorio")
+	var rel: String = term.output.get_parsed_text()
+	ok = _check("relatorio lista as maquinas, os achados e as recomendacoes", rel.find("Máquinas acessadas: web01, db01") != -1 and rel.find("Achados:") != -1 and rel.find("Recomendações:") != -1) and ok
+	ok = _check("relatorio conclui a m15 e fecha o terminal", missions.is_completed("m15") and not term.is_active()) and ok
+
+	# exit em cadeia: da maquina remota volta, da local fecha
+	term.open("c_cadeia", "praca-central")
+	term._on_command_submitted("ssh deploy@web01")
+	term._on_command_submitted("Orion@2023")
+	term._on_command_submitted("exit")
+	ok = _check("exit na maquina remota volta para a local", term._sim.current_host == "" and term.is_active() and term.title_label.text == "kali@praca-central: ~") and ok
+	term._on_command_submitted("exit")
+	ok = _check("exit na maquina local fecha o terminal", not term.is_active()) and ok
+	term.open("c_logs", "loja")
+	term._on_command_submitted("ssh deploy@web01")
+	ok = _check("ssh em outro desafio nao existe", term._ssh_pending.is_empty()) and ok
+	term.close()
+
 	# --- dica no computador da casa (sem desafio): usa as pistas da m01 ---
 	term.open("", "casa-1")
 	var before: int = phone.get_revealed_clues("m01").size()
