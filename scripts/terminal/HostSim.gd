@@ -93,6 +93,18 @@ func page(host_name: String, path: String) -> Variant:
 	return null
 
 
+## Máquinas no formato do mapa de rede (NetworkMap): nome e, embaixo, IP e portas.
+func map_nodes() -> Array:
+	var nodes: Array = []
+	for host_name in _hosts.keys():
+		var host: Dictionary = _hosts[host_name]
+		var sub: Array = [String(host.get("ip", "?"))]
+		if String(host.get("ports", "")) != "":
+			sub.append(" ".join(String(host["ports"]).split(" ", false)))
+		nodes.append({"name": String(host_name), "sub": sub})
+	return nodes
+
+
 ## Uma linha por máquina para o 'scan': IP, nome e portas abertas.
 func scan_lines() -> PackedStringArray:
 	var lines := PackedStringArray()

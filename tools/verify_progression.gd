@@ -14,6 +14,7 @@ func _initialize() -> void:
 	ok = await _check_arrow() and ok
 	ok = _check_study_tools() and ok
 	ok = _check_phone_tools() and ok
+	ok = _check_network_map() and ok
 	print("RESULTADO: ", "TUDO OK" if ok else "FALHOU")
 	quit(0 if ok else 1)
 
@@ -140,6 +141,48 @@ func _check_study_tools() -> bool:
 	ok = _check("senha sem simbolo e media", tools.password_strength("CasaSegura2026x") == "média") and ok
 	ok = _check("palavra extra a evitar e respeitada", not tools.password_problems("Roteador#2026ok", 10, ["roteador"]).is_empty()) and ok
 	ok = _check("senha vazia nao tem classificacao", tools.password_strength("") == "") and ok
+	return ok
+
+
+func _check_network_map() -> bool:
+	var game = root.get_node("GameManager")
+	var term = root.get_node("TerminalManager")
+	var map: GDScript = load("res://scripts/terminal/NetworkMap.gd")
+	var ok := true
+
+	var nodes := [
+		{"name": "web01", "sub": ["192.168.1.30", "22/ssh 80/http"]},
+		{"name": "db01", "sub": ["192.168.1.40"]},
+		{"name": "gateway", "sub": ["192.168.1.1"]},
+	]
+	var lines: PackedStringArray = map.render("kali@praca", nodes)
+	var text: String = "\n".join(lines)
+	ok = _check("mapa: mostra a origem e as 3 maquinas com seus enderecos", text.find("kali@praca") != -1 and text.find("web01") != -1 and text.find("db01") != -1 and text.find("gateway") != -1 and text.find("192.168.1.40") != -1 and text.find("22/ssh 80/http") != -1) and ok
+	ok = _check("mapa: usa os tracos de caixa e liga a origem as maquinas", text.find("┌") != -1 and text.find("┬") != -1 and text.find("┴") != -1 and text.find("└") != -1) and ok
+	ok = _check("mapa: sem maquinas nao desenha nada", map.render("kali@x", []).is_empty()) and ok
+	ok = _check("mapa: uma so maquina e uma origem larga cabem", map.render("kali@casa", [nodes[0]]).size() > 5 and map.render("kali@estacao-do-escritorio-grande", [{"name": "a", "sub": []}, {"name": "b", "sub": []}]).size() > 5) and ok
+	var widest := 0
+	for line in lines:
+		widest = maxi(widest, line.length())
+	ok = _check("mapa: cabe numa janela de terminal (menos de 100 colunas)", widest < 100) and ok
+
+	# o 'scan' so desenha o mapa a partir do nivel 4
+	game.reset()
+	term.open("c_cadeia", "praca-central")
+	term._on_command_submitted("scan")
+	ok = _check("scan no nivel 1: so a lista, sem mapa", term.output.get_parsed_text().find("Mapa de rede") == -1 and term.output.get_parsed_text().find("192.168.1.30") != -1) and ok
+	game.add_xp(100 + 200 + 300)
+	term._on_command_submitted("clear")
+	term._on_command_submitted("scan")
+	var scan_text: String = term.output.get_parsed_text()
+	ok = _check("scan no nivel 4: a lista e o mapa", game.level == 4 and scan_text.find("Mapa de rede") != -1 and scan_text.find("┌") != -1 and scan_text.find("web01") != -1) and ok
+	term.close()
+
+	term.open("c_rede", "servidor")
+	term._on_command_submitted("scan")
+	ok = _check("scan do desafio de rede tambem desenha o mapa no nivel 4", term.output.get_parsed_text().find("Mapa de rede") != -1 and term.output.get_parsed_text().find("UNKNOWN") != -1) and ok
+	term.close()
+	game.reset()
 	return ok
 
 

@@ -57,6 +57,7 @@ var _report_found: Array = []
 ## veio e por onde passou. Ver HostSim.gd.
 const HostSim := preload("res://scripts/terminal/HostSim.gd")
 const StudyTools := preload("res://scripts/systems/StudyTools.gd")
+const NetworkMap := preload("res://scripts/terminal/NetworkMap.gd")
 var _sim := HostSim.new()
 
 ## ssh esperando a senha: {"user": ..., "host": ...}. Vazio = nenhum.
@@ -454,6 +455,7 @@ func _cmd_scan() -> void:
 		_print_line("%-15s %-10s %s" % ["ENDEREÇO", "MÁQUINA", "PORTAS ABERTAS"])
 		for line in _sim.scan_lines():
 			_print_line(line)
+		_print_network_map(_sim.map_nodes())
 		return
 	if String(_challenge.get("type", "")) != "network":
 		_print_error("Comando não disponível neste sistema.")
@@ -469,9 +471,25 @@ func _cmd_scan() -> void:
 		if bool(device["suspicious"]):
 			found_suspicious = true
 
+	var map_nodes: Array = []
+	for ip in devices.keys():
+		map_nodes.append({"name": String(devices[ip]["name"]), "sub": [String(ip)]})
+	_print_network_map(map_nodes)
+
 	_print_line("")
 	if found_suspicious:
 		_print_line("Dispositivo suspeito detectado. Use 'connect <ip>' para investigar.")
+
+
+## Mapa de rede desenhado depois do 'scan'. Ferramenta liberada no nível 4;
+## antes disso o 'scan' só mostra a lista.
+func _print_network_map(nodes: Array) -> void:
+	if nodes.is_empty() or not GameManager.is_tool_unlocked("network_map"):
+		return
+	_print_line("")
+	_print_rich("[color=%s]Mapa de rede:[/color]" % C_DIM)
+	for line in NetworkMap.render(_shown_host(), nodes):
+		_print_line(line)
 
 
 func _cmd_connect(args: PackedStringArray) -> void:
