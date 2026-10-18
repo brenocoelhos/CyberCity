@@ -96,12 +96,14 @@ func _initialize() -> void:
 	ok = _check("so a Casa 1 usa o interior padrao (m01)", default_houses == 1 and not bool(houses["Casa1"].get("configure_interior", false))) and ok
 	ok = _check("Casa 1 mostra o ! da m01", "m01" in houses["Casa1"].get("mission_ids", PackedStringArray())) and ok
 	ok = _check("Casa 6: roteador, m11 e !", houses["Casa6"].get("interior_computer_challenge") == "c_roteador" and houses["Casa6"].get("interior_npc_mission") == "m11" and "m11" in houses["Casa6"].get("mission_ids", PackedStringArray())) and ok
-	for house_name in ["Casa2", "Casa3", "Casa4", "Casa5"]:
+	ok = _check("Casa 2: e-mail, m12 e !", houses["Casa2"].get("interior_computer_challenge") == "c_email" and houses["Casa2"].get("interior_npc_mission") == "m12" and "m12" in houses["Casa2"].get("mission_ids", PackedStringArray())) and ok
+	for house_name in ["Casa3", "Casa4", "Casa5"]:
 		var p: Dictionary = houses[house_name]
 		ok = _check("%s: so historia (NPC com falas, sem computador, sem missao)" % house_name, String(p.get("interior_npc_name", "")) != "" and PackedStringArray(p.get("interior_npc_lines", PackedStringArray())).size() >= 1 and String(p.get("interior_computer_challenge", "")) == "" and String(p.get("interior_npc_mission", "")) == "" and not p.has("mission_ids")) and ok
 	ok = _check("Casa 5 trancada ate a m10", bool(houses["Casa5"].get("starts_locked", false)) and houses["Casa5"].get("unlock_mission") == "m10") and ok
 	var challenge_ids: Array = root.get_node("ChallengeData").CHALLENGES.keys()
 	ok = _check("o desafio do computador da Casa 6 existe", houses["Casa6"].get("interior_computer_challenge") in challenge_ids) and ok
+	ok = _check("o desafio do computador da Casa 2 existe", houses["Casa2"].get("interior_computer_challenge") in challenge_ids) and ok
 
 	transition.interior_config = {}
 	print("RESULTADO: ", "TUDO OK" if ok else "FALHOU")

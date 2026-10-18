@@ -56,9 +56,12 @@ position = Vector2(336, 384)
 facade = ExtResource("facade_1")
 building_name = "Casa 2"
 entrance_x = 12.0
+mission_ids = PackedStringArray("m12")
 configure_interior = true
 interior_npc_name = "Vizinha"
-interior_npc_lines = PackedStringArray("Você é o hacker ético de quem o pessoal anda falando?", "Ouvi dizer que a DataSoft anda recebendo e-mails estranhos. Fique de olho.", "Se precisar de ajuda, converse com o pessoal da cidade.")
+interior_npc_lines = PackedStringArray("Recebi um e-mail do \"banco\" dizendo que minha conta será bloqueada em 24 horas.", "Fiquei com medo, mas tem alguma coisa estranha nele.", "Dá uma olhada no computador: leia o e-mail inteiro, com os cabeçalhos, e me diga se é golpe.")
+interior_npc_mission = "m12"
+interior_computer_challenge = "c_email"
 
 [node name="Casa6" parent="Buildings" instance=ExtResource("3")]
 position = Vector2(496, 384)
