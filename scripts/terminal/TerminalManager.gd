@@ -56,6 +56,7 @@ var _report_found: Array = []
 ## Máquinas simuladas do desafio ("hosts"): em qual o jogador está, de onde
 ## veio e por onde passou. Ver HostSim.gd.
 const HostSim := preload("res://scripts/terminal/HostSim.gd")
+const StudyTools := preload("res://scripts/systems/StudyTools.gd")
 var _sim := HostSim.new()
 
 ## ssh esperando a senha: {"user": ..., "host": ...}. Vazio = nenhum.
@@ -969,34 +970,9 @@ func _cmd_passwd(nova_senha: String) -> void:
 
 ## O que falta para a senha ser considerada forte (lista vazia = forte).
 func _password_problems(password: String) -> PackedStringArray:
-	var problems := PackedStringArray()
-	var min_length: int = int(_challenge.get("min_length", 10))
-	if password.length() < min_length:
-		problems.append("precisa ter pelo menos %d caracteres" % min_length)
-
-	var has_letter := false
-	var has_digit := false
-	var has_symbol := false
-	for character in password:
-		if character.to_upper() != character.to_lower():
-			has_letter = true
-		elif "0123456789".contains(character):
-			has_digit = true
-		elif character != " ":
-			has_symbol = true
-	if not has_letter:
-		problems.append("precisa de letras")
-	if not has_digit:
-		problems.append("precisa de pelo menos um número")
-	if not has_symbol:
-		problems.append("precisa de pelo menos um símbolo (como ! # $ %)")
-
-	var lowered: String = password.to_lower()
-	for obvious in [String(_challenge.get("default_password", "")), "admin", "senha", "1234"]:
-		if obvious != "" and lowered.contains(obvious):
-			problems.append("não use palavras óbvias como '%s'" % obvious)
-			break
-	return problems
+	# A regra é a mesma do verificador de senha do celular (StudyTools).
+	var min_length: int = int(_challenge.get("min_length", StudyTools.DEFAULT_MIN_LENGTH))
+	return StudyTools.password_problems(password, min_length, [String(_challenge.get("default_password", ""))])
 
 
 ## --- Laboratório fictício de XSS --------------------------------------
