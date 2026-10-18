@@ -138,25 +138,45 @@ func complete(challenge_id: String) -> bool:
 
 	var stats: Dictionary = _get_stats(challenge_id)
 	stats["time_msec"] = Time.get_ticks_msec() - int(stats["started_msec"])
+	_award(challenge_id, String(challenge.get("mission", "")), stats)
+	return true
 
-	# O rank é calculado antes de concluir a missão, porque o HUD o lê
-	# (last_result) quando mostra a tela de "desafio concluído".
-	var mission_id: String = String(challenge.get("mission", ""))
+
+## Conclui uma missão que não tem desafio no ChallengeData (como a m01, ler o
+## e-mail), com rank também. Como não há erro possível, o rank depende só das
+## dicas pedidas no celular ou no terminal. Missão com desafio vai por
+## complete(). Devolve false se a missão não está em andamento.
+func complete_plain_mission(mission_id: String) -> bool:
+	var challenge_id: String = ChallengeData.get_challenge_id_for_mission(mission_id)
+	if challenge_id != "":
+		return complete(challenge_id)
+	if not MissionManager.is_active(mission_id):
+		return false
+
+	# A 1ª pista é grátis: só as pedidas depois dela contam.
+	var hints_asked: int = maxi(0, PhoneManager.get_revealed_clues(mission_id).size() - 1)
+	_award(mission_id, mission_id, {"hints": hints_asked, "errors": 0})
+	return true
+
+
+## Calcula o rank, guarda o resultado, conclui a missão e paga o bônus de XP.
+## O rank é calculado antes de concluir a missão, porque o HUD o lê
+## (last_result) quando mostra a tela de "desafio concluído".
+func _award(key: String, mission_id: String, stats: Dictionary) -> void:
 	var rank: String = rank_for(stats)
 	var mission_xp: int = int(MissionManager.get_mission(mission_id).get("xp", 0))
 	var bonus_xp: int = int(round(float(mission_xp) * float(RANK_XP_BONUS[rank])))
 	stats["rank"] = rank
 	stats["bonus_xp"] = bonus_xp
-	_ranks[challenge_id] = rank
-	last_result = {"challenge_id": challenge_id, "mission_id": mission_id, "rank": rank, "bonus_xp": bonus_xp}
+	_ranks[key] = rank
+	last_result = {"challenge_id": key, "mission_id": mission_id, "rank": rank, "bonus_xp": bonus_xp}
 
 	# A missão é a fonte da verdade sobre "concluído": ela dispara XP, a
 	# tela de explicação no HUD e o avanço dos capítulos.
 	MissionManager.complete_mission(mission_id)
 	if bonus_xp > 0:
 		GameManager.add_xp(bonus_xp)
-	challenge_completed.emit(challenge_id, stats.duplicate())
-	return true
+	challenge_completed.emit(key, stats.duplicate())
 
 
 ## Rank S/A/B de um conjunto de números ({errors, hints}).

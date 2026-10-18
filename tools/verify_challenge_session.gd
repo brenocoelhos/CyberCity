@@ -72,6 +72,29 @@ func _initialize() -> void:
 	session.reset()
 	ok = _check("reset limpa os ranks", session.get_rank("c_senhas") == "" and session.last_result.is_empty()) and ok
 
+	# --- a m01 (sem desafio no ChallengeData) tambem tem rank ---
+	var phone = root.get_node("PhoneManager")
+	session.reset()
+	phone.reset()
+	missions.reset()
+	ok = _check("m01: sem missao em andamento nao conclui", not session.complete_plain_mission("m01")) and ok
+	missions.start_mission("m01")
+	xp_before = game.total_xp_earned
+	ok = _check("m01: concluir pela sessao", session.complete_plain_mission("m01") and missions.is_completed("m01")) and ok
+	ok = _check("m01: sem pedir dicas e rank S com bonus de 25%", session.get_rank("m01") == "S" and game.total_xp_earned - xp_before == 125) and ok
+	ok = _check("m01: o HUD mostra o rank na tela de conclusao", hud.complete_xp.text.find("RANK S") != -1) and ok
+	ok = _check("m01: nao conclui duas vezes", not session.complete_plain_mission("m01")) and ok
+
+	session.reset()
+	phone.reset()
+	missions.reset()
+	missions.start_mission("m01")
+	phone.reveal_next_clue("m01")
+	phone.reveal_next_clue("m01")
+	session.complete_plain_mission("m01")
+	ok = _check("m01: 2 dicas pedidas alem da gratis dao rank B", session.get_rank("m01") == "B") and ok
+	ok = _check("missao com desafio vai pelo caminho normal", missions.start_mission("m02") == null and session.complete_plain_mission("m02") and session.get_rank("c_senhas") != "") and ok
+
 	# todos os desafios tem 3 camadas e missao valida
 	var data = root.get_node("ChallengeData")
 	for id in data.CHALLENGES.keys():

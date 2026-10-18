@@ -1135,7 +1135,8 @@ func _check_mission_progress(filename: String) -> void:
 		_print_line("")
 		_print_success("Objetivo cumprido: e-mail analisado.")
 		close()
-		MissionManager.complete_mission("m01")
+		# Pela ChallengeSession, para a m01 também ter rank e bônus de XP.
+		ChallengeSession.complete_plain_mission("m01")
 
 
 ## Escreve uma linha de texto comum (verde). Colchetes digitados pelo
