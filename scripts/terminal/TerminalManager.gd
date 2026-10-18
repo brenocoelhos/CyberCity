@@ -53,6 +53,17 @@ var _router_logged_in: bool = false
 ## Desafio de evidências: índices (em "targets") dos indícios já reportados.
 var _report_found: Array = []
 
+## Máquinas simuladas do desafio ("hosts"): em qual o jogador está, de onde
+## veio e por onde passou. Ver HostSim.gd.
+const HostSim := preload("res://scripts/terminal/HostSim.gd")
+var _sim := HostSim.new()
+
+## ssh esperando a senha: {"user": ..., "host": ...}. Vazio = nenhum.
+var _ssh_pending: Dictionary = {}
+
+## Desafio "hosts": true depois que o jogador leu o arquivo-objetivo (a flag).
+var _flag_captured: bool = false
+
 ## Nome da máquina mostrado no prompt (kali㉿<host>).
 var _host: String = "cybercity"
 ## Acumulador do efeito de digitação (frações de caractere por frame).
@@ -76,12 +87,14 @@ func open(challenge_id: String = "", host: String = "cybercity") -> void:
 	_firewall_rules = {}
 	_router_logged_in = false
 	_report_found = []
+	_sim.setup(_challenge)
+	_ssh_pending = {}
+	_flag_captured = false
+	input_line.secret = false
 	_host = host
 	_active = true
 	visible = true
-	title_label.text = "kali@%s: ~" % _host
-	prompt_top.text = _prompt_top_bbcode()
-	prompt_label.text = _prompt_bottom_bbcode()
+	_refresh_prompt()
 
 	# A janela "abre" crescendo um pouco, como num desktop.
 	monitor.modulate.a = 0.0
@@ -171,8 +184,21 @@ func _print_boot() -> void:
 
 
 func _prompt_top_bbcode() -> String:
-	return "[color=%s]┌──([/color][b][color=%s]kali㉿%s[/color][/b][color=%s])-[lb][/color][b][color=%s]~[/color][/b][color=%s][rb][/color]" % [
-		C_GREEN, C_BLUE, _escape(_host), C_GREEN, C_WHITE, C_GREEN]
+	return "[color=%s]┌──([/color][b][color=%s]%s㉿%s[/color][/b][color=%s])-[lb][/color][b][color=%s]~[/color][/b][color=%s][rb][/color]" % [
+		C_GREEN, C_BLUE, _escape(_sim.current_user), _escape(_shown_host()), C_GREEN, C_WHITE, C_GREEN]
+
+
+## Nome da máquina que aparece no prompt: a remota (depois de um ssh) ou a
+## local, onde o terminal foi aberto.
+func _shown_host() -> String:
+	return _sim.current_host if _sim.is_remote() else _host
+
+
+## Atualiza a barra de título e o prompt (ao abrir e a cada ssh/exit).
+func _refresh_prompt() -> void:
+	title_label.text = "%s@%s: ~" % [_sim.current_user, _shown_host()]
+	prompt_top.text = _prompt_top_bbcode()
+	prompt_label.text = _prompt_bottom_bbcode()
 
 
 func _prompt_bottom_bbcode() -> String:
@@ -182,6 +208,8 @@ func _prompt_bottom_bbcode() -> String:
 func close() -> void:
 	_active = false
 	visible = false
+	_ssh_pending = {}
+	input_line.secret = false
 	input_line.release_focus()
 
 
@@ -213,8 +241,16 @@ func _advance_typing(delta: float) -> void:
 
 func _on_command_submitted(text: String) -> void:
 	SoundManager.play("keypress")
-	var command := text.strip_edges()
 	input_line.text = ""
+
+	# Depois de 'ssh', a próxima linha é a senha (não vai para o histórico
+	# nem aparece na tela).
+	if not _ssh_pending.is_empty():
+		_handle_ssh_password(text)
+		_keep_focus()
+		return
+
+	var command := text.strip_edges()
 
 	if command == "":
 		_keep_focus()
@@ -260,17 +296,17 @@ func _run_command(command: String) -> void:
 		"clear":
 			_cmd_clear()
 		"files", "ls":
-			_cmd_files()
+			_cmd_files(args)
 		"read", "cat":
 			_cmd_read(args)
 		"grep":
 			_cmd_grep(args)
 		"whoami":
-			_print_line("kali")
+			_print_line(_sim.current_user)
 		"pwd":
-			_print_line("/home/kali")
+			_print_line("/home/" + _sim.current_user)
 		"hostname":
-			_print_line(_host)
+			_print_line(_shown_host())
 		"date":
 			_print_line(Time.get_datetime_string_from_system().replace("T", " "))
 		"uname":
@@ -305,8 +341,14 @@ func _run_command(command: String) -> void:
 			_cmd_postar(rest)
 		"passwd":
 			_cmd_passwd(rest)
-		"exit", "sair":
-			close()
+		"ssh":
+			_cmd_ssh(args)
+		"curl":
+			_cmd_curl(args)
+		"relatorio", "relatório":
+			_cmd_relatorio()
+		"exit", "sair", "logout":
+			_cmd_exit()
 		_:
 			_print_error("zsh: comando não encontrado: " + cmd)
 			_print_rich("[color=%s]Digite 'help' para ver os comandos disponíveis.[/color]" % C_DIM)
@@ -347,9 +389,15 @@ func _cmd_help() -> void:
 	elif challenge_type == "report":
 		_print_line("  report              - mostra o que você precisa achar neste desafio")
 		_print_line("  report <achado>     - aponta, em poucas palavras, algo que você encontrou")
+	if _sim.has_hosts() and _guidance() < 3:
+		_print_line("  scan                - mapeia as máquinas da rede e suas portas")
+		_print_line("  ssh <usuário>@<máquina> - entra em uma máquina (pede a senha)")
+		_print_line("  curl <endereço>     - mostra o conteúdo de uma página web")
+		if bool(_challenge.get("final_report", false)):
+			_print_line("  relatorio           - entrega o relatório do teste (depois de cumprir o objetivo)")
 	if not PhoneManager.get_all_clues(_hint_mission_id()).is_empty():
 		_print_line("  dica                - revela a próxima dica da missão")
-	_print_line("  exit                - fecha o terminal")
+	_print_line("  exit                - sai da máquina atual (ou fecha o terminal)")
 
 
 ## Missão cujas dicas o comando 'dica' mostra neste computador: a do
@@ -399,6 +447,13 @@ func _cmd_desafio() -> void:
 ## --- Desafio de rede (scan / connect) -------------------------------
 
 func _cmd_scan() -> void:
+	# 'scan' também serve aos desafios com máquinas simuladas ("hosts").
+	if _sim.has_hosts():
+		_print_line("Starting scan (simulado) ...")
+		_print_line("%-15s %-10s %s" % ["ENDEREÇO", "MÁQUINA", "PORTAS ABERTAS"])
+		for line in _sim.scan_lines():
+			_print_line(line)
+		return
 	if String(_challenge.get("type", "")) != "network":
 		_print_error("Comando não disponível neste sistema.")
 		return
@@ -711,6 +766,142 @@ func _split_words(text: String) -> PackedStringArray:
 	return regex.sub(text, " ", true).split(" ", false)
 
 
+## --- Máquinas simuladas (ssh / curl / relatorio) -----------------------
+## Desafios com "hosts": o jogador descobre as máquinas com 'scan', acha
+## credenciais em arquivos e páginas, entra com 'ssh' e segue de máquina em
+## máquina. O que ele descobre numa libera a próxima; não há etapas na tela.
+
+func _cmd_ssh(args: PackedStringArray) -> void:
+	if not _sim.has_hosts():
+		_print_error("Comando não disponível neste sistema.")
+		return
+	if args.is_empty() or not args[0].contains("@"):
+		_print_line("Uso: ssh <usuário>@<máquina>")
+		return
+
+	var user: String = args[0].get_slice("@", 0)
+	var target: String = args[0].get_slice("@", 1)
+	var host_name: String = _sim.find(target)
+	if host_name == "":
+		_print_error("ssh: Could not resolve hostname %s: Name or service not known" % target)
+		return
+	if not _check_scope(host_name):
+		return
+
+	# A próxima linha digitada é a senha (campo mascarado).
+	_ssh_pending = {"user": user, "host": host_name}
+	input_line.secret = true
+	_print_line("%s@%s's password:" % [user, host_name])
+
+
+## Recusa (e conta como erro) alvos fora do escopo autorizado do teste.
+func _check_scope(host_name: String) -> bool:
+	if _sim.in_scope(host_name):
+		return true
+	ChallengeSession.record_attempt(_challenge_id, false)
+	SoundManager.play("error")
+	_print_error("Abortado: %s está FORA do escopo autorizado do teste. Atacar um sistema sem autorização é crime." % host_name)
+	return false
+
+
+func _handle_ssh_password(password: String) -> void:
+	var user: String = String(_ssh_pending["user"])
+	var host_name: String = String(_ssh_pending["host"])
+	_ssh_pending = {}
+	input_line.secret = false
+
+	if _sim.check_password(host_name, user, password):
+		_sim.connect_to(host_name, user)
+		_refresh_prompt()
+		ChallengeSession.record_attempt(_challenge_id, true)
+		_print_success("Acesso concedido: %s@%s" % [user, host_name])
+	else:
+		ChallengeSession.record_attempt(_challenge_id, false)
+		SoundManager.play("error")
+		_print_error("Permission denied, please try again.")
+
+
+func _cmd_curl(args: PackedStringArray) -> void:
+	if not _sim.has_hosts():
+		_print_error("Comando não disponível neste sistema.")
+		return
+	if args.is_empty():
+		_print_line("Uso: curl <endereço>   (ex.: curl http://máquina/caminho)")
+		return
+
+	var url: String = args[args.size() - 1].trim_prefix("http://").trim_prefix("https://")
+	var slash: int = url.find("/")
+	var host_part: String = url if slash == -1 else url.substr(0, slash)
+	var path: String = "/" if slash == -1 else url.substr(slash)
+	var host_name: String = _sim.find(host_part)
+	if host_name == "":
+		_print_error("curl: (6) Could not resolve host: %s" % host_part)
+		return
+	if not _check_scope(host_name):
+		return
+
+	var body: Variant = _sim.page(host_name, path)
+	if body == null:
+		_print_line("<html><body><h1>404 Not Found</h1></body></html>")
+	else:
+		_print_line(String(body))
+
+
+## exit/logout: dentro de uma máquina remota volta para a anterior; na
+## máquina local fecha o terminal.
+func _cmd_exit() -> void:
+	var left: String = _sim.current_host
+	if _sim.disconnect_one():
+		_refresh_prompt()
+		_print_line("logout")
+		_print_line("Connection to %s closed." % left)
+		return
+	close()
+
+
+## Ler o arquivo-objetivo do desafio ("win_file": {host, file}) conclui o
+## desafio, ou, com "final_report", libera a entrega do relatório.
+func _check_objective_file(filename: String) -> void:
+	var win: Dictionary = Dictionary(_challenge.get("win_file", {}))
+	if win.is_empty() or _flag_captured:
+		return
+	if _sim.current_host != String(win.get("host", "")) or filename != String(win.get("file", "")):
+		return
+
+	_flag_captured = true
+	ChallengeSession.record_attempt(_challenge_id, true)
+	_print_line("")
+	if bool(_challenge.get("final_report", false)):
+		_print_success("Objetivo alcançado: a flag foi capturada. Entregue o relatório do teste com 'relatorio'.")
+	else:
+		_finish_challenge(String(_challenge.get("success_message", "Objetivo cumprido.")))
+
+
+## relatorio: entrega final de um teste de invasão. Só vale depois de
+## alcançar o objetivo; mostra por onde o jogador passou e conclui o desafio.
+func _cmd_relatorio() -> void:
+	if not bool(_challenge.get("final_report", false)):
+		_print_error("Comando não disponível neste sistema.")
+		return
+	if not _flag_captured:
+		_print_line("Ainda não há o que relatar: o objetivo do teste não foi alcançado.")
+		return
+
+	_print_rich("[color=%s][b]RELATÓRIO DO TESTE DE INVASÃO[/b][/color]" % C_WHITE)
+	_print_line("Alvo: " + String(_challenge.get("title", "")))
+	_print_line("Máquinas acessadas: " + ", ".join(PackedStringArray(_sim.visited)))
+	_print_line("")
+	_print_line("Achados:")
+	for finding in _challenge.get("report_findings", []):
+		_print_line("  - " + String(finding))
+	_print_line("")
+	_print_line("Recomendações:")
+	for recommendation in _challenge.get("report_recommendations", []):
+		_print_line("  - " + String(recommendation))
+	_print_line("")
+	_finish_challenge(String(_challenge.get("success_message", "Objetivo cumprido.")))
+
+
 ## --- Roteador doméstico (login / passwd) ------------------------------
 ## Duas etapas: entrar com a credencial de fábrica (está no manual) e depois
 ## trocá-la por uma senha forte. Tudo simulado em texto.
@@ -824,14 +1015,25 @@ func _cmd_clear() -> void:
 ## Arquivos que este computador mostra: os comuns (VIRTUAL_FILES) mais os
 ## que o desafio define em "files", que só existem neste computador.
 func _available_files() -> Dictionary:
+	# Dentro de uma máquina remota (depois do ssh) valem só os arquivos dela.
+	if _sim.is_remote():
+		return _sim.files()
 	var files: Dictionary = VIRTUAL_FILES.duplicate()
 	files.merge(Dictionary(_challenge.get("files", {})), true)
 	return files
 
 
-func _cmd_files() -> void:
+## ls / files. Arquivos cujo nome começa com "." ficam ocultos, como no
+## Linux, e só aparecem com 'ls -a'.
+func _cmd_files(args: PackedStringArray = PackedStringArray()) -> void:
+	var show_hidden := false
+	for arg in args:
+		if arg.begins_with("-") and arg.contains("a"):
+			show_hidden = true
 	_print_line("Arquivos encontrados:")
 	for filename in _available_files().keys():
+		if String(filename).begins_with(".") and not show_hidden:
+			continue
 		_print_line("  " + filename)
 
 
@@ -845,6 +1047,7 @@ func _cmd_read(args: PackedStringArray) -> void:
 	if files.has(filename):
 		_print_line(String(files[filename]))
 		_check_mission_progress(filename)
+		_check_objective_file(filename)
 	else:
 		_print_error("cat: " + filename + ": arquivo não encontrado")
 
