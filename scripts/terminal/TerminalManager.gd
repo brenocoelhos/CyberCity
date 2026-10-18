@@ -845,6 +845,7 @@ func _cmd_curl(args: PackedStringArray) -> void:
 		_print_line("<html><body><h1>404 Not Found</h1></body></html>")
 	else:
 		_print_line(String(body))
+		_check_objective_page(host_name, path)
 
 
 ## exit/logout: dentro de uma máquina remota volta para a anterior; na
@@ -867,7 +868,23 @@ func _check_objective_file(filename: String) -> void:
 		return
 	if _sim.current_host != String(win.get("host", "")) or filename != String(win.get("file", "")):
 		return
+	_objective_reached()
 
+
+## Abrir com 'curl' a página-objetivo do desafio ("win_page": {host, path})
+## também alcança o objetivo (ex.: achar um arquivo exposto no site).
+func _check_objective_page(host_name: String, path: String) -> void:
+	var win: Dictionary = Dictionary(_challenge.get("win_page", {}))
+	if win.is_empty() or _flag_captured:
+		return
+	if host_name != String(win.get("host", "")) or path != String(win.get("path", "")):
+		return
+	_objective_reached()
+
+
+## O jogador chegou ao objetivo: conclui o desafio ou, com "final_report",
+## libera a entrega do 'relatorio'.
+func _objective_reached() -> void:
 	_flag_captured = true
 	ChallengeSession.record_attempt(_challenge_id, true)
 	_print_line("")

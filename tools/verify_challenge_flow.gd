@@ -355,6 +355,22 @@ func _initialize() -> void:
 	ok = _check("ssh em outro desafio nao existe", term._ssh_pending.is_empty()) and ok
 	term.close()
 
+	# --- win_page: abrir com curl a pagina-objetivo alcanca o objetivo ---
+	term.open("c_logs", "loja")
+	var site_challenge := {
+		"mission": "m08",
+		"hosts": {"site": {"ip": "10.0.0.5", "scope": true, "web": {"/": "inicio", "/segredo.txt": "achou"}}},
+		"win_page": {"host": "site", "path": "/segredo.txt"},
+	}
+	term._challenge = site_challenge
+	term._sim.setup(site_challenge)
+	term._flag_captured = false
+	term._on_command_submitted("curl http://site/")
+	ok = _check("curl em outra pagina nao alcanca o objetivo", not term._flag_captured) and ok
+	term._on_command_submitted("curl 10.0.0.5/segredo.txt")
+	ok = _check("curl na pagina-objetivo alcanca o objetivo", term._flag_captured) and ok
+	term.close()
+
 	# --- dica no computador da casa (sem desafio): usa as pistas da m01 ---
 	term.open("", "casa-1")
 	var before: int = phone.get_revealed_clues("m01").size()
