@@ -12,6 +12,7 @@ func _initialize() -> void:
 	var ok := true
 	ok = await _check_unlocks() and ok
 	ok = await _check_arrow() and ok
+	ok = _check_study_tools() and ok
 	print("RESULTADO: ", "TUDO OK" if ok else "FALHOU")
 	quit(0 if ok else 1)
 
@@ -120,6 +121,24 @@ func _check_arrow() -> bool:
 	game.reset()
 	missions.reset()
 	campaign.reset()
+	return ok
+
+
+func _check_study_tools() -> bool:
+	var tools: GDScript = load("res://scripts/systems/StudyTools.gd")
+	var ok := true
+	ok = _check("cesar: VHJXUR -3 = SEGURO (o da missao 4)", tools.caesar("VHJXUR", -3) == "SEGURO") and ok
+	ok = _check("cesar: cifrar e decifrar se desfazem", tools.caesar(tools.caesar("Ataque ao amanhecer!", 7), -7) == "Ataque ao amanhecer!") and ok
+	ok = _check("cesar: mantem maiusculas, espacos e simbolos", tools.caesar("Abc, xyz 123!", 3) == "Def, abc 123!") and ok
+	ok = _check("cesar: deslocamento maior que 26 e negativo", tools.caesar("abc", 29) == "def" and tools.caesar("abc", -27) == "zab") and ok
+	ok = _check("hash: md5 da senha de exemplo do vazamento", tools.md5("marcos2020") == "159e70e5dfbf44e74b2b20257657db3c") and ok
+	ok = _check("hash: sha256 tem 64 caracteres e e estavel", tools.sha256("a").length() == 64 and tools.sha256("a") == tools.sha256("a")) and ok
+	ok = _check("senha forte: sem problemas", tools.password_problems("Casa#Segura2026!").is_empty() and tools.password_strength("Casa#Segura2026!") == "forte") and ok
+	ok = _check("senha curta: aponta o tamanho", tools.password_problems("Ab#1").size() >= 1 and String(tools.password_problems("Ab#1")[0]).find("10 caracteres") != -1) and ok
+	ok = _check("senha 'admin' e fraca", tools.password_strength("admin") == "fraca") and ok
+	ok = _check("senha sem simbolo e media", tools.password_strength("CasaSegura2026x") == "média") and ok
+	ok = _check("palavra extra a evitar e respeitada", not tools.password_problems("Roteador#2026ok", 10, ["roteador"]).is_empty()) and ok
+	ok = _check("senha vazia nao tem classificacao", tools.password_strength("") == "") and ok
 	return ok
 
 
