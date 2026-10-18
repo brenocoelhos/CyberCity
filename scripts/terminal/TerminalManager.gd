@@ -50,6 +50,9 @@ var _firewall_rules: Dictionary = {}
 ## Desafio do roteador: true depois que o jogador entrou no painel.
 var _router_logged_in: bool = false
 
+## Desafio de evidências: índices (em "targets") dos indícios já reportados.
+var _report_found: Array = []
+
 ## Nome da máquina mostrado no prompt (kali㉿<host>).
 var _host: String = "cybercity"
 ## Acumulador do efeito de digitação (frações de caractere por frame).
@@ -72,6 +75,7 @@ func open(challenge_id: String = "", host: String = "cybercity") -> void:
 		ChallengeSession.begin(challenge_id)
 	_firewall_rules = {}
 	_router_logged_in = false
+	_report_found = []
 	_host = host
 	_active = true
 	visible = true
@@ -122,6 +126,8 @@ func _challenge_hint() -> String:
 			intro = "Campo de comentário simulado. Digite 'postar <mensagem>' para testar."
 		"router":
 			intro = "Roteador doméstico detectado. Digite 'files' e leia o manual com 'read manual.txt'."
+		"report":
+			intro = String(_challenge.get("intro", ""))
 
 	if intro != "" and not PhoneManager.get_all_clues(_hint_mission_id()).is_empty():
 		intro += " Travou? Digite 'dica'."
@@ -320,6 +326,8 @@ func _cmd_help() -> void:
 	elif challenge_type == "router":
 		_print_line("  login <usuário> <senha> - entra no painel do roteador")
 		_print_line("  passwd <nova senha>     - troca a senha do painel (depois do login)")
+	elif challenge_type == "report":
+		_print_line("  report <indício>    - aponta um indício do problema que você encontrou")
 	if not PhoneManager.get_all_clues(_hint_mission_id()).is_empty():
 		_print_line("  dica                - revela a próxima dica da missão")
 	_print_line("  exit                - fecha o terminal")
@@ -499,6 +507,11 @@ func _cmd_logs() -> void:
 
 
 func _cmd_report(args: PackedStringArray) -> void:
+	# 'report' existe em dois desafios: o de logs (número da linha) e o de
+	# evidências (texto livre).
+	if String(_challenge.get("type", "")) == "report":
+		_cmd_report_evidence(" ".join(args))
+		return
 	if String(_challenge.get("type", "")) != "logs":
 		_print_error("Comando não disponível neste sistema.")
 		return
@@ -553,6 +566,66 @@ func _looks_like_sqli_bypass(senha: String) -> bool:
 	var has_or: bool = s.find(" or ") != -1 or s.find("'or'") != -1
 	var always_true: bool = s.find("1=1") != -1 or s.find("1='1") != -1 or s.find("'1'='1") != -1
 	return has_quote and has_or and always_true
+
+
+## --- Desafio de evidências (report <indício>) ---------------------------
+## O jogador lê os arquivos deste computador e aponta o que indica o problema.
+## Cada alvo ("targets" no ChallengeData) tem palavras-chave, um "hit" (true =
+## indício de verdade, false = isca que parece suspeita mas não prova nada) e a
+## mensagem mostrada. O desafio termina ao reportar "required" indícios.
+
+func _cmd_report_evidence(answer: String) -> void:
+	if answer.strip_edges() == "":
+		_print_line("Uso: report <indício que você encontrou>")
+		return
+
+	var targets: Array = _challenge["targets"]
+	var index: int = _find_report_target(answer, targets)
+	if index == -1:
+		# Palavra que não bate com nada: não conta como erro, só pede para reler.
+		_print_line(String(_challenge.get("unknown_message", "Isso não bate com nada do material. Releia os arquivos e tente outro indício.")))
+		return
+
+	var target: Dictionary = targets[index]
+	if not bool(target.get("hit", false)):
+		ChallengeSession.record_attempt(_challenge_id, false)
+		SoundManager.play("error")
+		_print_error(String(target["message"]))
+		return
+	if _report_found.has(index):
+		_print_line("Você já reportou esse indício.")
+		return
+
+	_report_found.append(index)
+	ChallengeSession.record_attempt(_challenge_id, true)
+	var required: int = _report_required()
+	_print_success(String(target["message"]))
+	_print_line("Indícios encontrados: %d/%d" % [mini(_report_found.size(), required), required])
+	if _report_found.size() >= required:
+		_print_line("")
+		_finish_challenge(String(_challenge.get("success_message", "Objetivo cumprido.")))
+
+
+## Quantos indícios o jogador precisa reportar (padrão: todos os "hit").
+func _report_required() -> int:
+	var hits := 0
+	for target in _challenge["targets"]:
+		if bool(target.get("hit", false)):
+			hits += 1
+	return int(_challenge.get("required", hits))
+
+
+## Acha o alvo cuja palavra-chave bate com o que o jogador digitou. Palavra
+## curta (até 3 letras ou um número) só vale se for igual ao texto inteiro;
+## as maiores valem se estiverem contidas nele. -1 se nenhum bater.
+func _find_report_target(answer: String, targets: Array) -> int:
+	var text: String = answer.strip_edges().to_lower()
+	for i in range(targets.size()):
+		for keyword in targets[i]["keywords"]:
+			var word: String = String(keyword).to_lower()
+			if word == text or (word.length() > 3 and text.contains(word)):
+				return i
+	return -1
 
 
 ## --- Roteador doméstico (login / passwd) ------------------------------

@@ -152,6 +152,31 @@ func _initialize() -> void:
 	ok = _check("passwd em outro desafio nao existe", not term._router_logged_in) and ok
 	term.close()
 
+	# --- analise de e-mail (tipo "report": indicios com palavras-chave) ---
+	term.open("c_email", "casa-2")
+	ok = _check("abrir o e-mail ativa a m12", missions.is_active("m12")) and ok
+	term._on_command_submitted("cat email.eml")
+	ok = _check("e-mail mostra os cabecalhos reais", term.output.get_parsed_text().find("Authentication-Results") != -1 and term.output.get_parsed_text().find("Reply-To") != -1) and ok
+	term._on_command_submitted("grep spf email.eml")
+	ok = _check("grep acha o resultado do SPF no cabecalho", term.output.get_parsed_text().find("spf=fail") != -1) and ok
+	term._on_command_submitted("report xyzabc")
+	ok = _check("palavra desconhecida nao conta como erro", session.get_stats("c_email")["errors"] == 0) and ok
+	term._on_command_submitted("report message-id")
+	ok = _check("campo normal (isca) conta como erro", session.get_stats("c_email")["errors"] == 1 and not missions.is_completed("m12")) and ok
+	term._on_command_submitted("report SPF")
+	term._on_command_submitted("report dkim")
+	ok = _check("mesmo indicio duas vezes nao conta duas", term._report_found.size() == 1) and ok
+	term._on_command_submitted("report reply-to")
+	ok = _check("2 de 3 indicios: ainda nao conclui", term._report_found.size() == 2 and not missions.is_completed("m12") and term.is_active()) and ok
+	term._on_command_submitted("report o prazo de 24 horas")
+	ok = _check("3 indicios concluem a m12 e fecham o terminal", missions.is_completed("m12") and not term.is_active()) and ok
+	var es: Dictionary = session.get_stats("c_email")
+	ok = _check("stats e-mail: 1 erro e 4 tentativas (1 erro + 3 acertos)", es["errors"] == 1 and es["attempts"] == 4) and ok
+	term.open("c_logs", "loja")
+	term._on_command_submitted("report urgente")
+	ok = _check("report em desafio de logs continua pedindo numero de linha", term.output.get_parsed_text().find("Uso: report <linha>") != -1) and ok
+	term.close()
+
 	# --- dica no computador da casa (sem desafio): usa as pistas da m01 ---
 	term.open("", "casa-1")
 	var before: int = phone.get_revealed_clues("m01").size()

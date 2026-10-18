@@ -203,6 +203,36 @@ const CHALLENGES := {
 		],
 		"explanation": "Roteadores e outros equipamentos saem de fábrica com usuário e senha conhecidos (como admin/admin), listados nos manuais. Se ninguém troca, qualquer pessoa entra no painel. Troque sempre a credencial padrão por uma senha longa, única e sem palavras óbvias.",
 	},
+
+	## Análise de e-mail: o jogador lê um e-mail com cabeçalhos completos e
+	## aponta (com 'report') os indícios de fraude. Tipo "report": cada alvo
+	## tem palavras-chave; "hit" false é uma isca (campo normal que não prova
+	## nada). Termina ao reportar "required" indícios.
+	"c_email": {
+		"type": "report",
+		"title": "Análise de e-mail",
+		"mission": "m12",
+		"intro": "E-mail suspeito aberto. Leia com 'cat email.eml' e aponte os indícios de fraude com 'report <indício>'.",
+		"files": {
+			"email.eml": "Return-Path: <suporte@empresaa-seguranca.com>\nReceived: from mail.empresaa-seguranca.com (mail.empresaa-seguranca.com [203.0.113.77])\n        by mx.provedor.example with ESMTP id 4f9c2b1a; Tue, 06 Oct 2026 03:12:44 -0300\nAuthentication-Results: mx.provedor.example;\n        spf=fail (domain of empresaa-seguranca.com does not designate 203.0.113.77 as permitted sender);\n        dkim=none;\n        dmarc=fail (p=none) header.from=empresaa-seguranca.com\nFrom: \"Suporte Banco Central\" <suporte@empresaa-seguranca.com>\nReply-To: recuperacao.conta@mail-seguro.example\nTo: vizinha@email.example\nSubject: URGENTE: sua conta sera bloqueada em 24 horas\nDate: Tue, 06 Oct 2026 03:12:40 -0300\nMessage-ID: <20261006031240.77A1@empresaa-seguranca.com>\nContent-Type: text/html; charset=utf-8\n\nPrezado cliente,\n\nDetectamos um acesso suspeito na sua conta. Para evitar o bloqueio,\nconfirme seus dados agora:\n\n   [ Acessar minha conta ]\n   texto exibido:  https://www.bancocentral.example/login\n   destino real:   http://seguranca-bc.example.net/entrar?id=88213\n\nVoce tem apenas 24 horas. Nao compartilhe este e-mail.",
+		},
+		"required": 3,
+		"success_message": "Objetivo cumprido: e-mail identificado como fraude.",
+		"targets": [
+			{"hit": true, "keywords": ["spf", "dkim", "dmarc", "authentication", "autenticacao", "autenticação"], "message": "Indício: a autenticação falhou (spf=fail, dkim=none, dmarc=fail). O servidor não consegue confirmar que o remetente é quem diz ser."},
+			{"hit": true, "keywords": ["reply-to", "reply to", "responder", "resposta"], "message": "Indício: o Reply-To manda a resposta para outro domínio (mail-seguro.example), diferente do remetente. Quem responde fala com o golpista."},
+			{"hit": true, "keywords": ["empresaa", "dominio", "domínio", "remetente", "from"], "message": "Indício: o domínio 'empresaa-seguranca.com' imita um nome conhecido (note o 'a' a mais). Domínios parecidos são típicos de phishing."},
+			{"hit": true, "keywords": ["link", "href", "url", "destino"], "message": "Indício: o texto do link mostra um endereço, mas o destino real é outro (seguranca-bc.example.net). Sempre confira para onde o link realmente aponta."},
+			{"hit": true, "keywords": ["urgencia", "urgência", "urgente", "24 horas", "prazo", "pressa"], "message": "Indício: pressão de tempo ('apenas 24 horas'). É uma técnica clássica de engenharia social para o alvo agir sem pensar."},
+			{"hit": false, "keywords": ["message-id", "message id", "date", "data", "to", "content-type"], "message": "Esse campo existe em qualquer e-mail, inclusive nos legítimos. Sozinho ele não prova fraude."},
+		],
+		"hints": [
+			"O e-mail está no computador da Casa 2. Use 'files' e depois 'cat email.eml' para ler tudo, inclusive os cabeçalhos no topo.",
+			"Analistas olham quem enviou de verdade, o resultado da autenticação (SPF, DKIM, DMARC), para onde vai a resposta e para onde o link realmente leva. Aponte cada achado com 'report <indício>'.",
+			"Procure: o Authentication-Results com falha, o Reply-To em outro domínio, o domínio 'empresaa' parecido com o verdadeiro, o link cujo destino real é outro e o prazo de 24 horas.",
+		],
+		"explanation": "Um e-mail fraudulento costuma se denunciar nos cabeçalhos: SPF, DKIM e DMARC reprovados (o servidor não confirma o remetente), Reply-To em outro domínio, domínio parecido com o real, link cujo destino difere do texto e pressão de tempo. Antes de clicar, confira o remetente real, os cabeçalhos de autenticação e para onde o link realmente aponta.",
+	},
 }
 
 

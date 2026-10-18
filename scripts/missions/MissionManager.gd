@@ -146,6 +146,18 @@ var missions: Dictionary = {
 		"concept": "Credenciais padrão",
 		"explanation": "Roteadores e outros equipamentos saem de fábrica com usuário e senha conhecidos (como admin/admin), listados nos manuais. Se ninguém troca, qualquer pessoa entra no painel. Troque sempre a credencial padrão por uma senha longa, única e sem palavras óbvias.",
 	},
+	"m12": {
+		"id": "m12",
+		"title": "Missão 12 — Cabeçalho suspeito",
+		"description": "A vizinha da Casa 2 recebeu um e-mail do \"banco\" e quer saber se pode confiar nele.",
+		"objective": "Na Casa 2, use o computador: leia o e-mail com 'cat email.eml' e aponte pelo menos 3 indícios de fraude com 'report <indício>'.",
+		"location": "Casa 2 (E-mail)",
+		"state": State.AVAILABLE,
+		"xp": 150,
+		"difficulty": "Média",
+		"concept": "Cabeçalhos de e-mail",
+		"explanation": "Um e-mail fraudulento costuma se denunciar nos cabeçalhos: SPF, DKIM e DMARC reprovados (o servidor não confirma o remetente), Reply-To em outro domínio, domínio parecido com o real, link cujo destino difere do texto e pressão de tempo. Antes de clicar, confira o remetente real, os cabeçalhos de autenticação e para onde o link realmente aponta.",
+	},
 }
 
 ## Estado inicial de cada missão, guardado para o "Novo jogo".

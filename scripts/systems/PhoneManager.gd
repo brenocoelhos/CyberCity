@@ -32,6 +32,7 @@ const CONTACTS := {
 	"m09": "Loja Eletrônica",
 	"m10": "Loja Eletrônica",
 	"m11": "Moradora (Casa 6)",
+	"m12": "Vizinha (Casa 2)",
 }
 
 const CENTRAL := "Central Cyber City"
