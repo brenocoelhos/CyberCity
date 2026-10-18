@@ -245,6 +245,13 @@ func _initialize() -> void:
 	term._on_command_submitted("dica")
 	term._on_command_submitted("dica")
 	ok = _check("c_xss: 3 camadas apos 3 pedidos (a 1a ja era gratis)", session.get_revealed_hints("c_xss").size() == 3) and ok
+	# depois da ultima, 'dica' (ou 'dicas') mostra as tres de novo, sempre
+	for command in ["dica", "dicas", "dica"]:
+		term._on_command_submitted("clear")
+		term._on_command_submitted(command)
+		var again: String = term.output.get_parsed_text()
+		ok = _check("'%s' depois da ultima mostra as 3 dicas de novo" % command, again.find("Dica 1/3") != -1 and again.find("Dica 2/3") != -1 and again.find("Dica 3/3") != -1) and ok
+	ok = _check("repetir dicas nao conta como dica nova", session.get_stats("c_xss")["hints"] == 2) and ok
 	term.close()
 
 	# --- novo jogo ---

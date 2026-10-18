@@ -271,7 +271,7 @@ func _run_command(command: String) -> void:
 			_print_error("[sudo] acesso negado: este é um ambiente de treino. Nada aqui roda de verdade ;)")
 		"desafio":
 			_cmd_desafio()
-		"dica":
+		"dica", "dicas":
 			_cmd_dica()
 		"scan":
 			_cmd_scan()
@@ -354,18 +354,19 @@ func _cmd_dica() -> void:
 	SoundManager.play("blip")
 
 	# As dicas são as mesmas do app Pistas do celular. Cada pedido revela a
-	# próxima camada; se não há mais, só avisa.
+	# próxima camada. Depois da última, cada pedido mostra todas de novo.
 	var revealed_before: int = PhoneManager.get_revealed_clues(mission_id).size()
-	if not PhoneManager.reveal_next_clue(mission_id):
-		_print_rich("[color=%s]Você já viu todas as dicas desta missão (%d/%d).[/color]" % [C_DIM, hints.size(), hints.size()])
-		return
+	var got_new: bool = PhoneManager.reveal_next_clue(mission_id)
 
 	# Mostra o que já estava revelado (apagado) e a camada nova (amarelo).
+	# Sem camada nova, todas aparecem em amarelo para o jogador reler.
 	var revealed: PackedStringArray = PhoneManager.get_revealed_clues(mission_id)
 	for i in range(revealed.size()):
-		var is_new: bool = i >= revealed_before
+		var is_new: bool = i >= revealed_before or not got_new
 		var color: String = C_YELLOW if is_new else C_DIM
 		_print_rich("[color=%s][lb]*[rb] Dica %d/%d:[/color] %s" % [color, i + 1, hints.size(), _escape(revealed[i])])
+	if not got_new:
+		_print_rich("[color=%s]Essas são todas as dicas deste desafio.[/color]" % C_DIM)
 
 
 func _cmd_desafio() -> void:
