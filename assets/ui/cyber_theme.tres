@@ -1,0 +1,273 @@
+[gd_resource type="Theme" load_steps=15 format=3]
+
+; Tema futurista global do Cyber City.
+; Aplicado em Projeto > Configurações do Projeto > GUI > Tema > Personalizado.
+; Para trocar a fonte por uma .ttf/.otf (ex.: Orbitron ou Rajdhani), coloque o
+; arquivo em assets/ui/fonts/ e, no Inspetor deste tema, mude "Default Font".
+
+[sub_resource type="SystemFont" id="Font"]
+font_names = PackedStringArray("Bahnschrift", "Rajdhani", "Orbitron", "Segoe UI Semibold", "Ubuntu", "Roboto", "DejaVu Sans", "Sans-serif")
+font_weight = 500
+antialiasing = 1
+subpixel_positioning = 0
+
+; --- Painel principal: fundo escuro translúcido + borda ciano com brilho ---
+[sub_resource type="StyleBoxFlat" id="PanelMain"]
+bg_color = Color(0.03, 0.06, 0.11, 0.9)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.2, 0.9, 1, 0.85)
+corner_radius_top_left = 2
+corner_radius_top_right = 10
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 10
+corner_detail = 4
+shadow_color = Color(0.1, 0.8, 1, 0.28)
+shadow_size = 10
+content_margin_left = 12.0
+content_margin_top = 8.0
+content_margin_right = 12.0
+content_margin_bottom = 8.0
+
+; --- Painel interno (dentro de outro painel): mais discreto ---
+[sub_resource type="StyleBoxFlat" id="PanelInner"]
+bg_color = Color(0.02, 0.04, 0.08, 0.92)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.2, 0.9, 1, 0.35)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+content_margin_left = 10.0
+content_margin_top = 6.0
+content_margin_right = 10.0
+content_margin_bottom = 6.0
+
+; --- Painel do HUD (barra de nível/XP/objetivo): borda magenta embaixo ---
+[sub_resource type="StyleBoxFlat" id="PanelHud"]
+bg_color = Color(0.03, 0.05, 0.1, 0.82)
+border_width_left = 3
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.2, 0.9, 1, 0.7)
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+shadow_color = Color(0.1, 0.8, 1, 0.18)
+shadow_size = 6
+
+[sub_resource type="StyleBoxFlat" id="BtnNormal"]
+bg_color = Color(0.04, 0.09, 0.15, 0.92)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 3
+border_color = Color(0.15, 0.6, 0.78, 0.9)
+corner_radius_top_left = 2
+corner_radius_top_right = 8
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 8
+content_margin_left = 16.0
+content_margin_top = 6.0
+content_margin_right = 16.0
+content_margin_bottom = 6.0
+
+[sub_resource type="StyleBoxFlat" id="BtnHover"]
+bg_color = Color(0.06, 0.2, 0.3, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 3
+border_color = Color(0.35, 1, 1, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 8
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 8
+shadow_color = Color(0.2, 0.95, 1, 0.4)
+shadow_size = 8
+content_margin_left = 16.0
+content_margin_top = 6.0
+content_margin_right = 16.0
+content_margin_bottom = 6.0
+
+[sub_resource type="StyleBoxFlat" id="BtnPressed"]
+bg_color = Color(0.22, 0.05, 0.28, 0.95)
+border_width_left = 1
+border_width_top = 3
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.95, 0.3, 1, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 8
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 8
+shadow_color = Color(0.9, 0.2, 1, 0.4)
+shadow_size = 8
+content_margin_left = 16.0
+content_margin_top = 6.0
+content_margin_right = 16.0
+content_margin_bottom = 6.0
+
+[sub_resource type="StyleBoxFlat" id="BtnDisabled"]
+bg_color = Color(0.04, 0.05, 0.08, 0.7)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.3, 0.35, 0.42, 0.6)
+corner_radius_top_left = 2
+corner_radius_top_right = 8
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 8
+content_margin_left = 16.0
+content_margin_top = 6.0
+content_margin_right = 16.0
+content_margin_bottom = 6.0
+
+; --- Foco do teclado: contorno só (sem fundo) ---
+[sub_resource type="StyleBoxFlat" id="Focus"]
+draw_center = false
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.85, 0.3, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 8
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 8
+expand_margin_left = 2.0
+expand_margin_top = 2.0
+expand_margin_right = 2.0
+expand_margin_bottom = 2.0
+
+; --- Barra de progresso (XP) ---
+[sub_resource type="StyleBoxFlat" id="BarBg"]
+bg_color = Color(0.02, 0.04, 0.08, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.2, 0.9, 1, 0.6)
+corner_radius_top_left = 2
+corner_radius_top_right = 6
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="BarFill"]
+bg_color = Color(0.2, 0.9, 1, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.7, 1, 1, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 6
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 6
+shadow_color = Color(0.2, 0.95, 1, 0.5)
+shadow_size = 4
+
+; --- Slider (volume) ---
+[sub_resource type="StyleBoxFlat" id="SliderTrack"]
+bg_color = Color(0.02, 0.04, 0.08, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.2, 0.9, 1, 0.5)
+content_margin_top = 4.0
+content_margin_bottom = 4.0
+
+[sub_resource type="StyleBoxFlat" id="SliderFill"]
+bg_color = Color(0.2, 0.9, 1, 0.9)
+content_margin_top = 4.0
+content_margin_bottom = 4.0
+
+[sub_resource type="StyleBoxFlat" id="Input"]
+bg_color = Color(0.02, 0.04, 0.08, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 2
+border_color = Color(0.2, 0.9, 1, 0.6)
+corner_radius_top_left = 2
+corner_radius_top_right = 6
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 6
+content_margin_left = 10.0
+content_margin_right = 10.0
+
+[resource]
+default_font = SubResource("Font")
+default_font_size = 16
+
+; ---------- Painéis ----------
+Panel/styles/panel = SubResource("PanelMain")
+PanelContainer/styles/panel = SubResource("PanelMain")
+
+InnerPanel/base_type = &"Panel"
+InnerPanel/styles/panel = SubResource("PanelInner")
+
+HudPanel/base_type = &"Panel"
+HudPanel/styles/panel = SubResource("PanelHud")
+
+; ---------- Textos ----------
+Label/colors/font_color = Color(0.84, 0.96, 1, 1)
+Label/colors/font_shadow_color = Color(0, 0.05, 0.1, 0.8)
+Label/constants/shadow_offset_x = 1
+Label/constants/shadow_offset_y = 1
+Label/constants/line_spacing = 2
+
+RichTextLabel/colors/default_color = Color(0.84, 0.96, 1, 1)
+
+; Título de seção (ex.: DESAFIO CONCLUÍDO, OPÇÕES, nome de quem fala)
+HeadingLabel/base_type = &"Label"
+HeadingLabel/colors/font_color = Color(0.3, 0.95, 1, 1)
+HeadingLabel/colors/font_shadow_color = Color(0.85, 0.15, 0.95, 0.75)
+HeadingLabel/constants/shadow_offset_x = 2
+HeadingLabel/constants/shadow_offset_y = 2
+HeadingLabel/font_sizes/font_size = 22
+
+; Textinho de ajuda (ex.: "[E] Continuar")
+DimLabel/base_type = &"Label"
+DimLabel/colors/font_color = Color(0.5, 0.68, 0.78, 1)
+DimLabel/font_sizes/font_size = 13
+
+; ---------- Botões ----------
+Button/colors/font_color = Color(0.8, 0.95, 1, 1)
+Button/colors/font_hover_color = Color(1, 1, 1, 1)
+Button/colors/font_pressed_color = Color(1, 0.8, 1, 1)
+Button/colors/font_focus_color = Color(1, 1, 1, 1)
+Button/colors/font_disabled_color = Color(0.45, 0.5, 0.58, 1)
+Button/styles/normal = SubResource("BtnNormal")
+Button/styles/hover = SubResource("BtnHover")
+Button/styles/pressed = SubResource("BtnPressed")
+Button/styles/disabled = SubResource("BtnDisabled")
+Button/styles/focus = SubResource("Focus")
+
+CheckButton/colors/font_color = Color(0.8, 0.95, 1, 1)
+CheckButton/colors/font_hover_color = Color(1, 1, 1, 1)
+CheckButton/styles/normal = SubResource("BtnNormal")
+CheckButton/styles/hover = SubResource("BtnHover")
+CheckButton/styles/pressed = SubResource("BtnNormal")
+CheckButton/styles/hover_pressed = SubResource("BtnHover")
+CheckButton/styles/focus = SubResource("Focus")
+
+; ---------- Barras e campos ----------
+ProgressBar/styles/background = SubResource("BarBg")
+ProgressBar/styles/fill = SubResource("BarFill")
+
+HSlider/styles/slider = SubResource("SliderTrack")
+HSlider/styles/grabber_area = SubResource("SliderFill")
+HSlider/styles/grabber_area_highlight = SubResource("SliderFill")
+
+LineEdit/colors/font_color = Color(0.9, 0.98, 1, 1)
+LineEdit/colors/caret_color = Color(0.3, 0.95, 1, 1)
+LineEdit/styles/normal = SubResource("Input")
+LineEdit/styles/focus = SubResource("BtnHover")
