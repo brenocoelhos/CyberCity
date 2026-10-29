@@ -16,6 +16,8 @@ extends Area2D
 ## O que o interior deve ter (preenchido pelo Building). Ver SceneTransition.
 var interior_config: Dictionary = {}
 
+const UiStyle := preload("res://scripts/ui/UiStyle.gd")
+
 @onready var prompt: Label = $PromptLabel
 
 var _player_in_range: bool = false
@@ -38,7 +40,7 @@ func _on_body_entered(body: Node) -> void:
 		return
 	_update_lock_state()
 	_player_in_range = true
-	prompt.text = "🔒 Bloqueado" if locked else "[E] Entrar"
+	UiStyle.prompt(prompt, "Bloqueado" if locked else "[E] Entrar")
 	prompt.visible = true
 
 

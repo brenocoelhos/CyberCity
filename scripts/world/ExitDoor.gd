@@ -3,12 +3,15 @@ extends Area2D
 ## Porta de saída dentro de uma casa/empresa. Leva o jogador de volta
 ## para a cidade, na posição salva por SceneTransition.
 
+const UiStyle := preload("res://scripts/ui/UiStyle.gd")
+
 @onready var prompt: Label = $PromptLabel
 
 var _player_in_range: bool = false
 
 
 func _ready() -> void:
+	UiStyle.prompt(prompt, "[E] Sair")
 	prompt.visible = false
 	body_entered.connect(_on_body_entered)
 	body_exited.connect(_on_body_exited)

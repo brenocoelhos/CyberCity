@@ -118,6 +118,7 @@ position = Vector2(110, 140)
 [node name="UI" type="CanvasLayer" parent="."]
 
 [node name="TitleLabel" type="Label" parent="UI"]
+visible = false
 offset_left = 16.0
 offset_top = 16.0
 offset_right = 400.0
@@ -125,6 +126,7 @@ offset_bottom = 40.0
 text = "Interior"
 
 [node name="HintLabel" type="Label" parent="UI"]
+visible = false
 offset_left = 16.0
 offset_top = 40.0
 offset_right = 480.0

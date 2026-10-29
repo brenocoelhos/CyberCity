@@ -9,6 +9,8 @@ extends Area2D
 ##
 ## Requer um Label filho chamado "PromptLabel" na cena.
 
+const UiStyle := preload("res://scripts/ui/UiStyle.gd")
+
 @export var prompt_text: String = "[E] Interagir"
 
 @onready var prompt_label: Label = $PromptLabel
@@ -18,7 +20,8 @@ var player_in_range: bool = false
 
 func _ready() -> void:
 	if prompt_label:
-		prompt_label.text = prompt_text
+		# Balão no estilo do HUD: tecla [E] numa caixinha + o texto.
+		UiStyle.prompt(prompt_label, prompt_text)
 		prompt_label.visible = false
 	body_entered.connect(_on_body_entered)
 	body_exited.connect(_on_body_exited)

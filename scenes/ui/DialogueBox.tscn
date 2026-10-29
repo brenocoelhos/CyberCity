@@ -1,38 +1,142 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/dialogue/DialogueManager.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/ui/CyberFrame.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/ui/CyberIcon.gd" id="3"]
+
+[sub_resource type="StyleBoxFlat" id="KeyBoxBig"]
+bg_color = Color(0.05, 0.18, 0.26, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.5, 0.95, 1, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
 
 [node name="DialogueBox" type="CanvasLayer"]
 script = ExtResource("1")
 
-[node name="Panel" type="Panel" parent="."]
-offset_left = 160.0
-offset_top = 496.0
-offset_right = 1120.0
-offset_bottom = 636.0
+[node name="Panel" type="Control" parent="."]
+anchors_preset = 0
+offset_left = 264.0
+offset_top = 470.0
+offset_right = 1016.0
+offset_bottom = 616.0
+mouse_filter = 2
+
+[node name="Frame" type="Control" parent="Panel"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+script = ExtResource("2")
+fill_color = Color(0.02, 0.06, 0.11, 0.94)
+cut_top_left = 14.0
+cut_top_right = 14.0
+cut_bottom_right = 14.0
+cut_bottom_left = 14.0
+
+[node name="PortraitFrame" type="Control" parent="Panel"]
+offset_left = 14.0
+offset_top = 12.0
+offset_right = 128.0
+offset_bottom = 134.0
+mouse_filter = 2
+script = ExtResource("2")
+fill_color = Color(0.03, 0.12, 0.19, 1)
+border_width = 1.5
+cut_top_left = 10.0
+cut_bottom_right = 10.0
+glow = false
+accents = false
+
+[node name="Portrait" type="TextureRect" parent="Panel"]
+texture_filter = 1
+offset_left = 22.0
+offset_top = 20.0
+offset_right = 120.0
+offset_bottom = 126.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="PortraitIcon" type="Control" parent="Panel"]
+visible = false
+offset_left = 36.0
+offset_top = 38.0
+offset_right = 106.0
+offset_bottom = 108.0
+mouse_filter = 2
+script = ExtResource("3")
+kind = 6
+line_width = 3.0
+
+[node name="TextFrame" type="Control" parent="Panel"]
+offset_left = 140.0
+offset_top = 40.0
+offset_right = 736.0
+offset_bottom = 110.0
+mouse_filter = 2
+script = ExtResource("2")
+fill_color = Color(0.01, 0.04, 0.08, 0.7)
+border_width = 1.0
+border_color = Color(0.25, 0.85, 1, 0.45)
+cut_top_left = 0.0
+cut_bottom_right = 8.0
+glow = false
+inner_line = false
+accents = false
 
 [node name="SpeakerLabel" type="Label" parent="Panel"]
-offset_left = 16.0
-offset_top = 8.0
-offset_right = 400.0
-offset_bottom = 30.0
-theme_type_variation = &"HeadingLabel"
-theme_override_font_sizes/font_size = 20
+offset_left = 144.0
+offset_top = 12.0
+offset_right = 600.0
+offset_bottom = 36.0
+theme_type_variation = &"HudTitle"
+theme_override_font_sizes/font_size = 16
 text = "NPC"
+text_overrun_behavior = 3
 
 [node name="TextLabel" type="Label" parent="Panel"]
-offset_left = 16.0
-offset_top = 34.0
-offset_right = 944.0
-offset_bottom = 100.0
-autowrap_mode = 3
-theme_override_font_sizes/font_size = 18
+offset_left = 154.0
+offset_top = 46.0
+offset_right = 706.0
+offset_bottom = 104.0
+theme_type_variation = &"HudText"
+theme_override_font_sizes/font_size = 16
 text = ""
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="NextArrow" type="Label" parent="Panel"]
+offset_left = 708.0
+offset_top = 84.0
+offset_right = 730.0
+offset_bottom = 106.0
+theme_type_variation = &"HudTitle"
+text = "»"
+horizontal_alignment = 1
+
+[node name="KeyLabel" type="Label" parent="Panel"]
+offset_left = 640.0
+offset_top = 117.0
+offset_right = 656.0
+offset_bottom = 135.0
+theme_type_variation = &"HudSmall"
+theme_override_colors/font_color = Color(0.75, 1, 1, 1)
+theme_override_styles/normal = SubResource("KeyBoxBig")
+text = "E"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="HintLabel" type="Label" parent="Panel"]
-offset_left = 16.0
-offset_top = 108.0
-offset_right = 300.0
-offset_bottom = 128.0
-theme_type_variation = &"DimLabel"
-text = "[E] Continuar"
+offset_left = 662.0
+offset_top = 116.0
+offset_right = 736.0
+offset_bottom = 136.0
+theme_type_variation = &"HudSmall"
+theme_override_font_sizes/font_size = 13
+text = "Continuar"

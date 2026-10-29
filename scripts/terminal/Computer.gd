@@ -11,6 +11,11 @@ extends "res://scripts/systems/Interactable.gd"
 @export var host_name: String = ""
 
 
+func _ready() -> void:
+	super._ready()
+	UiStyle.name_tag(get_node_or_null("NameLabel"))
+
+
 func _on_interact() -> void:
 	TerminalManager.open(challenge_id, _resolve_host())
 

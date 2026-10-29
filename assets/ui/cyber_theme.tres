@@ -1,4 +1,4 @@
-[gd_resource type="Theme" load_steps=14 format=3]
+[gd_resource type="Theme" load_steps=22 format=3]
 
 ; Tema futurista global do Cyber City.
 ; Aplicado em Projeto > Configurações do Projeto > GUI > Tema > Personalizado.
@@ -186,6 +186,100 @@ corner_radius_bottom_left = 6
 content_margin_left = 10.0
 content_margin_right = 10.0
 
+; --- Elementos do HUD no estilo "painel sci-fi" ---
+[sub_resource type="SystemFont" id="FontBold"]
+font_names = PackedStringArray("Bahnschrift", "Rajdhani", "Orbitron", "Segoe UI Semibold", "Ubuntu", "Roboto", "DejaVu Sans", "Sans-serif")
+font_weight = 700
+antialiasing = 1
+subpixel_positioning = 0
+
+; Fonte das etiquetas no mundo: MSDF fica nítida mesmo com o zoom da câmera
+[sub_resource type="SystemFont" id="WorldFont"]
+font_names = PackedStringArray("Bahnschrift", "Rajdhani", "Segoe UI Semibold", "Ubuntu", "Roboto", "DejaVu Sans", "Sans-serif")
+font_weight = 600
+multichannel_signed_distance_field = true
+
+[sub_resource type="StyleBoxEmpty" id="Empty"]
+
+; Etiqueta de nome no mundo (pílula com cantos cortados)
+[sub_resource type="StyleBoxFlat" id="NameTagBox"]
+bg_color = Color(0.02, 0.08, 0.14, 0.88)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.3, 0.88, 1, 0.9)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+corner_detail = 1
+shadow_color = Color(0.1, 0.8, 1, 0.25)
+shadow_size = 2
+content_margin_left = 5.0
+content_margin_top = 1.0
+content_margin_right = 5.0
+content_margin_bottom = 1.0
+
+; Balão de interação: espaço à esquerda para a tecla [E]
+[sub_resource type="StyleBoxFlat" id="PromptBox"]
+bg_color = Color(0.02, 0.08, 0.14, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.3, 0.88, 1, 0.95)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+corner_detail = 1
+shadow_color = Color(0.1, 0.8, 1, 0.3)
+shadow_size = 2
+content_margin_left = 15.0
+content_margin_top = 1.0
+content_margin_right = 5.0
+content_margin_bottom = 1.0
+
+; Caixinha de tecla ("E")
+[sub_resource type="StyleBoxFlat" id="KeyBox"]
+bg_color = Color(0.05, 0.18, 0.26, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.5, 0.95, 1, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+content_margin_left = 2.0
+content_margin_top = 0.0
+content_margin_right = 2.0
+content_margin_bottom = 0.0
+
+; Barra fina (XP e progresso da missão)
+[sub_resource type="StyleBoxFlat" id="ThinBarBg"]
+bg_color = Color(0.03, 0.1, 0.16, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.2, 0.55, 0.7, 0.8)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="ThinBarFill"]
+bg_color = Color(0.25, 0.9, 1, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+shadow_color = Color(0.2, 0.95, 1, 0.55)
+shadow_size = 4
+
 [resource]
 default_font = SubResource("Font")
 default_font_size = 16
@@ -254,3 +348,63 @@ LineEdit/colors/font_color = Color(0.9, 0.98, 1, 1)
 LineEdit/colors/caret_color = Color(0.3, 0.95, 1, 1)
 LineEdit/styles/normal = SubResource("Input")
 LineEdit/styles/focus = SubResource("BtnHover")
+
+; ---------- HUD estilo painel sci-fi ----------
+FlatPanel/base_type = &"Panel"
+FlatPanel/styles/panel = SubResource("Empty")
+
+FlatButton/base_type = &"Button"
+FlatButton/styles/normal = SubResource("Empty")
+FlatButton/styles/hover = SubResource("Empty")
+FlatButton/styles/pressed = SubResource("Empty")
+FlatButton/styles/focus = SubResource("Empty")
+FlatButton/styles/disabled = SubResource("Empty")
+
+; Título de card (ex.: TECHCORP LTDA., MISSÃO ATUAL, NÍVEL 2)
+HudTitle/base_type = &"Label"
+HudTitle/fonts/font = SubResource("FontBold")
+HudTitle/font_sizes/font_size = 17
+HudTitle/colors/font_color = Color(0.55, 0.95, 1, 1)
+HudTitle/colors/font_shadow_color = Color(0.1, 0.7, 1, 0.35)
+HudTitle/constants/shadow_offset_x = 0
+HudTitle/constants/shadow_offset_y = 0
+HudTitle/constants/shadow_outline_size = 4
+
+; Texto normal de card
+HudText/base_type = &"Label"
+HudText/font_sizes/font_size = 14
+HudText/colors/font_color = Color(0.88, 0.96, 1, 1)
+
+; Texto pequeno de card (subtítulo, contadores)
+HudSmall/base_type = &"Label"
+HudSmall/font_sizes/font_size = 12
+HudSmall/colors/font_color = Color(0.62, 0.82, 0.92, 1)
+
+ThinBar/base_type = &"ProgressBar"
+ThinBar/styles/background = SubResource("ThinBarBg")
+ThinBar/styles/fill = SubResource("ThinBarFill")
+
+; ---------- Etiquetas no mundo (NPCs, computadores, portas) ----------
+NameTag/base_type = &"Label"
+NameTag/fonts/font = SubResource("WorldFont")
+NameTag/font_sizes/font_size = 7
+NameTag/colors/font_color = Color(0.85, 0.97, 1, 1)
+NameTag/constants/shadow_offset_x = 0
+NameTag/constants/shadow_offset_y = 0
+NameTag/styles/normal = SubResource("NameTagBox")
+
+PromptChip/base_type = &"Label"
+PromptChip/fonts/font = SubResource("WorldFont")
+PromptChip/font_sizes/font_size = 7
+PromptChip/colors/font_color = Color(0.85, 0.97, 1, 1)
+PromptChip/constants/shadow_offset_x = 0
+PromptChip/constants/shadow_offset_y = 0
+PromptChip/styles/normal = SubResource("PromptBox")
+
+KeyCap/base_type = &"Label"
+KeyCap/fonts/font = SubResource("WorldFont")
+KeyCap/font_sizes/font_size = 6
+KeyCap/colors/font_color = Color(0.75, 1, 1, 1)
+KeyCap/constants/shadow_offset_x = 0
+KeyCap/constants/shadow_offset_y = 0
+KeyCap/styles/normal = SubResource("KeyBox")
