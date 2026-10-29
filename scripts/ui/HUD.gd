@@ -9,7 +9,7 @@ extends CanvasLayer
 @onready var level_label: Label = $Info/LevelLabel
 @onready var xp_bar: ProgressBar = $Info/XPBar
 @onready var xp_label: Label = $Info/XPLabel
-@onready var objective_label: Label = $Info/ObjectiveLabel
+@onready var objective_label: Label = $Objective/ObjectiveLabel
 
 @onready var complete_panel: Panel = $CompletePanel
 @onready var complete_title: Label = $CompletePanel/TitleLabel

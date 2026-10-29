@@ -16,8 +16,13 @@ const CITY_SCENE := "res://scenes/world/City.tscn"
 @onready var controls_panel: Panel = $ControlsPanel
 @onready var controls_back_button: Button = $ControlsPanel/BackButton
 
+@onready var title_label: Label = $TitleLabel
+
 ## Evita clicar duas vezes em "Novo jogo" durante o fade.
 var _leaving: bool = false
+
+## Tempo até o próximo "tremido" (glitch) do título.
+var _glitch_wait: float = 1.5
 
 
 func _ready() -> void:
@@ -39,6 +44,29 @@ func _ready() -> void:
 
 	controls_panel.visible = false
 	_show_main_buttons()
+
+
+func _process(delta: float) -> void:
+	_glitch_wait -= delta
+	if _glitch_wait <= 0.0:
+		_glitch_wait = randf_range(1.8, 4.0)
+		_glitch_title()
+
+
+## Efeito rápido de "defeito digital" no título: o texto treme de lado,
+## a sombra ciano se afasta e o brilho pisca por uma fração de segundo.
+func _glitch_title() -> void:
+	var tween := create_tween()
+	for i in 4:
+		tween.tween_callback(func() -> void:
+			title_label.position.x = randf_range(-7.0, 7.0)
+			title_label.add_theme_constant_override("shadow_offset_x", randi_range(-10, 10))
+			title_label.modulate = Color(1, 1, 1, randf_range(0.7, 1.0)))
+		tween.tween_interval(0.045)
+	tween.tween_callback(func() -> void:
+		title_label.position.x = 0.0
+		title_label.remove_theme_constant_override("shadow_offset_x")
+		title_label.modulate = Color(1, 1, 1, 1))
 
 
 func _show_main_buttons() -> void:
