@@ -1,4 +1,4 @@
-[gd_resource type="Theme" load_steps=12 format=3]
+[gd_resource type="Theme" load_steps=11 format=3]
 
 ; Tema verde "terminal hacker" usado só no menu principal (MainMenu.tscn).
 ; O resto do jogo continua com assets/ui/cyber_theme.tres (ciano).
@@ -100,22 +100,6 @@ content_margin_top = 8.0
 content_margin_right = 16.0
 content_margin_bottom = 8.0
 
-; Foco (teclado / botão selecionado): só contorno brilhante, sem preencher
-[sub_resource type="StyleBoxFlat" id="BtnFocus"]
-draw_center = false
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.35, 1, 0.55, 1)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_right = 10
-corner_radius_bottom_left = 10
-corner_detail = 1
-shadow_color = Color(0.2, 1, 0.45, 0.5)
-shadow_size = 12
-
 [sub_resource type="StyleBoxFlat" id="SliderTrack"]
 bg_color = Color(0, 0.05, 0.02, 0.95)
 border_width_left = 1
@@ -179,19 +163,22 @@ Button/colors/font_hover_color = Color(1, 1, 1, 1)
 Button/colors/font_pressed_color = Color(1, 1, 1, 1)
 Button/colors/font_focus_color = Color(1, 1, 1, 1)
 Button/colors/font_disabled_color = Color(0.35, 0.5, 0.4, 1)
+; O destaque (preenchimento + borda + brilho) é o estilo "focus". O "hover"
+; fica igual ao normal: ao passar o mouse, MainMenu.gd dá o foco ao botão,
+; então mouse e teclado mostram exatamente o mesmo visual.
 Button/styles/normal = SubResource("BtnNormal")
-Button/styles/hover = SubResource("BtnHover")
+Button/styles/hover = SubResource("BtnNormal")
 Button/styles/pressed = SubResource("BtnPressed")
 Button/styles/disabled = SubResource("BtnNormal")
-Button/styles/focus = SubResource("BtnFocus")
+Button/styles/focus = SubResource("BtnHover")
 
 CheckButton/colors/font_color = Color(0.75, 1, 0.82, 1)
 CheckButton/colors/font_hover_color = Color(1, 1, 1, 1)
 CheckButton/styles/normal = SubResource("BtnNormal")
-CheckButton/styles/hover = SubResource("BtnHover")
+CheckButton/styles/hover = SubResource("BtnNormal")
 CheckButton/styles/pressed = SubResource("BtnNormal")
-CheckButton/styles/hover_pressed = SubResource("BtnHover")
-CheckButton/styles/focus = SubResource("BtnFocus")
+CheckButton/styles/hover_pressed = SubResource("BtnNormal")
+CheckButton/styles/focus = SubResource("BtnHover")
 
 HSlider/styles/slider = SubResource("SliderTrack")
 HSlider/styles/grabber_area = SubResource("SliderFill")

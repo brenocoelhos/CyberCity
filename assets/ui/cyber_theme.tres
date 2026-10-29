@@ -1,4 +1,4 @@
-[gd_resource type="Theme" load_steps=15 format=3]
+[gd_resource type="Theme" load_steps=14 format=3]
 
 ; Tema futurista global do Cyber City.
 ; Aplicado em Projeto > Configurações do Projeto > GUI > Tema > Personalizado.
@@ -77,8 +77,10 @@ content_margin_top = 6.0
 content_margin_right = 16.0
 content_margin_bottom = 6.0
 
+; Destaque (mouse em cima OU botão selecionado pelo teclado): o mesmo estilo
+; nos dois casos, opaco e sem brilho, para nunca parecerem diferentes.
 [sub_resource type="StyleBoxFlat" id="BtnHover"]
-bg_color = Color(0.06, 0.2, 0.3, 0.95)
+bg_color = Color(0.06, 0.2, 0.3, 1)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
@@ -88,8 +90,6 @@ corner_radius_top_left = 2
 corner_radius_top_right = 8
 corner_radius_bottom_right = 2
 corner_radius_bottom_left = 8
-shadow_color = Color(0.2, 0.95, 1, 0.4)
-shadow_size = 8
 content_margin_left = 16.0
 content_margin_top = 6.0
 content_margin_right = 16.0
@@ -128,23 +128,6 @@ content_margin_left = 16.0
 content_margin_top = 6.0
 content_margin_right = 16.0
 content_margin_bottom = 6.0
-
-; --- Foco do teclado: contorno só (sem fundo) ---
-[sub_resource type="StyleBoxFlat" id="Focus"]
-draw_center = false
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(1, 0.85, 0.3, 1)
-corner_radius_top_left = 2
-corner_radius_top_right = 8
-corner_radius_bottom_right = 2
-corner_radius_bottom_left = 8
-expand_margin_left = 2.0
-expand_margin_top = 2.0
-expand_margin_right = 2.0
-expand_margin_bottom = 2.0
 
 ; --- Barra de progresso (XP) ---
 [sub_resource type="StyleBoxFlat" id="BarBg"]
@@ -249,7 +232,7 @@ Button/styles/normal = SubResource("BtnNormal")
 Button/styles/hover = SubResource("BtnHover")
 Button/styles/pressed = SubResource("BtnPressed")
 Button/styles/disabled = SubResource("BtnDisabled")
-Button/styles/focus = SubResource("Focus")
+Button/styles/focus = SubResource("BtnHover")
 
 CheckButton/colors/font_color = Color(0.8, 0.95, 1, 1)
 CheckButton/colors/font_hover_color = Color(1, 1, 1, 1)
@@ -257,7 +240,7 @@ CheckButton/styles/normal = SubResource("BtnNormal")
 CheckButton/styles/hover = SubResource("BtnHover")
 CheckButton/styles/pressed = SubResource("BtnNormal")
 CheckButton/styles/hover_pressed = SubResource("BtnHover")
-CheckButton/styles/focus = SubResource("Focus")
+CheckButton/styles/focus = SubResource("BtnHover")
 
 ; ---------- Barras e campos ----------
 ProgressBar/styles/background = SubResource("BarBg")

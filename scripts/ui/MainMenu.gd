@@ -42,6 +42,13 @@ func _ready() -> void:
 	controls_back_button.pressed.connect(_close_controls)
 	options_panel.closed.connect(_show_main_buttons)
 
+	# Mouse em cima de um botão = botão selecionado. Assim o mouse e o teclado
+	# mostram sempre o mesmo destaque, e só um botão fica aceso por vez.
+	for button in find_children("*", "BaseButton", true, false):
+		button.mouse_entered.connect(func() -> void:
+			if button.is_visible_in_tree() and not button.disabled:
+				button.grab_focus())
+
 	controls_panel.visible = false
 	_show_main_buttons()
 
