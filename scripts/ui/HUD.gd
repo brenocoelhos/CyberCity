@@ -158,7 +158,10 @@ func _build_station_tabs() -> void:
 	for i in count:
 		var computer: Node2D = computers[i]
 		var tab := Control.new()
-		tab.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		# Clicável: o personagem anda sozinho até este computador.
+		tab.mouse_filter = Control.MOUSE_FILTER_STOP
+		tab.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		tab.tooltip_text = "Clique para ir até " + _computer_name(computer)
 		tab.size = TAB_SIZE
 		tab.position = Vector2(-(count - i) * (TAB_SIZE.x + TAB_GAP) + TAB_GAP, 0)
 		stations.add_child(tab)
@@ -187,8 +190,28 @@ func _build_station_tabs() -> void:
 		label.size = Vector2(TAB_SIZE.x - 8.0, 20)
 		tab.add_child(label)
 
+		tab.gui_input.connect(_on_tab_gui_input.bind(computer))
+		tab.mouse_entered.connect(func() -> void: tab.modulate = Color(1.3, 1.3, 1.3))
+		tab.mouse_exited.connect(func() -> void: tab.modulate = Color.WHITE)
+
 		_tab_frames[computer] = frame
 	_update_tab_highlight()
+
+
+func _on_tab_gui_input(event: InputEvent, computer: Node2D) -> void:
+	if not (event is InputEventMouseButton and event.pressed \
+			and event.button_index == MOUSE_BUTTON_LEFT):
+		return
+	get_viewport().set_input_as_handled()
+	if _popup_active or GameMenu.is_active() or DialogueManager.is_active() \
+		or TerminalManager.is_active() or ChallengeManager.is_active():
+		return
+	if not is_instance_valid(computer):
+		return
+	var player: Node = get_tree().get_first_node_in_group("player")
+	if player != null and player.has_method("walk_to"):
+		SoundManager.play("blip")
+		player.walk_to(computer)
 
 
 func _computer_name(computer: Node) -> String:
