@@ -110,12 +110,14 @@ func _auto_walk_direction(delta: float) -> Vector2:
 	# Chegou: já está dentro da área de interação do alvo.
 	if _auto_target is Area2D and is_instance_valid(_auto_target) \
 			and (_auto_target as Area2D).overlaps_body(self):
-		_finish_auto_walk()
+		_finish_auto_walk(true)
 		return Vector2.ZERO
 	while _auto_index < _auto_path.size() and global_position.distance_to(_auto_path[_auto_index]) < 3.0:
 		_auto_index += 1
 	if _auto_index >= _auto_path.size():
-		_finish_auto_walk()
+		# Fim do caminho: só conta como chegada se já está no alcance do alvo.
+		_finish_auto_walk(_auto_target is Area2D and is_instance_valid(_auto_target) \
+			and (_auto_target as Area2D).overlaps_body(self))
 		return Vector2.ZERO
 	# Preso em algum canto por muito tempo: desiste.
 	if get_real_velocity().length() < speed * 0.2:
@@ -128,15 +130,19 @@ func _auto_walk_direction(delta: float) -> Vector2:
 	return (_auto_path[_auto_index] - global_position).normalized()
 
 
-## Ao chegar, vira de frente para o alvo.
-func _finish_auto_walk() -> void:
-	if _auto_target != null and is_instance_valid(_auto_target):
-		var d := _auto_target.global_position - global_position
+## Ao parar, vira de frente para o alvo. Se chegou de verdade ao alcance
+## dele ("arrived"), já usa o alvo: no caso de um computador, abre o terminal.
+func _finish_auto_walk(arrived: bool = false) -> void:
+	var target := _auto_target
+	if target != null and is_instance_valid(target):
+		var d := target.global_position - global_position
 		if absf(d.x) > absf(d.y):
 			_facing = "direita" if d.x > 0.0 else "esquerda"
 		else:
 			_facing = "baixo" if d.y > 0.0 else "cima"
 	_cancel_auto_walk()
+	if arrived and target != null and is_instance_valid(target) and target.has_method("interact"):
+		target.interact()
 
 
 ## Monta uma grade de quadradinhos em volta do jogador e do alvo, marca

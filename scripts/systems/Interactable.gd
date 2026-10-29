@@ -52,8 +52,18 @@ func _unhandled_input(event: InputEvent) -> void:
 		or GameMenu.is_active() or HUD.is_popup_active():
 		return
 	if player_in_range and event.is_action_pressed("interact"):
-		SoundManager.play("interact")
-		_on_interact()
+		interact()
+
+
+## Usa o objeto, como se o jogador tivesse apertado E. Também é chamado pela
+## caminhada automática (Player.gd) quando o personagem chega ao alcance.
+func interact() -> void:
+	if DialogueManager.is_active() or TerminalManager.is_active() \
+		or ChallengeManager.is_active() \
+		or GameMenu.is_active() or HUD.is_popup_active():
+		return
+	SoundManager.play("interact")
+	_on_interact()
 
 
 ## Sobrescreva este método em cada tipo de objeto interativo.
