@@ -15,6 +15,11 @@ var return_spawn_position: Vector2 = Vector2.ZERO
 ## return_spawn_position (usado apenas ao voltar de um interior).
 var has_pending_spawn: bool = false
 
+## Posição do jogador DENTRO de um interior ao carregar um save (só vale para
+## a próxima cena carregada). Ver SaveManager.gd e InteriorBase.gd.
+var has_interior_spawn: bool = false
+var interior_spawn_position: Vector2 = Vector2.ZERO
+
 ## Título mostrado dentro do interior (ex.: "Casa 2", "TechCorp Ltda").
 var interior_title: String = ""
 

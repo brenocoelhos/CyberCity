@@ -53,6 +53,47 @@ func reset() -> void:
 	last_result = {}
 
 
+## Dados para o save: ranks e números de cada desafio. O tempo de um desafio
+## em andamento é guardado como "decorrido", porque o relógio do jogo
+## (Time.get_ticks_msec) recomeça do zero a cada vez que o jogo abre.
+func get_save_data() -> Dictionary:
+	var stats := {}
+	var now: int = Time.get_ticks_msec()
+	for challenge_id in _stats.keys():
+		var entry: Dictionary = _stats[challenge_id].duplicate()
+		var started: int = int(entry.get("started_msec", -1))
+		entry["elapsed_msec"] = (now - started) if started >= 0 else -1
+		entry.erase("started_msec")
+		stats[challenge_id] = entry
+	return {"ranks": _ranks.duplicate(), "stats": stats}
+
+
+func load_save_data(data: Dictionary) -> void:
+	reset()
+	var ranks: Dictionary = data.get("ranks", {})
+	for key in ranks.keys():
+		_ranks[String(key)] = String(ranks[key])
+	var now: int = Time.get_ticks_msec()
+	var stats: Dictionary = data.get("stats", {})
+	for challenge_id in stats.keys():
+		var saved: Dictionary = stats[challenge_id]
+		var elapsed: int = int(saved.get("elapsed_msec", -1))
+		_stats[String(challenge_id)] = {
+			"attempts": int(saved.get("attempts", 0)),
+			"errors": int(saved.get("errors", 0)),
+			"hints": int(saved.get("hints", 0)),
+			"revealed": int(saved.get("revealed", 0)),
+			"started_msec": (now - elapsed) if elapsed >= 0 else -1,
+			"time_msec": int(saved.get("time_msec", 0)),
+		}
+	# Campos extras que o desafio possa ter ganhado (rank, bônus...).
+	for challenge_id in stats.keys():
+		var saved: Dictionary = stats[challenge_id]
+		for extra in ["rank", "bonus_xp"]:
+			if saved.has(extra):
+				_stats[String(challenge_id)][extra] = saved[extra]
+
+
 ## Chamado quando o jogador abre um desafio. Aceita a missão ligada a ele
 ## se ainda estiver disponível e começa a contar o tempo (só na 1ª vez).
 func begin(challenge_id: String) -> void:

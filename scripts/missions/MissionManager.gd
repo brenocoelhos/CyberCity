@@ -235,6 +235,23 @@ func reset() -> void:
 		missions[mission_id]["state"] = _initial_states[mission_id]
 
 
+## Dados para o save: estado de cada missão (ver SaveManager.gd).
+func get_save_data() -> Dictionary:
+	var states := {}
+	for mission_id in missions.keys():
+		states[mission_id] = int(missions[mission_id]["state"])
+	return {"states": states}
+
+
+## Restaura os estados salvos. Missões que não estão no save ficam como estão.
+func load_save_data(data: Dictionary) -> void:
+	var states: Dictionary = data.get("states", {})
+	for mission_id in states.keys():
+		if missions.has(mission_id):
+			var value: int = clampi(int(states[mission_id]), 0, State.size() - 1)
+			missions[mission_id]["state"] = value
+
+
 func get_mission(mission_id: String) -> Dictionary:
 	return missions.get(mission_id, {})
 

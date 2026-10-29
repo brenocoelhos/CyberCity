@@ -246,9 +246,18 @@ func _on_unread_changed(count: int) -> void:
 
 func _on_message_received(message: Dictionary) -> void:
 	SoundManager.play("interact")
-	message_toast_title.text = "Nova mensagem — " + String(message["from"])
 	# Só a primeira linha, como a prévia de uma notificação.
-	message_toast_text.text = String(message["text"]).get_slice("\n", 0)
+	_show_toast("Nova mensagem — " + String(message["from"]), String(message["text"]).get_slice("\n", 0), true)
+
+
+## Aviso rápido no topo da tela (ex.: "Jogo salvo"), sem vibrar o celular.
+func show_notice(title: String, text: String) -> void:
+	_show_toast(title, text, false)
+
+
+func _show_toast(title: String, text: String, shake_phone: bool) -> void:
+	message_toast_title.text = title
+	message_toast_text.text = text
 	message_toast.visible = true
 	message_toast.modulate.a = 1.0
 
@@ -256,11 +265,12 @@ func _on_message_received(message: Dictionary) -> void:
 		_toast_tween.kill()
 	phone_button.position.x = _phone_button_x
 	_toast_tween = create_tween()
-	# "Vibração": o ícone do celular treme para os lados.
-	for i in range(6):
-		var shake: float = 4.0 if i % 2 == 0 else -4.0
-		_toast_tween.tween_property(phone_button, "position:x", _phone_button_x + shake, 0.04)
-	_toast_tween.tween_property(phone_button, "position:x", _phone_button_x, 0.04)
+	if shake_phone:
+		# "Vibração": o ícone do celular treme para os lados.
+		for i in range(6):
+			var shake: float = 4.0 if i % 2 == 0 else -4.0
+			_toast_tween.tween_property(phone_button, "position:x", _phone_button_x + shake, 0.04)
+		_toast_tween.tween_property(phone_button, "position:x", _phone_button_x, 0.04)
 	# A notificação some sozinha depois de alguns segundos.
 	_toast_tween.tween_interval(3.0)
 	_toast_tween.tween_property(message_toast, "modulate:a", 0.0, 0.4)

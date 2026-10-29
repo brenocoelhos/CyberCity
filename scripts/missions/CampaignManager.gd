@@ -122,6 +122,28 @@ func reset() -> void:
 		DialogueManager.closed.disconnect(_run_queued_action)
 
 
+## Dados para o save: em que ponto da campanha o jogador está.
+func get_save_data() -> Dictionary:
+	return {
+		"is_game_completed": is_game_completed,
+		"intro_played": _intro_played,
+		"chapter_started": _chapter_started.duplicate(),
+		"chapter_finished": _chapter_finished.duplicate(),
+	}
+
+
+func load_save_data(data: Dictionary) -> void:
+	reset()
+	is_game_completed = bool(data.get("is_game_completed", false))
+	_intro_played = bool(data.get("intro_played", false))
+	var started: Dictionary = data.get("chapter_started", {})
+	for chapter_id in started.keys():
+		_chapter_started[String(chapter_id)] = bool(started[chapter_id])
+	var finished: Dictionary = data.get("chapter_finished", {})
+	for chapter_id in finished.keys():
+		_chapter_finished[String(chapter_id)] = bool(finished[chapter_id])
+
+
 ## true se a missão faz parte de um capítulo já começado e ainda não
 ## terminado. Usado pelos marcadores "!" dos prédios na cidade.
 func is_mission_in_current_chapter(mission_id: String) -> bool:

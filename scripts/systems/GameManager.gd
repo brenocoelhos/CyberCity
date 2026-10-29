@@ -58,6 +58,29 @@ func reset() -> void:
 
 ## XP necessário para passar do nível atual para o próximo.
 ## Fórmula simples e previsível: nível 1 -> 100, nível 2 -> 200, etc.
+## Dados para o save (ver SaveManager.gd).
+func get_save_data() -> Dictionary:
+	return {
+		"level": level,
+		"xp": xp,
+		"total_xp_earned": total_xp_earned,
+		"knowledge": knowledge.duplicate(),
+	}
+
+
+## Restaura o progresso salvo. Não emite "leveled_up" (não é um nível novo).
+func load_save_data(data: Dictionary) -> void:
+	level = maxi(1, int(data.get("level", 1)))
+	xp = maxi(0, int(data.get("xp", 0)))
+	total_xp_earned = maxi(0, int(data.get("total_xp_earned", 0)))
+	knowledge.clear()
+	var saved_knowledge: Dictionary = data.get("knowledge", {})
+	for concept in saved_knowledge.keys():
+		knowledge[String(concept)] = int(saved_knowledge[concept])
+	game_started = true
+	xp_changed.emit(xp, xp_to_next_level(), level)
+
+
 func xp_to_next_level() -> int:
 	return level * 100
 

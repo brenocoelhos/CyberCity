@@ -10,6 +10,7 @@ extends Node2D
 func _ready() -> void:
 	title_label.text = SceneTransition.interior_title
 	_apply_config(SceneTransition.interior_config)
+	_apply_saved_spawn()
 
 
 ## Aplica o que o prédio pediu (ver Building.gd): quais NPC e computador
@@ -51,3 +52,17 @@ func _apply_config(config: Dictionary) -> void:
 			node.queue_free()
 		else:
 			node.challenge_id = wanted
+
+
+## Ao carregar um save feito dentro do prédio, põe o jogador onde ele estava.
+func _apply_saved_spawn() -> void:
+	if not SceneTransition.has_interior_spawn:
+		return
+	SceneTransition.has_interior_spawn = false
+	var player: Node2D = get_node_or_null("Player")
+	if player == null:
+		return
+	player.global_position = SceneTransition.interior_spawn_position
+	var camera: Camera2D = player.get_node_or_null("Camera2D")
+	if camera:
+		camera.reset_smoothing()

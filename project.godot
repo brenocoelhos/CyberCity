@@ -38,6 +38,7 @@ TerminalManager="*res://scenes/terminal/Terminal.tscn"
 ChallengeManager="*res://scenes/ui/ChallengeScreen.tscn"
 HUD="*res://scenes/ui/HUD.tscn"
 GameMenu="*res://scenes/ui/GameMenu.tscn"
+SaveManager="*res://scripts/systems/SaveManager.gd"
 
 [display]
 

@@ -76,6 +76,30 @@ func reset() -> void:
 	unread_changed.emit(0)
 
 
+## Dados para o save: mensagens recebidas e pistas reveladas.
+func get_save_data() -> Dictionary:
+	return {
+		"messages": messages.duplicate(true),
+		"revealed": _revealed.duplicate(),
+	}
+
+
+func load_save_data(data: Dictionary) -> void:
+	messages.clear()
+	_revealed.clear()
+	for entry in Array(data.get("messages", [])):
+		if entry is Dictionary:
+			messages.append({
+				"from": String(entry.get("from", "")),
+				"text": String(entry.get("text", "")),
+				"read": bool(entry.get("read", true)),
+			})
+	var revealed: Dictionary = data.get("revealed", {})
+	for mission_id in revealed.keys():
+		_revealed[String(mission_id)] = int(revealed[mission_id])
+	unread_changed.emit(unread_count())
+
+
 # --- Mensagens ---------------------------------------------------------
 
 func send_message(from: String, text: String) -> void:

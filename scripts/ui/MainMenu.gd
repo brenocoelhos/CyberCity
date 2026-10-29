@@ -30,7 +30,13 @@ func _ready() -> void:
 	HUD.visible = false
 	GameMenu.close()
 
-	continue_button.visible = GameManager.game_started
+	# "Continuar" aparece com um jogo em andamento ou com um save no disco.
+	continue_button.visible = GameManager.game_started or SaveManager.has_save()
+	if not GameManager.game_started and SaveManager.has_save():
+		var summary: Dictionary = SaveManager.get_save_summary()
+		if not summary.is_empty():
+			continue_button.text = "Continuar (Nível %d)" % int(summary["level"])
+			continue_button.tooltip_text = "Último save: " + String(summary["saved_at"])
 	# No navegador (exportação Web) não existe "fechar o jogo".
 	quit_button.visible = not OS.has_feature("web")
 
@@ -85,6 +91,15 @@ func _show_main_buttons() -> void:
 
 
 func _on_continue_pressed() -> void:
+	if not GameManager.game_started:
+		# Jogo recém-aberto: carrega o progresso do arquivo de save.
+		var saved_scene: String = SaveManager.load_game()
+		if saved_scene == "":
+			SoundManager.play("error")
+			continue_button.visible = false
+			return
+		_start_game(saved_scene)
+		return
 	var path: String = GameManager.resume_scene_path
 	if path == "":
 		path = CITY_SCENE
