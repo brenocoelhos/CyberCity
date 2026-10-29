@@ -15,14 +15,31 @@ extends "res://scripts/systems/Interactable.gd"
 func _ready() -> void:
 	super._ready()
 	UiStyle.name_tag(get_node_or_null("../NameLabel"))
-	# O "!" amarelo fica sempre sobre o NPC (lembra o jogador de conversar
-	# antes de ir aos computadores) e sobe e desce devagar.
+	# O "!" amarelo fica sobre o NPC e sobe e desce devagar. Quando o NPC
+	# entrega uma missão, o "!" some assim que o jogador a aceita.
 	var marker: Label = get_node_or_null("../Marker")
 	if marker:
 		var base_y := marker.position.y
 		var tween := create_tween().set_loops()
 		tween.tween_property(marker, "position:y", base_y - 6.0, 0.5)
 		tween.tween_property(marker, "position:y", base_y, 0.5)
+		MissionManager.mission_started.connect(_update_marker.unbind(1))
+		MissionManager.mission_completed.connect(_update_marker.unbind(1))
+		# Adiado: o interior só define "mission_to_start" depois deste _ready.
+		_update_marker.call_deferred()
+
+
+## Com missão para entregar: "!" só enquanto ela ainda não foi aceita
+## (estado DISPONÍVEL). NPC sem missão mantém o "!" (ver o Guia e os
+## funcionários, que só orientam o jogador).
+func _update_marker() -> void:
+	var marker: Label = get_node_or_null("../Marker")
+	if marker == null:
+		return
+	if mission_to_start == "":
+		marker.visible = true
+	else:
+		marker.visible = MissionManager.get_state(mission_to_start) == MissionManager.State.AVAILABLE
 
 
 func _on_interact() -> void:
