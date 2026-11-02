@@ -22,6 +22,12 @@ func _run() -> void:
 	assert(ground.get_cell_atlas_coords(Vector2i(21, 16)) == Vector2i(7, 2))
 	assert(ground.get_cell_alternative_tile(Vector2i(21, 16)) == TileSetAtlasSource.TRANSFORM_TRANSPOSE)
 	assert(ground.get_cell_atlas_coords(Vector2i(10, 12)) == Vector2i(0, 1))
+	# A base visual de todos os postes pertence a uma calcada.
+	for prop in city.get_node("Decor").get_children():
+		if prop is Sprite2D and str(prop.name).begins_with("Lamp"):
+			var base: Vector2 = prop.position + prop.offset + Vector2(0,prop.texture.get_height()/2.0-1)
+			assert(ground.get_cell_atlas_coords(ground.local_to_map(base)) == Vector2i(0,1))
+	assert(city.get_node("RearBuildings").get_child_count() == 72)
 	var player: CharacterBody2D = city.get_node("Player")
 	for building in city.get_node("Buildings").get_children():
 		var sprite: Sprite2D = building.get_node("Sprite2D")

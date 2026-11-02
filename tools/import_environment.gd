@@ -64,6 +64,8 @@ func _initialize() -> void:
 	var manifest := FileAccess.open(DEST + "manifest.json", FileAccess.WRITE)
 	manifest.store_string(JSON.stringify(entries, "\t"))
 	print("Imported 44 terrain cells, 9 road rotations and 20 independent sprites.")
+	var cyber_importer = load("res://tools/import_cyber_exterior.gd").new()
+	cyber_importer.run()
 	quit()
 
 func _extract(asset_name: String, rect: Rect2i, canvas_size: Vector2i) -> void:

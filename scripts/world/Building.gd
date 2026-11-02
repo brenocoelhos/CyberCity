@@ -63,8 +63,11 @@ func _update_building() -> void:
 	footprint.size = Vector2(size.x - 16.0, 28.0)
 	$CollisionShape2D.shape = footprint
 	$CollisionShape2D.position = Vector2(0, -15)
-	$NameLabel.position = Vector2(-80, -size.y - 22)
-	$NameLabel.size = Vector2(160, 20)
+	var visible_top: float = texture.get_image().get_used_rect().position.y
+	$NameLabel.position = Vector2(-48, -size.y + visible_top - 32)
+	$NameLabel.size = Vector2(96, 30)
+	$NameLabel.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	$NameLabel.add_theme_font_size_override("font_size", 10)
 	$NameLabel.text = building_name
 	$Door.position = Vector2(entrance_x, 10)
 	$MissionMarker.position = Vector2(-10, -size.y - 52)
