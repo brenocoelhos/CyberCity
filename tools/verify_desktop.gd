@@ -80,6 +80,19 @@ func _initialize() -> void:
 	terminal._on_command_submitted("whoami")
 	ok = _check("terminal em janela funciona (sessao viva)", terminal.output.get_total_character_count() > 50) and ok
 
+	# --- botoes do desktop nao pegam foco de teclado: o terminal em foco reassume
+	# o cursor a cada quadro e, se o botao tivesse foco, o clique no icone ou na
+	# barra de tarefas era cancelado no meio (nao dava para abrir outro navegador) ---
+	var focusable: Array = []
+	for button in desktop._root.find_children("*", "Button", true, false):
+		var inside_window: bool = false
+		for window in desktop.visible_windows():
+			if window.is_ancestor_of(button):
+				inside_window = true
+		if not inside_window and (button as Button).focus_mode != Control.FOCUS_NONE:
+			focusable.append((button as Button).text)
+	ok = _check("icones, barra de tarefas e Desligar nao pegam foco (clique nao e cancelado)", focusable.is_empty()) and ok
+
 	# --- arrastar pela barra de titulo ---
 	var drag_press := InputEventMouseButton.new()
 	drag_press.button_index = MOUSE_BUTTON_LEFT
@@ -225,3 +238,5 @@ func _initialize() -> void:
 func _check(label: String, passed: bool) -> bool:
 	print(("  ok     " if passed else "  FALHA  ") + label)
 	return passed
+
+

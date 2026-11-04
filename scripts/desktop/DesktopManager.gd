@@ -412,6 +412,9 @@ func _add_task_button(entry: Dictionary) -> void:
 		return
 	var button := Button.new()
 	button.toggle_mode = true
+	# Sem foco de teclado: o terminal em foco reassume o cursor a cada quadro e,
+	# se o botão tivesse foco, o clique seria cancelado no meio.
+	button.focus_mode = Control.FOCUS_NONE
 	button.clip_text = true
 	button.custom_minimum_size = Vector2(150, 0)
 	button.pressed.connect(_on_task_pressed.bind(entry["node"]))
@@ -574,6 +577,7 @@ func _build() -> void:
 	row.add_child(_clock)
 	var power := Button.new()
 	power.text = "Desligar"
+	power.focus_mode = Control.FOCUS_NONE
 	power.tooltip_text = "Fecha o computador (ESC sem janelas abertas)"
 	power.pressed.connect(close)
 	row.add_child(power)
@@ -584,6 +588,7 @@ func _make_icon(glyph: String, title: String, action: Callable) -> Button:
 	button.text = "%s\n%s" % [glyph, title]
 	button.custom_minimum_size = Vector2(110, 84)
 	button.flat = true
+	button.focus_mode = Control.FOCUS_NONE
 	button.add_theme_color_override("font_color", Color("#e8ece9"))
 	button.add_theme_color_override("font_hover_color", C_GREEN)
 	button.pressed.connect(action)
