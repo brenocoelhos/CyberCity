@@ -36,7 +36,7 @@ func _initialize() -> void:
 	var names: Array = []
 	var pills: Array = []
 	_collect(map._markers, names, pills)
-	for wanted in ["Casa 1", "Casa 2", "Casa 3", "Casa 4", "Casa 5", "Casa 6", "TechCorp Ltda.", "DataSoft Sistemas", "Centro de Tecnologia", "Loja Eletrônica", "Terminal Público", "Salvar o jogo", "Você"]:
+	for wanted in ["Casa 1", "Casa 2", "Casa 3", "Casa 4", "Casa 5", "Casa 6", "TechCorp", "DataSoft", "Centro Tech", "Loja", "Terminal Público", "Salvar o jogo", "Você"]:
 		var found := false
 		for text in names:
 			if String(text).begins_with(wanted):

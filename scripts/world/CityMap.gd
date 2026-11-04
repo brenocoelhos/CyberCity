@@ -15,6 +15,14 @@ const MissionTarget := preload("res://scripts/ui/MissionTarget.gd")
 const VIEW_SIZE := Vector2i(1176, 512)
 const VIEW_POS := Vector2(52, 112)
 
+## Nomes mais curtos só para o mapa (o nome completo continua no prédio e no jogo).
+const SHORT_NAMES := {
+	"TechCorp Ltda.": "TechCorp",
+	"DataSoft Sistemas": "DataSoft",
+	"Centro de Tecnologia": "Centro Tech",
+	"Loja Eletrônica": "Loja",
+}
+
 ## Nomes dos bairros: linha (de cima para baixo) × coluna (da esquerda para a direita).
 const DISTRICTS := [
 	["Bairro Residencial", "Praça Central", "Distrito Empresarial"],
@@ -279,7 +287,7 @@ func _add_building(building: Node2D, target: Node2D) -> void:
 			locked = false
 
 	var color: Color = C_ACCENT
-	var text: String = String(building.building_name)
+	var text: String = String(SHORT_NAMES.get(String(building.building_name), building.building_name))
 	if locked:
 		color = C_LOCKED
 		text += " (trancada)"
