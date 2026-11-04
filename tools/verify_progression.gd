@@ -17,6 +17,7 @@ func _initialize() -> void:
 	ok = _check_network_map() and ok
 	ok = _check_saved_history() and ok
 	ok = _check_leaderboard() and ok
+	ok = _check_notes() and ok
 	print("RESULTADO: ", "TUDO OK" if ok else "FALHOU")
 	quit(0 if ok else 1)
 
@@ -206,6 +207,59 @@ func _check_network_map() -> bool:
 	ok = _check("scan do desafio de rede tambem desenha o mapa no nivel 4", term.output.get_parsed_text().find("Mapa de rede") != -1 and term.output.get_parsed_text().find("UNKNOWN") != -1) and ok
 	term.close()
 	game.reset()
+	return ok
+
+
+func _check_notes() -> bool:
+	var notes = root.get_node("PlayerNotes")
+	var menu = root.get_node("GameMenu")
+	var ok := true
+	notes.reset()
+
+	ok = _check("notas: comecam vazias", notes.text == "") and ok
+	notes.set_text("IP suspeito 203.0.113.45\nsenha: ???")
+	ok = _check("notas: guardam o texto", notes.text.begins_with("IP suspeito") and notes.text.contains("\n")) and ok
+	var saved: Dictionary = notes.get_save_data()
+	notes.reset()
+	notes.load_save_data(saved)
+	ok = _check("notas: sobrevivem a gravar e carregar", notes.text.begins_with("IP suspeito 203.0.113.45")) and ok
+	notes.set_text("x".repeat(notes.MAX_LENGTH + 500))
+	ok = _check("notas: o limite de caracteres corta o excesso", notes.text.length() == notes.MAX_LENGTH) and ok
+	var changes: Array = []
+	notes.changed.connect(func(): changes.append(1))
+	notes.set_text("curto")
+	notes.set_text("curto")
+	ok = _check("notas: so avisa quando o texto muda de verdade", changes.size() == 1) and ok
+	notes.reset()
+	ok = _check("notas: reset apaga (Novo jogo)", notes.text == "") and ok
+
+	# --- o app no celular ---
+	menu.open()
+	ok = _check("celular: o botao Notas sempre aparece", menu.notes_button.visible) and ok
+	ok = _check("celular: o botao fica antes do 'Fechar'", menu.notes_button.get_index() < menu.close_button.get_index()) and ok
+	notes.set_text("pista 1")
+	menu._open_app("notes")
+	var editors: Array = menu.list.find_children("*", "TextEdit", true, false)
+	ok = _check("celular: o app mostra um campo com o texto guardado", editors.size() == 1 and editors[0].text == "pista 1") and ok
+	editors[0].text = "pista 1\npista 2"
+	editors[0].text_changed.emit()
+	ok = _check("celular: o que o jogador digita vai para as notas", notes.text == "pista 1\npista 2") and ok
+	menu.close()
+
+	# o save inclui as notas (sem gravar arquivo: so monta os dados)
+	var save = root.get_node("SaveManager")
+	var fake_scene := Node2D.new()
+	root.add_child(fake_scene)
+	var fake_player := Node2D.new()
+	fake_player.add_to_group("player")
+	fake_scene.add_child(fake_player)
+	var previous_scene = get_current_scene()
+	current_scene = fake_scene
+	var data: Dictionary = save._collect("teste")
+	ok = _check("save: os dados gravados incluem as notas", data.has("notes") and String(data["notes"]["text"]) == "pista 1\npista 2") and ok
+	current_scene = previous_scene
+	fake_scene.queue_free()
+	notes.reset()
 	return ok
 
 

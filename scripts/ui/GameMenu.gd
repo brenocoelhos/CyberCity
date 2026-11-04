@@ -51,6 +51,12 @@ var _current_app: String = ""
 ## botões) e só aparece depois que o nível libera a ferramenta.
 var tools_button: Button
 
+## Botão do app "Notas" (bloco de notas do jogador), também criado por código.
+## Está sempre disponível. "_notes_dirty" avisa que o texto mudou desde o
+## último save, para gravar ao sair do app.
+var notes_button: Button
+var _notes_dirty: bool = false
+
 
 func _ready() -> void:
 	phone.visible = false
@@ -65,6 +71,7 @@ func _ready() -> void:
 	options_panel.closed.connect(_on_options_closed)
 
 	_setup_tools_button()
+	_setup_notes_button()
 	GameManager.tool_unlocked.connect(func(_id: String): _update_home_labels())
 
 	PhoneManager.unread_changed.connect(func(_count: int): _update_home_labels())
@@ -95,6 +102,7 @@ func open(app: String = "") -> void:
 
 
 func close() -> void:
+	_save_notes_if_changed()
 	_active = false
 	phone.visible = false
 	options_panel.visible = false
@@ -113,6 +121,7 @@ func _update_clock() -> void:
 # --- Tela inicial ------------------------------------------------------
 
 func _show_home() -> void:
+	_save_notes_if_changed()
 	_current_app = ""
 	app_view.visible = false
 	home.visible = true
@@ -129,6 +138,25 @@ func _setup_tools_button() -> void:
 	apps_grid.add_child(tools_button)
 	apps_grid.move_child(tools_button, close_button.get_index())
 	tools_button.visible = GameManager.is_tool_unlocked("phone_tools")
+
+
+func _setup_notes_button() -> void:
+	notes_button = profile_button.duplicate(0) as Button
+	notes_button.name = "NotesButton"
+	notes_button.text = "Notas"
+	notes_button.pressed.connect(_open_app.bind("notes"))
+	apps_grid.add_child(notes_button)
+	apps_grid.move_child(notes_button, close_button.get_index())
+
+
+## Grava o jogo (sem aviso na tela) quando o jogador sai do app Notas depois
+## de escrever, para as anotações não se perderem se ele fechar o jogo.
+func _save_notes_if_changed() -> void:
+	if not _notes_dirty:
+		return
+	_notes_dirty = false
+	if SaveManager.can_save():
+		SaveManager.save_game("notes")
 
 
 func _update_home_labels() -> void:
@@ -183,6 +211,9 @@ func _render_current_app() -> void:
 		"tools":
 			app_title.text = "FERRAMENTAS"
 			_render_tools()
+		"notes":
+			app_title.text = "NOTAS"
+			_render_notes()
 		"settings":
 			app_title.text = "AJUSTES"
 			_render_settings()
@@ -273,6 +304,35 @@ func _render_profile() -> void:
 	for concept in GameManager.knowledge.keys():
 		var reinforced: int = int(GameManager.knowledge[concept])
 		_add_label("%s  %s" % [String(concept), "■".repeat(mini(reinforced, 5)) + "□".repeat(maxi(0, 5 - reinforced))])
+
+
+## App Notas: bloco de notas livre do jogador. O jogo nunca lê o texto; é para
+## quem quer anotar pistas, IPs e senhas e resolver os enigmas por conta própria.
+func _render_notes() -> void:
+	_add_label("Suas anotações. Só você lê isto: o jogo não usa o texto.", COLOR_DIM)
+	var editor := TextEdit.new()
+	editor.name = "NotesEditor"
+	editor.placeholder_text = "Anote pistas, endereços, senhas achadas, o que falta fazer..."
+	editor.text = PlayerNotes.text
+	editor.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
+	editor.custom_minimum_size = Vector2(0, 360)
+	list.add_child(editor)
+
+	var counter := Label.new()
+	counter.add_theme_font_size_override("font_size", 12)
+	counter.add_theme_color_override("font_color", COLOR_DIM)
+	counter.text = "%d / %d" % [PlayerNotes.text.length(), PlayerNotes.MAX_LENGTH]
+	list.add_child(counter)
+
+	editor.text_changed.connect(func():
+		PlayerNotes.set_text(editor.text)
+		# No limite o texto é cortado: o campo mostra o que ficou guardado.
+		if editor.text != PlayerNotes.text:
+			editor.text = PlayerNotes.text
+			editor.set_caret_line(editor.get_line_count() - 1)
+			editor.set_caret_column(editor.get_line(editor.get_line_count() - 1).length())
+		counter.text = "%d / %d" % [PlayerNotes.text.length(), PlayerNotes.MAX_LENGTH]
+		_notes_dirty = true)
 
 
 ## App Ferramentas: apoios de estudo (liberado no nível 3). O decifrador de
@@ -416,7 +476,7 @@ func _add_button(text: String, callback: Callable) -> void:
 
 func _focus_first_button() -> void:
 	for child in list.get_children():
-		if child is Button or child is LineEdit:
+		if child is Button or child is LineEdit or child is TextEdit:
 			child.grab_focus()
 			return
 	back_button.grab_focus()
@@ -434,6 +494,11 @@ func _input(event: InputEvent) -> void:
 		_on_back_pressed()
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("open_menu"):
+		# Escrevendo num campo (notas, ferramentas), o TAB é do campo e não
+		# fecha o celular; o ESC continua voltando.
+		var focused: Control = get_viewport().gui_get_focus_owner()
+		if focused is TextEdit or focused is LineEdit:
+			return
 		toggle()
 		get_viewport().set_input_as_handled()
 
