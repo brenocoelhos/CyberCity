@@ -56,6 +56,11 @@ const ROAD_PIECES := {
 	"0101": Vector2i(2, 4), # curva direita/baixo
 }
 
+const CityMap := preload("res://scripts/world/CityMap.gd")
+
+## Mapa grande da cidade (ver CityMap.gd).
+var city_map: CanvasLayer
+
 @onready var ground: TileMapLayer = $Ground
 @onready var player: CharacterBody2D = $Player
 @onready var minimap_viewport: SubViewport = $UI/MinimapPanel/SubViewportContainer/SubViewport
@@ -79,6 +84,7 @@ func _ready() -> void:
 	camera.limit_bottom = MAP_HEIGHT * TILE_SIZE
 	camera.reset_smoothing()
 	_setup_minimap()
+	_setup_city_map()
 	CampaignManager.play_opening()
 
 func _process(_delta: float) -> void:
@@ -177,6 +183,23 @@ func _setup_minimap() -> void:
 	var zoom_value := minf(view_size.x / map_size.x, view_size.y / map_size.y)
 	minimap_camera.zoom = Vector2(zoom_value, zoom_value)
 	minimap_camera.position = map_size / 2.0
+
+## Clicar no minimapa (ou apertar M) abre o mapa grande com os nomes dos lugares.
+func _setup_city_map() -> void:
+	city_map = CityMap.new()
+	city_map.setup(self)
+	add_child(city_map)
+	var panel: Panel = $UI/MinimapPanel
+	# O recipiente do minimapa deixa o clique passar para o painel.
+	minimap_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	panel.tooltip_text = "Clique para abrir o mapa grande (tecla M)"
+	panel.gui_input.connect(_on_minimap_input)
+	$UI/MinimapPanel/MinimapLabel.text = "MAPA  ·  clique ou M"
+
+func _on_minimap_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		city_map.open()
 
 func _update_minimap_dot() -> void:
 	var view_size := Vector2(minimap_viewport.size)

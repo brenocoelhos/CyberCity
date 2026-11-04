@@ -58,6 +58,7 @@ var _toast_tween: Tween
 var _phone_button_x: float = 0.0
 
 var _popup_active: bool = false
+var _overlay_active: bool = false
 
 ## Cena atual da última vez que o HUD olhou (para saber quando o jogador
 ## entrou ou saiu de um prédio).
@@ -90,7 +91,13 @@ func _add_mission_arrow() -> void:
 
 
 func is_popup_active() -> bool:
-	return _popup_active
+	return _popup_active or _overlay_active
+
+
+## Telas que cobrem o jogo (o mapa grande da cidade) avisam por aqui para o
+## personagem, as portas e o celular ficarem parados enquanto elas estão abertas.
+func set_overlay_active(active: bool) -> void:
+	_overlay_active = active
 
 
 ## Atualiza nível, XP e objetivo (usado ao começar um novo jogo).
