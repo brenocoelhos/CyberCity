@@ -126,11 +126,10 @@ position = Vector2(464, 736)
 facade = ExtResource("facade_4")
 building_name = "Casa 5"
 entrance_x = -20.0
-starts_locked = true
-unlock_mission = "m10"
 configure_interior = true
-interior_npc_name = "Desconhecido"
-interior_npc_lines = PackedStringArray("(Falas provisórias: a equipe de História vai escrever esta casa, que guarda uma pista sobre o hacker.)")
+interior_npc_name = "Hacker"
+interior_npc_lines = PackedStringArray("(Falas provisórias: a equipe de História vai escrever esta casa.)")
+interior_boss_fight = true
 
 [node name="PredioTecnologia" parent="Buildings" unique_id=487454252 instance=ExtResource("3")]
 position = Vector2(992, 736)

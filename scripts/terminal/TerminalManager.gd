@@ -71,6 +71,11 @@ var _ssh_pending: Dictionary = {}
 ## Desafio "hosts": true depois que o jogador leu o arquivo-objetivo (a flag).
 var _flag_captured: bool = false
 
+## Duelo final contra o hacker (ver BossFight.gd). Enquanto existir, o
+## terminal não fecha e a barra de disputa aparece no lugar do prompt.
+var _boss: RefCounted = null
+var _boss_status: String = ""
+
 ## Nome da máquina mostrado no prompt (kali㉿<host>).
 var _host: String = "cybercity"
 ## Acumulador do efeito de digitação (frações de caractere por frame).
@@ -86,6 +91,7 @@ func _ready() -> void:
 
 ## Abre o terminal. "host" é o nome da máquina no prompt (ex.: "estacao1").
 func open(challenge_id: String = "", host: String = "cybercity") -> void:
+	_boss = null
 	_challenge_id = challenge_id
 	_challenge = ChallengeData.get_challenge(challenge_id)
 	# Abrir o computador de um desafio aceita a missão ligada a ele.
@@ -215,6 +221,8 @@ func _print_boot() -> void:
 
 
 func _prompt_top_bbcode() -> String:
+	if _boss != null:
+		return _boss.status_bbcode()
 	return "[color=%s]┌──([/color][b][color=%s]%s㉿%s[/color][/b][color=%s])-[lb][/color][b][color=%s]~[/color][/b][color=%s][rb][/color]" % [
 		C_GREEN, C_BLUE, _escape(_sim.current_user), _escape(_shown_host()), C_GREEN, C_WHITE, C_GREEN]
 
@@ -232,11 +240,22 @@ func _refresh_prompt() -> void:
 	prompt_label.text = _prompt_bottom_bbcode()
 
 
+## Mantém a barra do duelo no prompt (só reescreve quando o texto muda).
+func _update_boss_status() -> void:
+	var status: String = _boss.status_bbcode()
+	if status != _boss_status:
+		_boss_status = status
+		prompt_top.text = status
+
+
 func _prompt_bottom_bbcode() -> String:
 	return "[color=%s]└─[/color][b][color=%s]$[/color][/b] " % [C_GREEN, C_BLUE]
 
 
 func close() -> void:
+	# Durante o duelo final não dá para fechar o terminal (a porta está trancada).
+	if _boss != null:
+		return
 	_active = false
 	visible = false
 	_ssh_pending = {}
@@ -248,6 +267,44 @@ func is_active() -> bool:
 	return _active
 
 
+## Abre o terminal no modo duelo contra o hacker. "fight" é um BossFight; o
+## terminal mostra o que ele diz e avisa o BossManager quando acaba.
+func open_boss(fight: RefCounted, host: String = "cidade-central") -> void:
+	open("", host)
+	_boss = fight
+	_boss_status = ""
+	fight.said.connect(_on_boss_said)
+	fight.finished.connect(_on_boss_finished)
+	_print_rich("[color=%s][b]DUELO: você contra o hacker. A barra mostra quem controla a cidade.[/b][/color]" % C_YELLOW)
+	_print_rich("[color=%s]Digite 'help' para ver os comandos do duelo.[/color]" % C_DIM)
+	fight.start()
+
+
+func _on_boss_said(kind: String, text: String) -> void:
+	match kind:
+		"boss":
+			_print_rich("[color=%s][b]HACKER:[/b] %s[/color]" % [C_RED, _escape(text)])
+		"good":
+			_print_success(text)
+		"bad":
+			_print_error(text)
+		"system":
+			_print_rich("[color=%s][b]%s[/b][/color]" % [C_YELLOW, _escape(text)])
+		"info":
+			_print_rich("[color=%s]%s[/color]" % [C_BLUE, _escape(text)])
+		_:
+			_print_line(text)
+
+
+func _on_boss_finished(won: bool) -> void:
+	_boss = null
+	_refresh_prompt()
+	# Uma pausa para o jogador ler a última mensagem antes da tela de final.
+	await get_tree().create_timer(1.5).timeout
+	close()
+	BossManager.on_fight_finished(won)
+
+
 ## Rede de segurança extra: a cada frame com o terminal aberto, garante
 ## que o campo de texto está com o foco. Cobre qualquer caso em que o
 ## foco se perca (não só logo após enviar um comando).
@@ -255,6 +312,11 @@ func _process(delta: float) -> void:
 	if _active and not input_line.has_focus():
 		input_line.grab_focus()
 	_advance_typing(delta)
+	if _boss != null:
+		# O relógio do duelo para enquanto o celular está aberto.
+		if not GameMenu.is_active():
+			_boss.tick(delta)
+		_update_boss_status()
 
 
 ## Efeito de "digitação": o texto já está no RichTextLabel, mas só uma
@@ -310,6 +372,8 @@ func _keep_focus() -> void:
 func _run_command(command: String) -> void:
 	var parts: PackedStringArray = command.split(" ", false)
 	if parts.is_empty():
+		return
+	if parts[0].to_lower() != "clear" and _boss != null and _boss.handle_command(command):
 		return
 
 	var cmd: String = parts[0].to_lower()

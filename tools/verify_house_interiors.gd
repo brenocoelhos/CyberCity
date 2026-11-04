@@ -119,7 +119,9 @@ func _initialize() -> void:
 	for house_name in ["Casa5"]:
 		var p: Dictionary = houses[house_name]
 		ok = _check("%s: so historia (NPC com falas, sem computador, sem missao)" % house_name, String(p.get("interior_npc_name", "")) != "" and PackedStringArray(p.get("interior_npc_lines", PackedStringArray())).size() >= 1 and String(p.get("interior_computer_challenge", "")) == "" and String(p.get("interior_npc_mission", "")) == "" and not p.has("mission_ids")) and ok
-	ok = _check("Casa 5 trancada ate a m10", bool(houses["Casa5"].get("starts_locked", false)) and houses["Casa5"].get("unlock_mission") == "m10") and ok
+	# PROVISORIO: a Casa 5 esta liberada para testar o duelo. Quando a historia
+	# definir como o jogador chega la, trocar por "trancada ate a missao X".
+	ok = _check("Casa 5 e a casa do duelo e esta liberada para teste", bool(houses["Casa5"].get("interior_boss_fight", false)) and not bool(houses["Casa5"].get("starts_locked", false))) and ok
 	var challenge_ids: Array = root.get_node("ChallengeData").CHALLENGES.keys()
 	ok = _check("o desafio do computador da Casa 6 existe", houses["Casa6"].get("interior_computer_challenge") in challenge_ids) and ok
 	ok = _check("o desafio do computador da Casa 2 existe", houses["Casa2"].get("interior_computer_challenge") in challenge_ids) and ok

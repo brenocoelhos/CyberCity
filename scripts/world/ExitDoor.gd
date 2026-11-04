@@ -21,7 +21,7 @@ func _on_body_entered(body: Node) -> void:
 	if not body.is_in_group("player"):
 		return
 	_player_in_range = true
-	prompt.visible = true
+	prompt.visible = not BossManager.is_exit_locked()
 
 
 func _on_body_exited(body: Node) -> void:
@@ -34,7 +34,8 @@ func _on_body_exited(body: Node) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if DialogueManager.is_active() or TerminalManager.is_active() \
 		or ChallengeManager.is_active() \
-		or GameMenu.is_active() or HUD.is_popup_active():
+		or GameMenu.is_active() or HUD.is_popup_active() \
+		or BossManager.is_exit_locked():
 		return
 	if _player_in_range and event.is_action_pressed("interact"):
 		SoundManager.play("interact")

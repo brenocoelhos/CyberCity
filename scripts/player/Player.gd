@@ -71,7 +71,8 @@ func _is_ui_blocking() -> bool:
 		or TerminalManager.is_active() \
 		or ChallengeManager.is_active() \
 		or GameMenu.is_active() \
-		or HUD.is_popup_active()
+		or HUD.is_popup_active() \
+		or BossManager.is_busy()
 
 func _update_footsteps(direction: Vector2) -> void:
 	if direction == Vector2.ZERO or get_real_velocity().length() < 1.0:

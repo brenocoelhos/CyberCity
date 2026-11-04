@@ -36,6 +36,9 @@ extends StaticBody2D
 ## {"Computer1": "c_site", "Computer3": ""}. Computadores que não aparecem
 ## aqui ficam como estão na cena.
 @export var interior_computers: Dictionary = {}
+## Marque na casa do hacker (Casa 5): ao entrar, a porta tranca e começa o
+## duelo final no terminal (ver BossManager.gd). Mantém o computador da cena.
+@export var interior_boss_fight := false
 @export_group("")
 
 var _marker_tween: Tween
@@ -83,6 +86,7 @@ func _build_interior_config() -> Dictionary:
 		"npc_mission": interior_npc_mission,
 		"computer_challenge": interior_computer_challenge,
 		"computers": interior_computers,
+		"boss": interior_boss_fight,
 	}
 
 func _on_missions_changed(_id: String) -> void:

@@ -33,10 +33,12 @@ func _apply_config(config: Dictionary) -> void:
 			interaction.mission_to_start = String(config.get("npc_mission", ""))
 			npc.get_node("NameLabel").text = npc_name
 
+	var is_boss_house: bool = bool(config.get("boss", false))
 	var computer := get_node_or_null("Computer")
 	if computer != null:
 		var challenge_id: String = String(config.get("computer_challenge", ""))
-		if challenge_id == "":
+		# Na casa do hacker o computador fica (é o do jogador no duelo).
+		if challenge_id == "" and not is_boss_house:
 			computer.queue_free()
 		else:
 			computer.challenge_id = challenge_id
@@ -52,6 +54,9 @@ func _apply_config(config: Dictionary) -> void:
 			node.queue_free()
 		else:
 			node.challenge_id = wanted
+
+	if is_boss_house:
+		BossManager.begin_encounter()
 
 
 ## Ao carregar um save feito dentro do prédio, põe o jogador onde ele estava.

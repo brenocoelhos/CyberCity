@@ -202,7 +202,7 @@ func visible_files() -> Dictionary:
 ## Linha de status mostrada no prompt do terminal (BBCode).
 func status_bbcode() -> String:
 	var filled: int = clampi(int(round(bar / 10.0)), 0, 10)
-	var meter := "█".repeat(filled) + "░".repeat(10 - filled)
+	var meter := "[lb]" + "#".repeat(filled) + "-".repeat(10 - filled) + "[rb]"
 	var left := "%ds" % int(ceil(maxf(time_left, 0.0)))
 	var label := ""
 	match phase:
@@ -212,7 +212,7 @@ func status_bbcode() -> String:
 			label = "HACKER ATORDOADO — desmascare!"
 		_:
 			label = "—"
-	return "[color=#ffd75f]%s[/color]  [color=#2f8cff]CIDADE[/color] [color=#3dff6e]%s[/color] [color=#ff5f5f]HACKER[/color]  %d/%d  [color=#ffd75f]⏱ %s[/color]" % [label, meter, bar, 100 - bar, left]
+	return "[color=#ffd75f]%s[/color]  [color=#2f8cff]CIDADE[/color] [color=#3dff6e]%s[/color] [color=#ff5f5f]HACKER[/color]  %d/%d  [color=#ffd75f]tempo %s[/color]" % [label, meter, bar, 100 - bar, left]
 
 
 # --- Tempo --------------------------------------------------------------------
