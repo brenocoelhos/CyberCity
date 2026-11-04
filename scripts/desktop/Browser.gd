@@ -1,4 +1,4 @@
-extends Panel
+extends "res://scripts/desktop/DesktopWindow.gd"
 ## Browser.gd
 ## Navegador do desktop. Mostra as páginas das máquinas simuladas do desafio
 ## (as mesmas que o 'curl' lê no terminal), só que renderizadas: títulos,
@@ -10,14 +10,10 @@ extends Panel
 
 const HtmlLite := preload("res://scripts/desktop/HtmlLite.gd")
 
-const C_BG := Color("#0a1420")
-const C_BORDER := Color("#2f8cff")
-const C_TITLE := Color("#122238")
 const C_PAGE := Color("#eef1ee")
 const C_TEXT := Color("#1b1f24")
 const C_LINK := "#0b5cd5"
 
-signal close_requested
 
 var _challenge: Dictionary = {}
 var _history: Array = []
@@ -25,7 +21,6 @@ var _index: int = -1
 var _showing_source: bool = false
 var _current: Dictionary = {}
 
-var _title_label: Label
 var _back_button: Button
 var _address: LineEdit
 var _source_button: Button
@@ -34,6 +29,9 @@ var _status: Label
 
 
 func _ready() -> void:
+	kind = "browser"
+	min_size = Vector2(520, 340)
+	set_title("Navegador")
 	_build()
 
 
@@ -106,7 +104,7 @@ func _current_host_text() -> String:
 
 func _show_start_page() -> void:
 	_address.text = ""
-	_title_label.text = "Navegador — Nova aba"
+	set_title("Navegador — Nova aba")
 	_back_button.disabled = true
 	var text := "[font_size=28][b]Nova aba[/b][/font_size]\n\nDigite um endereço na barra acima e pressione Enter.\n"
 	var bookmarks: Array = _challenge.get("bookmarks", [])
@@ -150,7 +148,7 @@ func _render() -> void:
 			title = "Erro"
 	_view.text = text
 	_view.scroll_to_line(0)
-	_title_label.text = "Navegador — " + title
+	set_title("Navegador — " + title)
 	_status.text = ("Carregado: " if status == "ok" else "Erro: ") + _address.text
 
 
@@ -197,30 +195,10 @@ func _on_link(meta: Variant) -> void:
 # --- Montagem da janela ----------------------------------------------------------
 
 func _build() -> void:
-	add_theme_stylebox_override("panel", _box(C_BG, C_BORDER, 2))
-
 	var column := VBoxContainer.new()
 	column.set_anchors_preset(Control.PRESET_FULL_RECT)
 	column.add_theme_constant_override("separation", 0)
-	add_child(column)
-
-	# Barra de título
-	var title_bar := PanelContainer.new()
-	title_bar.add_theme_stylebox_override("panel", _box(C_TITLE))
-	title_bar.custom_minimum_size = Vector2(0, 32)
-	column.add_child(title_bar)
-	var title_row := HBoxContainer.new()
-	title_bar.add_child(title_row)
-	_title_label = Label.new()
-	_title_label.text = "Navegador"
-	_title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_title_label.add_theme_color_override("font_color", Color("#e8ece9"))
-	title_row.add_child(_title_label)
-	var close := Button.new()
-	close.text = " X "
-	close.tooltip_text = "Minimizar (ESC)"
-	close.pressed.connect(func() -> void: close_requested.emit())
-	title_row.add_child(close)
+	content.add_child(column)
 
 	# Barra de ferramentas
 	var tools := PanelContainer.new()
@@ -272,18 +250,6 @@ func _build() -> void:
 	# Barra de status
 	_status = Label.new()
 	_status.text = "Pronto"
+	_status.clip_text = true
 	_status.add_theme_color_override("font_color", Color("#5f8f6a"))
 	column.add_child(_status)
-
-
-func _box(fill: Color, border: Color = Color(0, 0, 0, 0), width: int = 0) -> StyleBoxFlat:
-	var style := StyleBoxFlat.new()
-	style.bg_color = fill
-	if width > 0:
-		style.border_color = border
-		style.set_border_width_all(width)
-	style.content_margin_left = 10
-	style.content_margin_right = 10
-	style.content_margin_top = 6
-	style.content_margin_bottom = 6
-	return style

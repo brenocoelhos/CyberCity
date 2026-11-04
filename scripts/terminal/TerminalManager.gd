@@ -29,6 +29,17 @@ const TYPE_SPEED := 1100.0
 @onready var backdrop: ColorRect = $Backdrop
 @onready var status_bar: Label = $Monitor/StatusBar
 @onready var minimize_button: Button = $Monitor/TitleBar/WindowButtons/MinimizeButton
+@onready var maximize_button: Button = $Monitor/TitleBar/WindowButtons/MaximizeButton
+
+## No desktop, os botões da barra de título e o X pedem ao DesktopManager que
+## minimize, maximize ou feche a janela.
+signal window_minimize_requested
+signal window_maximize_requested
+signal window_close_requested
+
+## No desktop só a janela em foco recebe o teclado (as outras ficam quietas).
+var window_focused: bool = true
+var _monitor_default_rect: Rect2 = Rect2()
 
 ## True quando o terminal é uma janela dentro do desktop (ver DesktopManager.gd):
 ## fechar/ESC só minimiza, e o fundo escuro some para o desktop aparecer.
@@ -94,9 +105,48 @@ func _ready() -> void:
 	input_line.keep_editing_on_text_submit = true
 	input_line.text_submitted.connect(_on_command_submitted)
 	close_button.pressed.connect(_close_window)
+	# Os botões de minimizar/maximizar eram só enfeite; no desktop funcionam.
+	for button in [minimize_button, maximize_button]:
+		button.mouse_filter = Control.MOUSE_FILTER_STOP
 	minimize_button.pressed.connect(func() -> void:
 		if desktop_mode:
-			minimize())
+			window_minimize_requested.emit())
+	maximize_button.pressed.connect(func() -> void:
+		if desktop_mode:
+			window_maximize_requested.emit())
+	_make_monitor_resizable()
+
+
+## Passa o layout da janela de posições fixas para âncoras, para ela poder ser
+## redimensionada no desktop. No tamanho padrão (1100×648) fica igual a antes.
+func _make_monitor_resizable() -> void:
+	_monitor_default_rect = Rect2(monitor.offset_left, monitor.offset_top,
+		monitor.offset_right - monitor.offset_left, monitor.offset_bottom - monitor.offset_top)
+	var title_bar: Control = $Monitor/TitleBar
+	var buttons: Control = $Monitor/TitleBar/WindowButtons
+	var body: Control = $Monitor/Body
+	_anchor(title_bar, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 32.0)
+	_anchor(title_label, 0.0, 0.0, 1.0, 0.0, 200.0, 5.0, -200.0, 27.0)
+	_anchor(buttons, 1.0, 0.0, 1.0, 0.0, -110.0, 4.0, -8.0, 28.0)
+	_anchor(body, 0.0, 0.0, 1.0, 1.0, 1.0, 58.0, -1.0, -28.0)
+	_anchor(output, 0.0, 0.0, 1.0, 1.0, 14.0, 10.0, -14.0, -68.0)
+	_anchor(prompt_top, 0.0, 1.0, 1.0, 1.0, 14.0, -62.0, -14.0, -40.0)
+	_anchor($Monitor/Body/InputRow, 0.0, 1.0, 1.0, 1.0, 14.0, -40.0, -14.0, -14.0)
+	_anchor(status_bar, 0.0, 1.0, 1.0, 1.0, 14.0, -26.0, -14.0, -4.0)
+	status_bar.clip_text = true
+
+
+## Define âncoras (esquerda, cima, direita, baixo) e depois as margens (esquerda,
+## cima, direita, baixo) de um controle.
+func _anchor(control: Control, al: float, at: float, ar: float, ab: float, ol: float, ot: float, o_r: float, ob: float) -> void:
+	control.set_anchor(SIDE_RIGHT, ar, false, false)
+	control.set_anchor(SIDE_BOTTOM, ab, false, false)
+	control.set_anchor(SIDE_LEFT, al, false, false)
+	control.set_anchor(SIDE_TOP, at, false, false)
+	control.offset_left = ol
+	control.offset_top = ot
+	control.offset_right = o_r
+	control.offset_bottom = ob
 
 
 ## Abre o terminal. "host" é o nome da máquina no prompt (ex.: "estacao1").
@@ -131,6 +181,7 @@ func start_session(challenge_id: String, host: String) -> void:
 func show_window() -> void:
 	_active = true
 	visible = true
+	monitor.visible = true
 	_apply_window_mode()
 	_refresh_prompt()
 	_animate_window_open()
@@ -152,16 +203,57 @@ func show_window() -> void:
 func restore_window() -> void:
 	_active = true
 	visible = true
+	monitor.visible = true
 	_apply_window_mode()
 	_animate_window_open()
-	input_line.call_deferred("grab_focus")
+	if window_focused:
+		input_line.call_deferred("grab_focus")
 
 
 ## Desktop: esconde a janela mas mantém a sessão (ssh, progresso, histórico).
 func minimize() -> void:
 	_active = false
 	visible = false
+	monitor.visible = false
 	input_line.release_focus()
+
+
+## Desktop: quem recebe o teclado. A janela do terminal só pega o foco do
+## campo de texto quando é a janela da frente.
+func set_window_focused(focused: bool) -> void:
+	window_focused = focused
+	if not _active:
+		return
+	if focused:
+		input_line.call_deferred("grab_focus")
+	else:
+		input_line.release_focus()
+
+
+## Desktop: leva a janela do terminal para dentro do desktop (para ficar entre
+## as outras janelas), no tamanho e lugar dados.
+func attach_window(parent: Control, window_position: Vector2, window_size: Vector2) -> void:
+	if monitor.get_parent() != parent:
+		monitor.get_parent().remove_child(monitor)
+		parent.add_child(monitor)
+	monitor.position = window_position
+	monitor.size = window_size
+	monitor.visible = false
+
+
+## Desktop: devolve a janela ao seu lugar original (modo de tela cheia com fundo).
+func detach_window() -> void:
+	if monitor.get_parent() == self:
+		return
+	monitor.get_parent().remove_child(monitor)
+	add_child(monitor)
+	move_child(monitor, backdrop.get_index() + 1)
+	monitor.offset_left = _monitor_default_rect.position.x
+	monitor.offset_top = _monitor_default_rect.position.y
+	monitor.offset_right = _monitor_default_rect.end.x
+	monitor.offset_bottom = _monitor_default_rect.end.y
+	monitor.visible = true
+	window_focused = true
 
 
 ## True se a janela do terminal está na tela (no desktop pode estar minimizada).
@@ -179,6 +271,7 @@ func _apply_window_mode() -> void:
 
 # A janela "abre" crescendo um pouco, como num desktop.
 func _animate_window_open() -> void:
+	monitor.pivot_offset = monitor.size / 2.0
 	monitor.modulate.a = 0.0
 	monitor.scale = Vector2(0.96, 0.96)
 	var tween: Tween = create_tween().set_parallel()
@@ -190,7 +283,7 @@ func _animate_window_open() -> void:
 ## Fechar a janela (X, ESC, 'exit'): no desktop só minimiza; fora dele encerra.
 func _close_window() -> void:
 	if desktop_mode:
-		minimize()
+		window_close_requested.emit()
 	else:
 		close()
 
@@ -383,7 +476,7 @@ func _on_boss_finished(won: bool) -> void:
 ## que o campo de texto está com o foco. Cobre qualquer caso em que o
 ## foco se perca (não só logo após enviar um comando).
 func _process(delta: float) -> void:
-	if _active and not input_line.has_focus():
+	if _wants_focus() and not input_line.has_focus():
 		input_line.grab_focus()
 	_advance_typing(delta)
 	if _boss != null:
@@ -438,8 +531,13 @@ func _on_command_submitted(text: String) -> void:
 ## digitando sem precisar clicar no terminal de novo a cada comando.
 ## É deferido porque o LineEdit perde o foco no mesmo frame em que
 ## o comando é enviado.
+## No desktop o terminal só quer o teclado quando é a janela da frente.
+func _wants_focus() -> bool:
+	return _active and (window_focused or not desktop_mode)
+
+
 func _keep_focus() -> void:
-	if _active:
+	if _wants_focus():
 		input_line.call_deferred("grab_focus")
 
 
@@ -1383,7 +1481,7 @@ func _cmd_ifconfig() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not _active:
+	if not _wants_focus():
 		return
 	if not (event is InputEventKey) or not event.pressed:
 		return
