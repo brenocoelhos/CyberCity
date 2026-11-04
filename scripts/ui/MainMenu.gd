@@ -112,6 +112,7 @@ func _on_new_game_pressed() -> void:
 	MissionManager.reset()
 	CampaignManager.reset()
 	PhoneManager.reset()
+	PlayerNotes.reset()
 	ChallengeSession.reset()
 	DialogueManager.force_close()
 	SceneTransition.has_pending_spawn = false

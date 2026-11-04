@@ -126,6 +126,9 @@ func save_game(reason: String = "auto") -> bool:
 
 
 func _announce(success: bool, reason: String) -> void:
+	# Salvar as notas do jogador ao fechar o app é silencioso (sem aviso).
+	if success and reason == "notes":
+		return
 	if success:
 		HUD.show_notice("Jogo salvo", String(REASON_TEXTS.get(reason, "Progresso gravado.")))
 	else:
@@ -143,6 +146,7 @@ func _collect(reason: String) -> Dictionary:
 		"missions": MissionManager.get_save_data(),
 		"campaign": CampaignManager.get_save_data(),
 		"phone": PhoneManager.get_save_data(),
+		"notes": PlayerNotes.get_save_data(),
 		"challenges": ChallengeSession.get_save_data(),
 		"location": {
 			"scene": scene.scene_file_path,
@@ -183,6 +187,7 @@ func load_game() -> String:
 	MissionManager.reset()
 	CampaignManager.reset()
 	PhoneManager.reset()
+	PlayerNotes.reset()
 	ChallengeSession.reset()
 	DialogueManager.force_close()
 
@@ -190,6 +195,7 @@ func load_game() -> String:
 	MissionManager.load_save_data(_dict(data, "missions"))
 	CampaignManager.load_save_data(_dict(data, "campaign"))
 	PhoneManager.load_save_data(_dict(data, "phone"))
+	PlayerNotes.load_save_data(_dict(data, "notes"))
 	ChallengeSession.load_save_data(_dict(data, "challenges"))
 
 	var location: Dictionary = _dict(data, "location")
