@@ -388,6 +388,12 @@ const CHALLENGES := {
 		"title": "Site da DataSoft",
 		"mission": "m16",
 		"guidance": 1,
+		## PILOTO do desktop (ver DesktopManager.gd): este computador abre
+		## como um desktop com Navegador e Terminal. Tirar a linha abaixo
+		## volta ao terminal puro.
+		"desktop": true,
+		"bookmarks": [{"title": "Site da DataSoft (alvo da auditoria)", "url": "http://192.168.1.50/"}],
+		"desktop_intro": "Auditoria do site da DataSoft (192.168.1.50). Abra o Navegador e visite o site: o que um visitante comum enxerga? No terminal, 'curl <endereço>' mostra o código da página. Procure algo que não deveria estar público.",
 		"intro": "Auditoria do site da DataSoft (192.168.1.50). Use 'curl <endereço>' para ver as páginas, começando pela inicial: 'curl http://192.168.1.50/'. Procure algo que não deveria estar público.",
 		"files": {
 			"escopo.txt": "AUDITORIA AUTORIZADA — DataSoft Sistemas\n\nAlvo: o site em 192.168.1.50 (somente leitura, como um visitante comum).\nObjetivo: descobrir se existe algum arquivo interno acessivel publicamente.",
@@ -410,9 +416,9 @@ const CHALLENGES := {
 		"win_page": {"host": "site-datasoft", "path": "/legado/config.php.bak"},
 		"success_message": "Objetivo cumprido: o arquivo de configuração exposto foi encontrado.",
 		"hints": [
-			"Comece pela página inicial: 'curl http://192.168.1.50/'. Leia tudo, inclusive os comentários do HTML (o que fica entre <!-- e -->).",
-			"O arquivo robots.txt diz aos buscadores o que NÃO listar, e por isso vira um mapa do que a empresa quer esconder: 'curl http://192.168.1.50/robots.txt'. Siga os caminhos que ele cita.",
-			"A pasta /legado/ aparece no comentário e no robots.txt. Veja o conteúdo dela com curl e abra o arquivo de backup de configuração (.bak).",
+			"Comece pela página inicial: 'curl http://192.168.1.50/' no terminal, ou abra o site no Navegador e use o botão 'Código-fonte'. Leia tudo, inclusive os comentários do HTML (o que fica entre <!-- e -->): eles não aparecem na página, só no código.",
+			"O arquivo robots.txt diz aos buscadores o que NÃO listar, e por isso vira um mapa do que a empresa quer esconder: abra http://192.168.1.50/robots.txt (digite o endereço no navegador ou use 'curl'). Siga os caminhos que ele cita.",
+			"A pasta /legado/ aparece no comentário e no robots.txt. Abra essa pasta (no navegador ou com curl) e depois o arquivo de backup de configuração (.bak).",
 		],
 		"explanation": "Visitantes comuns podem ler o que o servidor entrega, e o robots.txt não protege nada: ele só pede aos buscadores que ignorem os caminhos, e acaba listando o que a empresa queria esconder. Comentários esquecidos no HTML e arquivos de backup (.bak, .old) com senhas em texto puro são achados clássicos. Remova arquivos antigos do servidor, nunca deixe credenciais em arquivos acessíveis e restrinja o acesso a pastas internas.",
 	},
@@ -466,6 +472,12 @@ const CHALLENGES := {
 
 func get_challenge(challenge_id: String) -> Dictionary:
 	return CHALLENGES.get(challenge_id, {})
+
+
+## True se o computador deste desafio abre como desktop (Navegador + Terminal)
+## em vez de só o terminal.
+func uses_desktop(challenge_id: String) -> bool:
+	return bool(get_challenge(challenge_id).get("desktop", false))
 
 
 ## Id do desafio ligado a uma missão ("" se a missão não tem desafio, como a m01).

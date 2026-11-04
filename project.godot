@@ -41,6 +41,7 @@ HUD="*res://scenes/ui/HUD.tscn"
 GameMenu="*res://scenes/ui/GameMenu.tscn"
 SaveManager="*res://scripts/systems/SaveManager.gd"
 BossManager="*res://scripts/boss/BossManager.gd"
+DesktopManager="*res://scripts/desktop/DesktopManager.gd"
 
 [display]
 

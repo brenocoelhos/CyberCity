@@ -26,6 +26,13 @@ const TYPE_SPEED := 1100.0
 @onready var title_label: Label = $Monitor/TitleBar/TitleLabel
 @onready var close_button: Button = $Monitor/TitleBar/WindowButtons/CloseButton
 @onready var monitor: Panel = $Monitor
+@onready var backdrop: ColorRect = $Backdrop
+@onready var status_bar: Label = $Monitor/StatusBar
+@onready var minimize_button: Button = $Monitor/TitleBar/WindowButtons/MinimizeButton
+
+## True quando o terminal é uma janela dentro do desktop (ver DesktopManager.gd):
+## fechar/ESC só minimiza, e o fundo escuro some para o desktop aparecer.
+var desktop_mode: bool = false
 
 ## "Sistema de arquivos" simulado. Cada terminal (por enquanto) vê os
 ## mesmos arquivos fictícios — dá pra tornar isso específico por
@@ -86,11 +93,23 @@ func _ready() -> void:
 	visible = false
 	input_line.keep_editing_on_text_submit = true
 	input_line.text_submitted.connect(_on_command_submitted)
-	close_button.pressed.connect(close)
+	close_button.pressed.connect(_close_window)
+	minimize_button.pressed.connect(func() -> void:
+		if desktop_mode:
+			minimize())
 
 
 ## Abre o terminal. "host" é o nome da máquina no prompt (ex.: "estacao1").
 func open(challenge_id: String = "", host: String = "cybercity") -> void:
+	desktop_mode = false
+	start_session(challenge_id, host)
+	show_window()
+
+
+## Prepara o desafio deste computador (zera o estado e aceita a missão), sem
+## mostrar a janela. O desktop usa isto para o terminal e o navegador
+## compartilharem a mesma sessão.
+func start_session(challenge_id: String, host: String) -> void:
 	_boss = null
 	_challenge_id = challenge_id
 	_challenge = ChallengeData.get_challenge(challenge_id)
@@ -106,17 +125,15 @@ func open(challenge_id: String = "", host: String = "cybercity") -> void:
 	_flag_captured = false
 	input_line.secret = false
 	_host = host
+
+
+## Mostra a janela do terminal pela primeira vez (boot e mensagem inicial).
+func show_window() -> void:
 	_active = true
 	visible = true
+	_apply_window_mode()
 	_refresh_prompt()
-
-	# A janela "abre" crescendo um pouco, como num desktop.
-	monitor.modulate.a = 0.0
-	monitor.scale = Vector2(0.96, 0.96)
-	var tween: Tween = create_tween().set_parallel()
-	tween.tween_property(monitor, "modulate:a", 1.0, 0.15)
-	tween.tween_property(monitor, "scale", Vector2.ONE, 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	SoundManager.play("blip")
+	_animate_window_open()
 
 	output.clear()
 	output.visible_characters = 0
@@ -129,6 +146,53 @@ func open(challenge_id: String = "", host: String = "cybercity") -> void:
 	input_line.text = ""
 	# Deferido: o foco só "gruda" depois que o painel realmente ficou visível.
 	input_line.call_deferred("grab_focus")
+
+
+## Desktop: traz de volta a janela minimizada, com a tela e a sessão como estavam.
+func restore_window() -> void:
+	_active = true
+	visible = true
+	_apply_window_mode()
+	_animate_window_open()
+	input_line.call_deferred("grab_focus")
+
+
+## Desktop: esconde a janela mas mantém a sessão (ssh, progresso, histórico).
+func minimize() -> void:
+	_active = false
+	visible = false
+	input_line.release_focus()
+
+
+## True se a janela do terminal está na tela (no desktop pode estar minimizada).
+func is_window_visible() -> bool:
+	return _active
+
+
+## Ajusta a janela ao modo: no desktop, sem o fundo escuro e com "ESC minimizar".
+func _apply_window_mode() -> void:
+	backdrop.visible = not desktop_mode
+	status_bar.text = status_bar.text.replace("ESC minimizar", "ESC fechar")
+	if desktop_mode:
+		status_bar.text = status_bar.text.replace("ESC fechar", "ESC minimizar")
+
+
+# A janela "abre" crescendo um pouco, como num desktop.
+func _animate_window_open() -> void:
+	monitor.modulate.a = 0.0
+	monitor.scale = Vector2(0.96, 0.96)
+	var tween: Tween = create_tween().set_parallel()
+	tween.tween_property(monitor, "modulate:a", 1.0, 0.15)
+	tween.tween_property(monitor, "scale", Vector2.ONE, 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	SoundManager.play("blip")
+
+
+## Fechar a janela (X, ESC, 'exit'): no desktop só minimiza; fora dele encerra.
+func _close_window() -> void:
+	if desktop_mode:
+		minimize()
+	else:
+		close()
 
 
 ## Mensagem mostrada ao abrir o terminal, que muda conforme o tipo de
@@ -155,6 +219,9 @@ func _challenge_hint() -> String:
 			intro = "Roteador doméstico detectado. Digite 'files' e leia o manual com 'read manual.txt'."
 		"report", "hosts":
 			intro = String(_challenge.get("intro", ""))
+
+	if desktop_mode and _challenge.has("desktop_intro"):
+		intro = String(_challenge["desktop_intro"])
 
 	# Quanto o terminal explica depende do nível de guia do desafio.
 	var guidance: int = _guidance()
@@ -261,10 +328,17 @@ func close() -> void:
 	_ssh_pending = {}
 	input_line.secret = false
 	input_line.release_focus()
+	# Encerrar a sessão também desliga o desktop (sem recursão: o modo é
+	# desligado antes).
+	if desktop_mode:
+		desktop_mode = false
+		DesktopManager.close()
 
 
+## True com o terminal na tela ou com o desktop aberto: para quem bloqueia o
+## jogador (movimento, portas, celular), o desktop conta como terminal aberto.
 func is_active() -> bool:
-	return _active
+	return _active or DesktopManager.is_open()
 
 
 ## Abre o terminal no modo duelo contra o hacker. "fight" é um BossFight; o
@@ -961,6 +1035,40 @@ func _cmd_curl(args: PackedStringArray) -> void:
 		_check_objective_page(host_name, path)
 
 
+## Navegador do desktop: busca uma página nas máquinas simuladas do desafio
+## (o mesmo "mundo" do 'curl'). Devolve {"status", "host", "path", "body"};
+## status: "ok", "notfound", "dns" (endereço desconhecido) ou "scope"
+## (fora do escopo autorizado, conta como erro).
+func browser_fetch(address: String) -> Dictionary:
+	var url: String = address.strip_edges().trim_prefix("http://").trim_prefix("https://")
+	var slash: int = url.find("/")
+	var host_part: String = url if slash == -1 else url.substr(0, slash)
+	var path: String = "/" if slash == -1 else url.substr(slash)
+	var result := {"status": "dns", "host": host_part, "path": path, "body": ""}
+	var host_name: String = _sim.find(host_part)
+	if host_name == "":
+		return result
+	result["host"] = host_name
+	if not _sim.in_scope(host_name):
+		ChallengeSession.record_attempt(_challenge_id, false)
+		SoundManager.play("error")
+		result["status"] = "scope"
+		return result
+	var body: Variant = _sim.page(host_name, path)
+	if body == null:
+		result["status"] = "notfound"
+		return result
+	result["status"] = "ok"
+	result["body"] = String(body)
+	return result
+
+
+## O navegador terminou de mostrar uma página: se ela é o objetivo do desafio
+## (win_page), o desafio termina, como acontece com o 'curl'.
+func browser_loaded(host_name: String, path: String) -> void:
+	_check_objective_page(host_name, path)
+
+
 ## exit/logout: dentro de uma máquina remota volta para a anterior; na
 ## máquina local fecha o terminal.
 func _cmd_exit() -> void:
@@ -970,7 +1078,7 @@ func _cmd_exit() -> void:
 		_print_line("logout")
 		_print_line("Connection to %s closed." % left)
 		return
-	close()
+	_close_window()
 
 
 ## Ler o arquivo-objetivo do desafio ("win_file": {host, file}) conclui o
@@ -1281,7 +1389,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 
 	if event.keycode == KEY_ESCAPE:
-		close()
+		_close_window()
 		get_viewport().set_input_as_handled()
 	elif event.keycode == KEY_UP:
 		_history_prev()

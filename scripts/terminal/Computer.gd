@@ -17,7 +17,10 @@ func _ready() -> void:
 
 
 func _on_interact() -> void:
-	TerminalManager.open(challenge_id, _resolve_host())
+	if ChallengeData.uses_desktop(challenge_id):
+		DesktopManager.open(challenge_id, _resolve_host())
+	else:
+		TerminalManager.open(challenge_id, _resolve_host())
 
 
 func _resolve_host() -> String:
