@@ -21,6 +21,9 @@ const DISTRICTS := [
 	["Vila Residencial", "Centro de Tecnologia", "Comércio"],
 ]
 
+## Camada de visibilidade (bit 2) dos textos do mundo que o mapa esconde.
+const WORLD_TEXT_LAYER := 2
+
 const C_ACCENT := Color("#2f8cff")
 const C_GREEN := Color("#3dff6e")
 const C_YELLOW := Color("#ffd75f")
@@ -165,6 +168,10 @@ func _build() -> void:
 	viewport.gui_disable_input = true
 	viewport.render_target_update_mode = SubViewport.UPDATE_WHEN_PARENT_VISIBLE
 	viewport.world_2d = _city.get_viewport().world_2d
+	# Os textos pequenos do mundo (placas de bairro, nomes sobre os prédios)
+	# ficam na camada de visibilidade 2 e não aparecem neste mapa (as etiquetas
+	# do mapa os substituem). No jogo normal continuam aparecendo.
+	viewport.canvas_cull_mask = 0xFFFFFFFF & ~WORLD_TEXT_LAYER
 	_container.add_child(viewport)
 	var camera := Camera2D.new()
 	camera.zoom = Vector2(_zoom, _zoom)
@@ -200,7 +207,16 @@ func _build() -> void:
 
 # --- Etiquetas (refeitas a cada abertura) -----------------------------------------------
 
+## Move os textos do mundo (Labels da cidade) para a camada que o mapa não desenha.
+func _hide_world_texts() -> void:
+	for label in _city.find_children("*", "Label", true, false):
+		if is_ancestor_of(label) or _city.get_node("UI").is_ancestor_of(label):
+			continue
+		(label as Label).visibility_layer = WORLD_TEXT_LAYER
+
+
 func _rebuild_markers() -> void:
+	_hide_world_texts()
 	for child in _markers.get_children():
 		child.queue_free()
 		_markers.remove_child(child)
@@ -228,8 +244,8 @@ func _rebuild_markers() -> void:
 	# O jogador por último, para ficar por cima.
 	var player: Node2D = _city.get_node_or_null("Player")
 	if player != null:
-		_player_marker = _add_pin(_to_map(player.global_position), C_RED, 12.0)
-		_add_label("Você", _to_map(player.global_position), C_RED, true, -22.0)
+		_player_marker = _add_pin(_to_map(player.global_position), C_RED, 16.0, true)
+		_add_label("Você", _to_map(player.global_position), C_RED, true, true)
 
 
 func _add_district_names() -> void:
@@ -276,11 +292,16 @@ func _add_building(building: Node2D, target: Node2D) -> void:
 		_add_ring(anchor)
 
 
-func _add_pin(map_position: Vector2, color: Color, size: float) -> Control:
+func _add_pin(map_position: Vector2, color: Color, size: float, hollow: bool = false) -> Control:
 	var pin := Control.new()
 	pin.position = map_position
 	pin.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	pin.draw.connect(func() -> void:
+		if hollow:
+			# Anel vazado: não esconde o ponto que está embaixo (ex.: uma porta).
+			pin.draw_arc(Vector2.ZERO, size / 2.0, 0.0, TAU, 24, Color(0, 0, 0, 0.9), 5.0)
+			pin.draw_arc(Vector2.ZERO, size / 2.0, 0.0, TAU, 24, color, 3.0)
+			return
 		pin.draw_circle(Vector2.ZERO, size / 2.0 + 2.0, Color(0, 0, 0, 0.85))
 		pin.draw_circle(Vector2.ZERO, size / 2.0, color))
 	_markers.add_child(pin)
@@ -296,12 +317,14 @@ func _add_ring(map_position: Vector2) -> void:
 	_markers.add_child(_ring)
 
 
-## Etiqueta com o nome, ao lado do ponto. Se bater em outra etiqueta, desce
-## (ou sobe, com "above") em degraus até achar lugar.
-func _add_label(text: String, anchor: Vector2, color: Color, below: bool, extra_offset: float = 0.0) -> void:
+## Etiqueta com o nome, perto do ponto. Se bater em outra etiqueta, desce
+## (ou sobe, com "below" falso) em degraus até achar lugar, e uma linha fina
+## liga a etiqueta ao seu ponto. Com "side", fica ao lado do ponto (para o
+## jogador, que muitas vezes está em cima de uma porta).
+func _add_label(text: String, anchor: Vector2, color: Color, below: bool, side: bool = false) -> void:
 	var pill := PanelContainer.new()
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.04, 0.08, 0.13, 0.9)
+	style.bg_color = Color(0.04, 0.08, 0.13, 0.94)
 	style.border_color = color
 	style.set_border_width_all(1)
 	style.set_corner_radius_all(3)
@@ -313,25 +336,40 @@ func _add_label(text: String, anchor: Vector2, color: Color, below: bool, extra_
 	pill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var label := Label.new()
 	label.text = text
-	label.add_theme_font_size_override("font_size", 12)
-	label.add_theme_color_override("font_color", color.lightened(0.35))
+	label.add_theme_font_size_override("font_size", 13)
+	label.add_theme_color_override("font_color", color.lightened(0.45))
 	pill.add_child(label)
 	_markers.add_child(pill)
 
 	var size: Vector2 = pill.get_combined_minimum_size()
-	var x: float = clampf(anchor.x - size.x / 2.0, 2.0, float(VIEW_SIZE.x) - size.x - 2.0)
-	var y: float = anchor.y + 9.0 + extra_offset
-	var step: float = size.y + 3.0
+	var x: float = anchor.x - size.x / 2.0
+	var y: float = anchor.y + 10.0
+	if side:
+		x = anchor.x + 12.0
+		y = anchor.y - size.y / 2.0
+	x = clampf(x, 2.0, float(VIEW_SIZE.x) - size.x - 2.0)
+	var default_y: float = y
+	var step: float = size.y + 4.0
 	var rect := Rect2(Vector2(x, y), size)
-	for attempt in range(6):
+	for attempt in range(8):
 		var free := true
 		for other in _placed:
-			if rect.grow(2.0).intersects(other):
+			if rect.grow(3.0).intersects(other):
 				free = false
 				break
 		if free:
 			break
-		rect.position.y += step if below else -step
+		rect.position.y += step if (below or side) else -step
 	pill.position = rect.position
 	pill.size = size
 	_placed.append(rect)
+
+	# Etiqueta afastada do ponto: linha de ligação (atrás da etiqueta).
+	if not side and absf(rect.position.y - default_y) > 1.0:
+		var line := Control.new()
+		line.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var end := Vector2(clampf(anchor.x, rect.position.x + 4.0, rect.end.x - 4.0), rect.position.y if rect.position.y > anchor.y else rect.end.y)
+		line.draw.connect(func() -> void:
+			line.draw_line(anchor, end, Color(color, 0.9), 1.5))
+		_markers.add_child(line)
+		_markers.move_child(line, pill.get_index())

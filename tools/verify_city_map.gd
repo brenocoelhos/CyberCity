@@ -60,6 +60,12 @@ func _initialize() -> void:
 	ok = _check("nenhuma etiqueta de lugar se sobrepoe", not overlap) and ok
 	ok = _check("todas as etiquetas ficam dentro do mapa", not outside) and ok
 
+	# --- textos pequenos do mundo nao aparecem no mapa (mas continuam no jogo) ---
+	var sign_label: Label = city.get_node("Districts/PlacaPraca")
+	var map_viewport: SubViewport = map._container.get_child(0)
+	ok = _check("placas pequenas dos bairros saem do mapa", sign_label.visibility_layer == map.WORLD_TEXT_LAYER and (map_viewport.canvas_cull_mask & map.WORLD_TEXT_LAYER) == 0) and ok
+	ok = _check("o jogo normal continua vendo as placas", sign_label.visible and (root.canvas_cull_mask & map.WORLD_TEXT_LAYER) != 0) and ok
+
 	# --- o objetivo da missao fica marcado ---
 	ok = _check("objetivo atual recebe um anel", map._ring != null) and ok
 
