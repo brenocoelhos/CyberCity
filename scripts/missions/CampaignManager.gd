@@ -207,7 +207,8 @@ func _finish_chapter(chapter_id: String) -> void:
 
 	# Espera a caixa de diálogo do "outro" fechar antes de mostrar a
 	# próxima (senão uma sobrescreveria a outra na mesma tela).
-	DialogueManager.closed.connect(_run_queued_action, CONNECT_ONE_SHOT)
+	if not DialogueManager.closed.is_connected(_run_queued_action):
+		DialogueManager.closed.connect(_run_queued_action, CONNECT_ONE_SHOT)
 
 
 func _run_queued_action() -> void:
