@@ -358,6 +358,13 @@ const CHALLENGES := {
 		"type": "report",
 		"title": "Senha reutilizada",
 		"mission": "m14",
+		## Desktop: o aviso de vazamento é um e-mail (app E-mail) e o resto são
+		## arquivos do computador (app Arquivos, com filtro de linhas para o log).
+		"desktop": true,
+		"apps": ["mail", "files", "terminal", "notes"],
+		"mailbox": ["aviso_vazamento.txt"],
+		"filesbox": ["acessos_email.log", "conta.txt", "lembretes.txt", "vazamento_lojafacil.csv"],
+		"desktop_intro": "Um site onde o Marcos tem conta vazou senhas. O aviso está no E-mail; no app Arquivos estão a lista vazada, o log de acessos do e-mail dele e as anotações dele. Filtre o log por um termo (como o grep) para achar quem não é o Marcos, e aponte o que descobrir.",
 		"intro": "Aviso de vazamento recebido. Veja os arquivos com 'ls', filtre o log com 'grep <termo> acessos_email.log' e aponte o que achar com 'report <achado>'. Digite 'report' sozinho para ver o que procurar.",
 		"files": {
 			"aviso_vazamento.txt": "De: seguranca@lojafacil.example\nAssunto: Incidente de seguranca na LojaFacil\n\nIdentificamos o acesso indevido a uma copia do nosso cadastro de clientes em\n03/10/2026. Foram expostos e-mails e senhas (armazenadas com hash MD5, sem sal).\nRecomendamos trocar a senha da LojaFacil e de qualquer outro servico em que\nvoce use a mesma senha.\n\nO arquivo vazamento_lojafacil.csv e a copia publicada pelo atacante.",
@@ -377,8 +384,8 @@ const CHALLENGES := {
 			{"hit": false, "keywords": ["198.51.100.23", "ip do marcos", "ip habitual"], "message": "Esse é o IP habitual do Marcos (Brasil, Firefox): são logins normais dele, não o ataque."},
 		],
 		"hints": [
-			"Os arquivos estão no computador da Casa 4. Use 'ls' e leia o aviso de vazamento ('cat aviso_vazamento.txt') e depois o log de acessos do e-mail (acessos_email.log).",
-			"Use 'grep <termo> acessos_email.log' para filtrar o log. Procure quem não é o Marcos: IP, país, programa usado e o que foi feito depois do login. Compare com o que ele anotou em lembretes.txt. Aponte cada achado com 'report <achado>'.",
+			"Os arquivos estão no computador da Casa 4. Leia o aviso de vazamento no app E-mail e depois o log de acessos do e-mail (acessos_email.log) no app Arquivos (ou, no terminal, use 'ls' e 'cat').",
+			"No app Arquivos, filtre o log por um termo (no terminal: 'grep <termo> acessos_email.log'). Procure quem não é o Marcos: IP, país, programa usado e o que foi feito depois do login. Compare com o que ele anotou em lembretes.txt. Aponte cada achado com 'report <achado>'.",
 			"Procure: um IP de outro país que tentou várias contas e entrou numa delas, uma regra criada logo depois do login e a mesma senha usada em vários serviços. Pense também no que impediria o login mesmo com a senha certa.",
 		],
 		"explanation": "Quando um site vaza senhas, os atacantes testam as mesmas combinações de e-mail e senha em outros serviços: é o credential stuffing, e só dá certo porque muita gente reutiliza a senha. Depois de entrar, costumam criar regras de encaminhamento para manter acesso mesmo se a senha for trocada. Use uma senha diferente em cada serviço (com um gerenciador de senhas), ative a verificação em duas etapas e revise as regras da conta depois de qualquer suspeita.",

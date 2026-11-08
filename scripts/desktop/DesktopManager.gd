@@ -18,6 +18,7 @@ extends CanvasLayer
 const Browser := preload("res://scripts/desktop/Browser.gd")
 const NotesWindow := preload("res://scripts/desktop/NotesWindow.gd")
 const MailWindow := preload("res://scripts/desktop/MailWindow.gd")
+const FilesWindow := preload("res://scripts/desktop/FilesWindow.gd")
 
 const C_ACCENT := Color("#2f8cff")
 const C_GREEN := Color("#3dff6e")
@@ -32,6 +33,7 @@ const APPS := {
 	"terminal": [">_", "Terminal"],
 	"browser": ["www", "Navegador"],
 	"mail": ["@", "E-mail"],
+	"files": ["dir", "Arquivos"],
 	"notes": ["txt", "Notas"],
 }
 const DEFAULT_APPS := ["terminal", "browser", "notes"]
@@ -41,6 +43,7 @@ const DEFAULT_SIZES := {
 	"browser": Vector2(760, 500),
 	"notes": Vector2(400, 380),
 	"mail": Vector2(860, 540),
+	"files": Vector2(860, 540),
 }
 const TERMINAL_MIN_SIZE := Vector2(520, 320)
 
@@ -195,6 +198,13 @@ func open_app(kind: String) -> Control:
 				return existing_mail["node"]
 			var mail: Control = MailWindow.new()
 			return _add_app_window(mail, "mail", func() -> void: mail.open_for(_challenge))
+		"files":
+			var existing_files: Dictionary = _find_entry("files")
+			if not existing_files.is_empty():
+				focus_window(existing_files["node"])
+				return existing_files["node"]
+			var files_window: Control = FilesWindow.new()
+			return _add_app_window(files_window, "files", func() -> void: files_window.open_for(_challenge))
 	return null
 
 
