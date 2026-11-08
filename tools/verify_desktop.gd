@@ -33,8 +33,9 @@ func _initialize() -> void:
 	ok = _check("html: colchetes do texto sao escapados", linked.contains("[lb]ok")) and ok
 
 	# --- quais computadores abrem o desktop ---
-	ok = _check("c_site abre o desktop", data.uses_desktop("c_site")) and ok
-	ok = _check("os demais desafios continuam so no terminal", not data.uses_desktop("c_senhas") and not data.uses_desktop("c_cadeia") and not data.uses_desktop("")) and ok
+	ok = _check("c_site e c_cadeia abrem o desktop", data.uses_desktop("c_site") and data.uses_desktop("c_cadeia")) and ok
+	ok = _check("c_cadeia mostra so terminal, navegador e notas", Array(data.get_challenge("c_cadeia")["apps"]) == ["terminal", "browser", "notes"]) and ok
+	ok = _check("os demais desafios continuam so no terminal", not data.uses_desktop("c_senhas") and not data.uses_desktop("")) and ok
 
 	# --- o computador de c_site abre o desktop ---
 	var computer: Node = (load(COMPUTER) as PackedScene).instantiate()
@@ -224,6 +225,21 @@ func _initialize() -> void:
 	ok = _check("abre de novo, sem janelas antigas", desktop.is_open() and desktop.window_count() == 1) and ok
 	desktop.close()
 	ok = _check("desligar encerra o desktop e a sessao", not desktop.is_open() and not terminal.desktop_mode and not terminal.is_active()) and ok
+
+	# --- m15 (c_cadeia): desktop completo, so com os apps do desafio ---
+	desktop.open("c_cadeia", "praca-central")
+	ok = _check("c_cadeia: so os icones Terminal, Navegador e Notas", desktop._icons["terminal"].visible and desktop._icons["browser"].visible and desktop._icons["notes"].visible and not desktop._icons["mail"].visible) and ok
+	ok = _check("c_cadeia: app fora da lista nao abre", desktop.open_app("mail") == null) and ok
+	var web: Control = desktop.open_app("browser")
+	ok = _check("c_cadeia: favorito leva ao portal do web01", web._view.text.contains("192.168.1.30")) and ok
+	web.navigate("192.168.1.30/backup/")
+	ok = _check("c_cadeia: pasta /backup/ lista a configuracao antiga", web._view.text.contains("[url=/backup/config.old]")) and ok
+	web.navigate("/backup/config.old")
+	ok = _check("c_cadeia: a configuracao expoe a senha do deploy", web._view.text.contains("Orion@2023")) and ok
+	web.navigate("192.168.1.1")
+	ok = _check("c_cadeia: gateway fora do escopo e bloqueado no navegador", String(web._current["status"]) == "scope" and web._view.text.contains("FORA do escopo")) and ok
+	desktop.close()
+	ok = _check("c_cadeia: ainda nao concluiu (so a flag do db01 conclui)", not session.is_completed("c_cadeia")) and ok
 
 	# --- terminal comum (sem desktop) continua em tela cheia ---
 	terminal.open("c_senhas", "estacao1")

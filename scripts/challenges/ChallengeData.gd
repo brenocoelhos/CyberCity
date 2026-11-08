@@ -317,6 +317,13 @@ const CHALLENGES := {
 		"title": "Orion Logística",
 		"mission": "m15",
 		"guidance": 1,
+		## Desktop completo (Navegador, Terminal e Notas): o site do web01 se vê
+		## no navegador e a invasão acontece no terminal. O escopo autorizado
+		## continua em notas_pentest.txt, no terminal.
+		"desktop": true,
+		"apps": ["terminal", "browser", "notes"],
+		"bookmarks": [{"title": "Portal de rastreamento da Orion (web01)", "url": "http://192.168.1.30/"}],
+		"desktop_intro": "Teste de invasão autorizado da Orion Logística. O escopo está em notas_pentest.txt (no terminal: 'cat notas_pentest.txt'). Use o Navegador para ver o que o site expõe e o Terminal para mapear a rede ('scan'), entrar nas máquinas ('ssh') e entregar o 'relatorio'. Anote o caminho nas Notas.",
 		"intro": "Terminal de teste de invasão aberto. O escopo autorizado está em notas_pentest.txt. Ferramentas: 'scan' (mapear a rede), 'curl <endereço>' (ver páginas), 'ssh usuário@máquina' (entrar), 'ls -a' (listar inclusive arquivos ocultos) e 'relatorio' (entregar no fim).",
 		"files": {
 			"notas_pentest.txt": "TESTE DE INVASAO AUTORIZADO — Orion Logistica\n\nEscopo autorizado: 192.168.1.30 (web01) e 192.168.1.40 (db01)\nFORA DO ESCOPO: 192.168.1.1 (gateway) e qualquer outro sistema\n\nObjetivo: chegar a flag do servidor de banco de dados e documentar o caminho.\nRegra: somente leitura. Nao altere nem apague nada.",

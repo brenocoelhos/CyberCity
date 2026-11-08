@@ -25,6 +25,16 @@ const TASKBAR_HEIGHT := 36.0
 const GRIP_SIZE := 18.0
 const MAX_BROWSERS := 4
 
+## Apps do desktop: id -> [símbolo do ícone, nome]. Cada desafio escolhe quais
+## aparecem com "apps" no ChallengeData (sem "apps": os de DEFAULT_APPS).
+const APPS := {
+	"terminal": [">_", "Terminal"],
+	"browser": ["www", "Navegador"],
+	"mail": ["@", "E-mail"],
+	"notes": ["txt", "Notas"],
+}
+const DEFAULT_APPS := ["terminal", "browser", "notes"]
+
 const DEFAULT_SIZES := {
 	"terminal": Vector2(820, 500),
 	"browser": Vector2(760, 500),
@@ -48,6 +58,8 @@ var _cascade: int = 0
 
 var _root: Control
 var _windows: Control
+var _icons: Dictionary = {}
+var _apps: Array = DEFAULT_APPS
 var _note: PanelContainer
 var _note_label: Label
 var _task_row: HBoxContainer
@@ -80,6 +92,9 @@ func open(challenge_id: String, host: String) -> void:
 	_entries.append(_terminal_entry)
 	_open = true
 	visible = true
+	_apps = Array(_challenge.get("apps", DEFAULT_APPS))
+	for app in _icons:
+		(_icons[app] as Button).visible = _apps.has(app)
 	_update_note()
 	_root.modulate.a = 0.0
 	create_tween().tween_property(_root, "modulate:a", 1.0, 0.2)
@@ -141,6 +156,8 @@ func _input(event: InputEvent) -> void:
 ## Abre (ou traz para a frente) um app: "terminal", "browser" (uma nova janela a
 ## cada vez) ou "notes". Devolve a janela.
 func open_app(kind: String) -> Control:
+	if not _apps.has(kind):
+		return null
 	match kind:
 		"terminal":
 			var node: Control = _terminal_entry["node"]
@@ -521,9 +538,10 @@ func _build() -> void:
 	icons.position = Vector2(20, 20)
 	icons.add_theme_constant_override("separation", 14)
 	_root.add_child(icons)
-	icons.add_child(_make_icon(">_", "Terminal", func() -> void: open_app("terminal")))
-	icons.add_child(_make_icon("www", "Navegador", func() -> void: open_app("browser")))
-	icons.add_child(_make_icon("txt", "Notas", func() -> void: open_app("notes")))
+	for app in APPS:
+		var icon: Button = _make_icon(String(APPS[app][0]), String(APPS[app][1]), func() -> void: open_app(String(app)))
+		_icons[app] = icon
+		icons.add_child(icon)
 
 	# Recado do desafio
 	_note = PanelContainer.new()
