@@ -75,6 +75,10 @@ var _router_logged_in: bool = false
 
 ## Desafio de evidências: índices (em "targets") dos indícios já reportados.
 var _report_found: Array = []
+## Resultado do último 'report' (o app de E-mail lê isto) e quanto esperar antes
+## de encerrar o desafio quando o 'report' veio do app.
+var _last_report: Dictionary = {}
+var _finish_delay: float = 0.0
 
 ## Máquinas simuladas do desafio ("hosts"): em qual o jogador está, de onde
 ## veio e por onde passou. Ver HostSim.gd.
@@ -944,7 +948,9 @@ func _cmd_report_evidence(answer: String) -> void:
 	var index: int = _find_report_target(answer, targets)
 	if index == -1:
 		# Palavra que não bate com nada: não conta como erro, só pede para reler.
-		_print_line(String(_challenge.get("unknown_message", "Isso não bate com nada do material. Releia os arquivos e tente outro indício.")))
+		var unknown: String = String(_challenge.get("unknown_message", "Isso não bate com nada do material. Releia os arquivos e tente outro indício."))
+		_last_report = {"kind": "unknown", "message": unknown}
+		_print_line(unknown)
 		if _guidance() < 3:
 			_print_rich("[color=%s]Dica: digite 'report' sozinho para ver o que procurar.[/color]" % C_DIM)
 		return
@@ -953,15 +959,18 @@ func _cmd_report_evidence(answer: String) -> void:
 	if not bool(target.get("hit", false)):
 		ChallengeSession.record_attempt(_challenge_id, false)
 		SoundManager.play("error")
+		_last_report = {"kind": "miss", "message": String(target["message"])}
 		_print_error(String(target["message"]))
 		return
 	if _report_found.has(index):
+		_last_report = {"kind": "dup", "message": "Você já reportou esse indício."}
 		_print_line("Você já reportou esse indício.")
 		return
 
 	_report_found.append(index)
 	ChallengeSession.record_attempt(_challenge_id, true)
 	var required: int = _report_required()
+	_last_report = {"kind": "hit", "message": String(target["message"]), "done": _report_found.size() >= required}
 	_print_success(String(target["message"]))
 	if _guidance() >= 3:
 		_print_line("Indícios encontrados: %d" % _report_found.size())
@@ -978,15 +987,22 @@ func _cmd_report_evidence(answer: String) -> void:
 ## ("label" no alvo), marcando os que já foram reportados. Não mostra as
 ## respostas, e as iscas não aparecem.
 func _print_report_checklist() -> void:
+	for line in report_checklist_lines():
+		_print_rich(line)
+
+
+## As linhas (BBCode) da lista "O que procurar", que o terminal imprime e o app
+## de E-mail mostra. Quanto elas dizem depende do nível de guia (ver _guidance).
+func report_checklist_lines() -> PackedStringArray:
+	var lines := PackedStringArray()
 	var required: int = _report_required()
-	# Quanto a lista mostra depende do nível de guia (ver _guidance).
 	if _guidance() >= 3:
-		_print_line("Indícios reportados até agora: %d. Neste nível o terminal não diz o que procurar." % _report_found.size())
-		return
+		lines.append(_escape("Indícios reportados até agora: %d. Neste nível o terminal não diz o que procurar." % _report_found.size()))
+		return lines
 	if _guidance() == 2:
-		_print_line("Indícios reportados: %d de %d necessários." % [mini(_report_found.size(), required), required])
-		return
-	_print_rich("[color=%s][b]O que procurar[/b][/color] (precisa de %d de %d):" % [C_WHITE, required, _report_hits_total()])
+		lines.append(_escape("Indícios reportados: %d de %d necessários." % [mini(_report_found.size(), required), required]))
+		return lines
+	lines.append("[color=%s][b]O que procurar[/b][/color] (precisa de %d de %d):" % [C_WHITE, required, _report_hits_total()])
 	var number := 0
 	for i in range(_challenge["targets"].size()):
 		var target: Dictionary = _challenge["targets"][i]
@@ -996,10 +1012,30 @@ func _print_report_checklist() -> void:
 		var label: String = String(target.get("label", "Achado %d" % number))
 		if _report_found.has(i):
 			label = String(target.get("found_label", label))
-			_print_rich("  [color=%s][lb]x[rb] %s[/color]" % [C_GREEN, _escape(label)])
+			lines.append("  [color=%s][lb]x[rb] %s[/color]" % [C_GREEN, _escape(label)])
 		else:
-			_print_rich("  [lb] [rb] %s" % _escape(label))
-	_print_line(String(_challenge.get("report_help", "Escreva em poucas palavras o que achou: report <achado>. O jogo entende sinônimos; se não reconhecer, tente outra palavra.")))
+			lines.append("  [lb] [rb] %s" % _escape(label))
+	lines.append(_escape(String(_challenge.get("report_help", "Escreva em poucas palavras o que achou: report <achado>. O jogo entende sinônimos; se não reconhecer, tente outra palavra."))))
+	return lines
+
+
+## App de E-mail: entrega um achado como o comando 'report <achado>'. Devolve
+## {"kind": "hit"|"miss"|"dup"|"unknown", "message": texto, "done": se concluiu}.
+## Quando este achado conclui o desafio, o terminal espera um instante antes de
+## fechar o desktop, para o jogador ler a mensagem.
+func report_from_app(answer: String) -> Dictionary:
+	_last_report = {"kind": "unknown", "message": ""}
+	if String(_challenge.get("type", "")) != "report" or answer.strip_edges() == "":
+		return _last_report
+	_finish_delay = 1.8
+	_cmd_report_evidence(answer)
+	_finish_delay = 0.0
+	return _last_report
+
+
+## Quantos indícios já foram reportados e quantos são necessários.
+func report_progress() -> Vector2i:
+	return Vector2i(_report_found.size(), _report_required())
 
 
 func _report_hits_total() -> int:
@@ -1394,6 +1430,10 @@ func _finish_challenge(success_message: String) -> void:
 		_print_rich("[color=%s]Este desafio já foi concluído antes (sem XP novo).[/color]" % C_DIM)
 		return
 	_print_success(success_message)
+	var delay: float = _finish_delay
+	_finish_delay = 0.0
+	if delay > 0.0:
+		await get_tree().create_timer(delay).timeout
 	close()
 	ChallengeSession.complete(_challenge_id)
 
