@@ -13,9 +13,8 @@ extends "res://scripts/desktop/DesktopWindow.gd"
 ## PROVISÓRIO: o visual é simples; a Arte pode trocar.
 
 const MailParser := preload("res://scripts/desktop/MailParser.gd")
+const ReportBar := preload("res://scripts/desktop/ReportBar.gd")
 
-const C_OK := "#3dff6e"
-const C_BAD := "#ff5f5f"
 const C_DIM := "#8aa0b4"
 
 var _challenge: Dictionary = {}
@@ -28,8 +27,8 @@ var _head_label: RichTextLabel
 var _body_label: RichTextLabel
 var _raw_button: Button
 var _flag_button: Button
-var _field: LineEdit
-var _feedback: RichTextLabel
+var _bar: Control
+var _feedback: RichTextLabel   # o da barra de baixo (os testes leem)
 
 
 func _ready() -> void:
@@ -53,7 +52,7 @@ func open_for(challenge: Dictionary) -> void:
 			_messages.append(MailParser.parse(file_name, String(files[file_name]), i + 1))
 	_flag_button.visible = _messages.size() > 1
 	_refresh_list()
-	_feedback.text = "[color=%s]Leia as mensagens. Aponte o que achar de suspeito aqui embaixo.[/color]" % C_DIM
+	_bar.say("Leia as mensagens. Aponte o que achar de suspeito aqui embaixo.")
 	if _messages.size() == 1:
 		_list.select(0)
 		_show_message(0)
@@ -98,36 +97,24 @@ func _on_raw_toggled(_pressed: bool) -> void:
 
 func _on_flag_pressed() -> void:
 	if _current < 0:
-		_feedback.text = "[color=%s]Abra uma mensagem antes de denunciar.[/color]" % C_DIM
+		_bar.say("Abra uma mensagem antes de denunciar.")
 		return
-	var number: int = int(_messages[_current]["number"])
-	_submit(str(number), number)
+	_report(str(int(_messages[_current]["number"])), int(_messages[_current]["number"]))
 
 
 func _on_field_submitted(text: String) -> void:
-	if text.strip_edges() == "":
-		return
-	_submit(text, -1)
-	_field.clear()
+	_bar.submit_text(text)
 
 
 func _on_help_pressed() -> void:
-	var lines: PackedStringArray = TerminalManager.report_checklist_lines()
-	_feedback.text = "\n".join(lines)
+	_bar.show_checklist()
 
 
-func _submit(answer: String, number: int) -> void:
-	var result: Dictionary = TerminalManager.report_from_app(answer)
-	var kind_of: String = String(result.get("kind", "unknown"))
-	var color: String = C_OK if kind_of == "hit" else (C_BAD if kind_of == "miss" else C_DIM)
-	var text: String = "[color=%s]%s[/color]" % [color, _escape(String(result.get("message", "")))]
-	if kind_of == "hit":
-		var progress: Vector2i = TerminalManager.report_progress()
-		text += "\n[color=%s]Indícios encontrados: %d/%d[/color]" % [C_DIM, mini(progress.x, progress.y), progress.y]
-		if number > 0:
-			_flagged[number] = true
-			_refresh_list()
-	_feedback.text = text
+func _report(answer: String, number: int) -> void:
+	var result: Dictionary = _bar.submit(answer)
+	if String(result.get("kind", "")) == "hit" and number > 0:
+		_flagged[number] = true
+		_refresh_list()
 
 
 # --- Lista -----------------------------------------------------------------------------
@@ -205,29 +192,7 @@ func _build() -> void:
 	_body_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	right.add_child(_body_label)
 
-	# Barra de baixo: apontar o que achou
-	var bottom := VBoxContainer.new()
-	bottom.add_theme_constant_override("separation", 4)
-	column.add_child(bottom)
-
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 6)
-	bottom.add_child(row)
-	_field = LineEdit.new()
-	_field.placeholder_text = "Aponte o que achou de suspeito (ex.: um cabeçalho, o link, o remetente) e Enter"
-	_field.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_field.text_submitted.connect(_on_field_submitted)
-	row.add_child(_field)
-	var send := Button.new()
-	send.text = "Apontar"
-	send.pressed.connect(func() -> void: _on_field_submitted(_field.text))
-	row.add_child(send)
-	var help := Button.new()
-	help.text = "O que procurar?"
-	help.pressed.connect(_on_help_pressed)
-	row.add_child(help)
-
-	_feedback = RichTextLabel.new()
-	_feedback.bbcode_enabled = true
-	_feedback.custom_minimum_size = Vector2(0, 74)
-	bottom.add_child(_feedback)
+	# Barra de baixo: apontar o que achou (a mesma dos outros apps de análise)
+	_bar = ReportBar.new()
+	_feedback = _bar.feedback
+	column.add_child(_bar)
