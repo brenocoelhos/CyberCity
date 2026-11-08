@@ -212,6 +212,13 @@ const CHALLENGES := {
 		"type": "report",
 		"title": "Análise de e-mail",
 		"mission": "m12",
+		## Desktop com e-mail: a mensagem se lê no app (os cabeçalhos completos ficam
+		## atrás de um botão, como num programa de e-mail de verdade) e os indícios
+		## se apontam ali mesmo, ou com 'report' no terminal.
+		"desktop": true,
+		"apps": ["mail", "terminal", "notes"],
+		"mailbox": ["email.eml"],
+		"desktop_intro": "Um e-mail suspeito chegou. Abra o E-mail, leia a mensagem e veja os cabeçalhos completos. Aponte cada indício de fraude na barra de baixo do app (ou com 'report' no terminal).",
 		"intro": "E-mail suspeito aberto. Leia com 'cat email.eml' e aponte os indícios de fraude com 'report <indício>'. Digite 'report' sozinho para ver o que procurar.",
 		"files": {
 			"email.eml": "Return-Path: <suporte@empresaa-seguranca.com>\nReceived: from mail.empresaa-seguranca.com (mail.empresaa-seguranca.com [203.0.113.77])\n        by mx.provedor.example with ESMTP id 4f9c2b1a; Tue, 06 Oct 2026 03:12:44 -0300\nAuthentication-Results: mx.provedor.example;\n        spf=fail (domain of empresaa-seguranca.com does not designate 203.0.113.77 as permitted sender);\n        dkim=none;\n        dmarc=fail (p=none) header.from=empresaa-seguranca.com\nFrom: \"Suporte Banco Central\" <suporte@empresaa-seguranca.com>\nReply-To: recuperacao.conta@mail-seguro.example\nTo: vizinha@email.example\nSubject: URGENTE: sua conta sera bloqueada em 24 horas\nDate: Tue, 06 Oct 2026 03:12:40 -0300\nMessage-ID: <20261006031240.77A1@empresaa-seguranca.com>\nContent-Type: text/html; charset=utf-8\n\nPrezado cliente,\n\nDetectamos um acesso suspeito na sua conta. Para evitar o bloqueio,\nconfirme seus dados agora:\n\n   [ Acessar minha conta ]\n   texto exibido:  https://www.bancocentral.example/login\n   destino real:   http://seguranca-bc.example.net/entrar?id=88213\n\nVoce tem apenas 24 horas. Nao compartilhe este e-mail.",
@@ -227,7 +234,7 @@ const CHALLENGES := {
 			{"hit": false, "keywords": ["message-id", "message id", "date", "data", "to", "content-type"], "message": "Esse campo existe em qualquer e-mail, inclusive nos legítimos. Sozinho ele não prova fraude."},
 		],
 		"hints": [
-			"O e-mail está no computador da Casa 2. Use 'files' e depois 'cat email.eml' para ler tudo, inclusive os cabeçalhos no topo.",
+			"O e-mail está no computador da Casa 2. Abra o app E-mail e clique em Cabeçalhos completos (ou, no terminal, use 'cat email.eml').",
 			"Analistas olham quem enviou de verdade, o resultado da autenticação (SPF, DKIM, DMARC), para onde vai a resposta e para onde o link realmente leva. Aponte cada achado com 'report <indício>'.",
 			"Procure: o Authentication-Results com falha, o Reply-To em outro domínio, o domínio 'empresaa' parecido com o verdadeiro, o link cujo destino real é outro e o prazo de 24 horas.",
 		],
@@ -242,6 +249,12 @@ const CHALLENGES := {
 		"type": "report",
 		"title": "Phishing em massa",
 		"mission": "m13",
+		## Desktop com e-mail: a caixa de entrada é um app (as mensagens são os
+		## arquivos msg*.eml abaixo) e o jogador denuncia ali mesmo, ou com 'report'.
+		"desktop": true,
+		"apps": ["mail", "terminal", "notes"],
+		"mailbox": ["msg1.eml", "msg2.eml", "msg3.eml", "msg4.eml", "msg5.eml", "msg6.eml"],
+		"desktop_intro": "Caixa de entrada com 6 mensagens. Abra o E-mail, leia cada uma (os cabeçalhos completos mostram se o remetente é de verdade) e use 'Denunciar como golpe' nas fraudes. Nem toda mensagem com prazo é golpe.",
 		"intro": "Caixa de entrada com 6 mensagens. Leia 'cat inbox.txt', abra cada uma com 'cat msg1.eml' etc. e aponte os golpes com 'report <número>'. Digite 'report' sozinho para ver quantos faltam.",
 		"files": {
 			"inbox.txt": "CAIXA DE ENTRADA — morador@email.example\n\n 1  rastreio@correios-entrega.example      Sua encomenda foi retida\n 2  avisos@meubanco.example                Sua fatura fechou\n 3  roberto.mendes.diretor@gmail.example   Preciso de um favor urgente\n 4  ana.souza@techcorp.example             Reunião de equipe amanhã\n 5  ti-suporte@techcorp-sistemas.example   Sua senha expira hoje\n 6  newsletter@seguranca.example           Dicas da semana\n\n(abra cada mensagem com 'cat msg1.eml', 'cat msg2.eml'...)",
@@ -263,7 +276,7 @@ const CHALLENGES := {
 			{"hit": false, "keywords": ["6", "msg6", "mensagem 6", "mensagem6"], "message": "Essa é legítima: boletim com autenticação aprovada e links para o próprio domínio."},
 		],
 		"hints": [
-			"A caixa de entrada está no computador da Casa 3. Use 'cat inbox.txt' e abra cada mensagem com 'cat msg1.eml', 'cat msg2.eml'...",
+			"A caixa de entrada está no computador da Casa 3. Abra o app E-mail e leia cada mensagem (ou, no terminal, use 'cat inbox.txt' e 'cat msg1.eml').",
 			"Compare o remetente, o resultado da autenticação, para onde o link realmente leva e o que a mensagem pede (dinheiro, senha, urgência). Aponte o golpe com 'report <número>'.",
 			"São três golpes: uma taxa de encomenda, um 'diretor' pedindo cartões-presente de um e-mail pessoal e um aviso de senha expirando num domínio parecido com o da empresa. Cuidado: nem toda mensagem com prazo é golpe.",
 		],

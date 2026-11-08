@@ -17,6 +17,7 @@ extends CanvasLayer
 
 const Browser := preload("res://scripts/desktop/Browser.gd")
 const NotesWindow := preload("res://scripts/desktop/NotesWindow.gd")
+const MailWindow := preload("res://scripts/desktop/MailWindow.gd")
 
 const C_ACCENT := Color("#2f8cff")
 const C_GREEN := Color("#3dff6e")
@@ -39,6 +40,7 @@ const DEFAULT_SIZES := {
 	"terminal": Vector2(820, 500),
 	"browser": Vector2(760, 500),
 	"notes": Vector2(400, 380),
+	"mail": Vector2(860, 540),
 }
 const TERMINAL_MIN_SIZE := Vector2(520, 320)
 
@@ -186,6 +188,13 @@ func open_app(kind: String) -> Control:
 				focus_window(existing["node"])
 				return existing["node"]
 			return _add_app_window(NotesWindow.new(), "notes", Callable())
+		"mail":
+			var existing_mail: Dictionary = _find_entry("mail")
+			if not existing_mail.is_empty():
+				focus_window(existing_mail["node"])
+				return existing_mail["node"]
+			var mail: Control = MailWindow.new()
+			return _add_app_window(mail, "mail", func() -> void: mail.open_for(_challenge))
 	return null
 
 
