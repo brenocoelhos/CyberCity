@@ -55,6 +55,7 @@ var tools_button: Button
 ## último save, para gravar ao sair do app.
 var notes_button: Button
 var _notes_dirty: bool = false
+var _stopwatch_label: Label
 
 
 func _ready() -> void:
@@ -71,6 +72,7 @@ func _ready() -> void:
 
 	_setup_tools_button()
 	_setup_notes_button()
+	_setup_stopwatch()
 	GameManager.tool_unlocked.connect(func(_id: String): _update_home_labels())
 
 	PhoneManager.unread_changed.connect(func(_count: int): _update_home_labels())
@@ -115,6 +117,21 @@ func _process(_delta: float) -> void:
 
 func _update_clock() -> void:
 	clock_label.text = Time.get_time_string_from_system().substr(0, 5)
+	if _stopwatch_label != null:
+		_stopwatch_label.text = "TEMPO " + Leaderboard.format_clock(Leaderboard.elapsed_msec())
+
+
+## Cronômetro da partida, na barra de cima do celular (é o tempo que vai para o
+## placar). O relógio da hora fica na direita.
+func _setup_stopwatch() -> void:
+	_stopwatch_label = Label.new()
+	_stopwatch_label.add_theme_font_size_override("font_size", 13)
+	_stopwatch_label.add_theme_color_override("font_color", COLOR_UNREAD)
+	_stopwatch_label.position = Vector2(112, 0)
+	_stopwatch_label.size = Vector2(170, 26)
+	_stopwatch_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_stopwatch_label.tooltip_text = "Tempo de jogo: é o que vale no placar"
+	$Phone/StatusBar.add_child(_stopwatch_label)
 
 
 # --- Tela inicial ------------------------------------------------------
@@ -284,7 +301,8 @@ func _render_profile() -> void:
 	if CampaignManager.is_game_completed:
 		_add_label("CASO ENCERRADO — todas as missões concluídas!", COLOR_UNREAD)
 
-	_add_label("HACKER", COLOR_TITLE)
+	_add_label("AGENTE %s" % Leaderboard.player_name if Leaderboard.player_name != "" else "HACKER", COLOR_TITLE)
+	_add_label("Tempo de jogo: %s" % Leaderboard.format_clock(Leaderboard.elapsed_msec()), COLOR_DIM)
 	_add_label("Nível: %d" % GameManager.level)
 
 	var bar := ProgressBar.new()

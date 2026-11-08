@@ -147,6 +147,7 @@ func _collect(reason: String) -> Dictionary:
 		"campaign": CampaignManager.get_save_data(),
 		"phone": PhoneManager.get_save_data(),
 		"notes": PlayerNotes.get_save_data(),
+		"run": Leaderboard.get_save_data(),
 		"challenges": ChallengeSession.get_save_data(),
 		"location": {
 			"scene": scene.scene_file_path,
@@ -196,6 +197,7 @@ func load_game() -> String:
 	CampaignManager.load_save_data(_dict(data, "campaign"))
 	PhoneManager.load_save_data(_dict(data, "phone"))
 	PlayerNotes.load_save_data(_dict(data, "notes"))
+	Leaderboard.load_save_data(_dict(data, "run"))
 	ChallengeSession.load_save_data(_dict(data, "challenges"))
 
 	var location: Dictionary = _dict(data, "location")

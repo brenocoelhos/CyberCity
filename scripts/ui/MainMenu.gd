@@ -114,6 +114,8 @@ func _on_new_game_pressed() -> void:
 	PhoneManager.reset()
 	PlayerNotes.reset()
 	ChallengeSession.reset()
+	# O nome e o cronômetro novos começam no telefonema da abertura (IntroCall.gd).
+	Leaderboard.cancel_run()
 	DialogueManager.force_close()
 	SceneTransition.has_pending_spawn = false
 	SceneTransition.return_scene_path = CITY_SCENE

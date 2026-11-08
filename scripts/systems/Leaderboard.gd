@@ -20,6 +20,7 @@ extends Node
 ## Emitido quando uma partida termina e entra (ou não) no placar.
 signal run_finished(entry: Dictionary, position: int)
 
+const MAIN_MENU_SCENE := "res://scenes/ui/MainMenu.tscn"
 const MAX_ENTRIES := 10
 const MAX_NAME_LENGTH := 10
 const DEFAULT_NAME := "JOGADOR"
@@ -41,8 +42,14 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	if _running and not _paused:
-		_elapsed_msec += delta * 1000.0
+	if not _running or _paused:
+		return
+	# No menu principal o tempo não corre (a pausa do jogo é a da própria
+	# árvore: com get_tree().paused este _process nem roda).
+	var scene: Node = get_tree().current_scene
+	if scene != null and scene.scene_file_path == MAIN_MENU_SCENE:
+		return
+	_elapsed_msec += delta * 1000.0
 
 
 ## Começa a contar uma partida para este jogador. O nome é aparado e cortado
@@ -65,6 +72,24 @@ func set_paused(value: bool) -> void:
 ## Tempo da partida em andamento, em milissegundos.
 func elapsed_msec() -> int:
 	return int(_elapsed_msec)
+
+
+## Nome e tempo da partida em andamento, para o save (SaveManager.gd). Sem
+## isto, carregar um jogo zeraria o cronômetro.
+func get_save_data() -> Dictionary:
+	return {"name": player_name, "elapsed_msec": int(_elapsed_msec), "running": _running}
+
+
+## Restaura a partida de um save. Save antigo (sem esses dados): a partida
+## continua valendo, sem nome e com o tempo zerado.
+func load_save_data(data: Dictionary) -> void:
+	if data.is_empty():
+		start_run("")
+		return
+	player_name = clean_name(String(data.get("name", "")))
+	_elapsed_msec = float(data.get("elapsed_msec", 0))
+	_running = bool(data.get("running", true))
+	_paused = false
 
 
 ## Abandona a partida (voltar ao menu, novo jogo) sem gravar nada.
@@ -137,6 +162,17 @@ func save_scores() -> void:
 static func clean_name(name_typed: String) -> String:
 	var cleaned: String = name_typed.strip_edges().left(MAX_NAME_LENGTH).strip_edges()
 	return cleaned if cleaned != "" else DEFAULT_NAME
+
+
+## "MM:SS" (ex.: 12:34) ou "H:MM:SS" se passar de uma hora: o relógio do celular.
+static func format_clock(msec: int) -> String:
+	var total_seconds: int = msec / 1000
+	var seconds: int = total_seconds % 60
+	var minutes: int = (total_seconds / 60) % 60
+	var hours: int = total_seconds / 3600
+	if hours > 0:
+		return "%d:%02d:%02d" % [hours, minutes, seconds]
+	return "%02d:%02d" % [minutes, seconds]
 
 
 ## "MM:SS.cc" (ex.: 12:34.56) ou "H:MM:SS.cc" se passar de uma hora.
