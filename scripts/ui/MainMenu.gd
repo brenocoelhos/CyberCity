@@ -18,6 +18,11 @@ const CITY_SCENE := "res://scenes/world/City.tscn"
 
 @onready var title_label: Label = $TitleLabel
 
+## Botão e painel do placar (criados em _setup_scores).
+var scores_button: Button
+var scores_panel: Panel
+var scores_back_button: Button
+
 ## Evita clicar duas vezes em "Novo jogo" durante o fade.
 var _leaving: bool = false
 
@@ -47,6 +52,8 @@ func _ready() -> void:
 	quit_button.pressed.connect(_on_quit_pressed)
 	controls_back_button.pressed.connect(_close_controls)
 	options_panel.closed.connect(_show_main_buttons)
+
+	_setup_scores()
 
 	# Mouse em cima de um botão = botão selecionado. Assim o mouse e o teclado
 	# mostram sempre o mesmo destaque, e só um botão fica aceso por vez.
@@ -162,6 +169,80 @@ func _on_quit_pressed() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if controls_panel.visible and event.is_action_pressed("ui_cancel"):
+	if scores_panel.visible and event.is_action_pressed("ui_cancel"):
+		_close_scores()
+		get_viewport().set_input_as_handled()
+	elif controls_panel.visible and event.is_action_pressed("ui_cancel"):
 		_close_controls()
 		get_viewport().set_input_as_handled()
+
+
+# --- Placar --------------------------------------------------------------------
+
+## O botão "Placar" e o painel com os 10 melhores tempos. O painel é uma cópia do
+## de Controles (mesmo visual), com as linhas do placar no lugar do texto.
+func _setup_scores() -> void:
+	scores_button = controls_button.duplicate(0) as Button
+	scores_button.name = "ScoresButton"
+	scores_button.text = "Placar"
+	main_buttons.add_child(scores_button)
+	main_buttons.move_child(scores_button, controls_button.get_index() + 1)
+	# Mais um botão na coluna: abre espaço dos dois lados.
+	main_buttons.offset_top -= 28.0
+	main_buttons.offset_bottom += 28.0
+
+	scores_panel = controls_panel.duplicate(0) as Panel
+	scores_panel.name = "ScoresPanel"
+	scores_panel.get_node("TitleLabel").text = "PLACAR"
+	scores_panel.get_node("TextLabel").visible = false
+	scores_panel.visible = false
+	add_child(scores_panel)
+	scores_back_button = scores_panel.get_node("BackButton")
+	scores_button.pressed.connect(_on_scores_pressed)
+	scores_back_button.pressed.connect(_close_scores)
+
+
+func _on_scores_pressed() -> void:
+	SoundManager.play("blip")
+	main_buttons.visible = false
+	_fill_scores()
+	scores_panel.visible = true
+	scores_back_button.grab_focus()
+
+
+func _close_scores() -> void:
+	SoundManager.play("blip")
+	scores_panel.visible = false
+	_show_main_buttons()
+
+
+## Monta a tabela (posição, nome, tempo) a partir de Leaderboard.get_scores().
+func _fill_scores() -> void:
+	var old: Node = scores_panel.get_node_or_null("Rows")
+	if old != null:
+		scores_panel.remove_child(old)
+		old.queue_free()
+	var scores: Array = Leaderboard.get_scores()
+	if scores.is_empty():
+		var empty := Label.new()
+		empty.name = "Rows"
+		empty.text = "Nenhum tempo registrado ainda. Termine o jogo para aparecer aqui."
+		empty.position = Vector2(60, 100)
+		empty.add_theme_color_override("font_color", Color("#8aa0b4"))
+		scores_panel.add_child(empty)
+		return
+	var rows := GridContainer.new()
+	rows.name = "Rows"
+	rows.columns = 3
+	rows.position = Vector2(220, 64)
+	rows.add_theme_constant_override("h_separation", 40)
+	rows.add_theme_constant_override("v_separation", 4)
+	scores_panel.add_child(rows)
+	for i in range(scores.size()):
+		var score: Dictionary = scores[i]
+		var color: Color = Color("#ffd75f") if i == 0 else Color("#e8ece9")
+		for text in ["%d." % (i + 1), String(score["name"]), Leaderboard.format_time(int(score["time_msec"]))]:
+			var label := Label.new()
+			label.text = text
+			label.add_theme_color_override("font_color", color)
+			rows.add_child(label)
