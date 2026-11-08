@@ -112,3 +112,10 @@ func scan_lines() -> PackedStringArray:
 		var host: Dictionary = _hosts[host_name]
 		lines.append("%-15s %-10s %s" % [String(host.get("ip", "?")), String(host_name), String(host.get("ports", ""))])
 	return lines
+
+
+## Formulário da máquina que recebe os dados enviados a um caminho (ex.: "/login"):
+## {"handler": ..., "ok_page": ..., "fail_page": ...}. Vazio se não existe.
+func form(host_name: String, path: String) -> Dictionary:
+	var forms: Dictionary = _hosts.get(host_name, {}).get("forms", {})
+	return Dictionary(forms.get(path, {}))

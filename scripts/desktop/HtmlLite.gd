@@ -53,6 +53,76 @@ static func render(html: String) -> String:
 	return s.strip_edges()
 
 
+## Divide a página em blocos, na ordem em que aparecem: {"type": "text",
+## "html": ...} para o que é texto e {"type": "form", "action", "method",
+## "fields": [{name, kind ("text"|"password"|"textarea"|"hidden"), label,
+## placeholder, value}], "submit": texto do botão} para cada <form>. Sem
+## formulário, devolve um bloco só, com a página inteira.
+static func blocks(html: String) -> Array:
+	var out: Array = []
+	var rx := RegEx.new()
+	rx.compile("(?is)<form\\b([^>]*)>(.*?)</form>")
+	var position := 0
+	for found in rx.search_all(html):
+		out.append({"type": "text", "html": html.substr(position, found.get_start() - position)})
+		out.append(_parse_form(found.get_string(1), found.get_string(2)))
+		position = found.get_end()
+	out.append({"type": "text", "html": html.substr(position)})
+	return out
+
+
+static func _parse_form(form_attributes: String, inner: String) -> Dictionary:
+	var form := {
+		"type": "form",
+		"action": _attribute(form_attributes, "action"),
+		"method": _attribute(form_attributes, "method").to_lower(),
+		"fields": [],
+		"submit": "Enviar",
+	}
+	var rx := RegEx.new()
+	rx.compile("(?is)<label\\b[^>]*>(.*?)</label>|<input\\b([^>]*)>|<textarea\\b([^>]*)>(.*?)</textarea>|<button\\b([^>]*)>(.*?)</button>")
+	var pending_label := ""
+	for found in rx.search_all(inner):
+		if found.get_string(1) != "":
+			pending_label = found.get_string(1).strip_edges()
+		elif found.get_string(2) != "":
+			var attributes: String = found.get_string(2)
+			var input_type: String = _attribute(attributes, "type").to_lower()
+			if input_type == "submit":
+				form["submit"] = _attribute(attributes, "value") if _attribute(attributes, "value") != "" else "Enviar"
+				continue
+			form["fields"].append({
+				"name": _attribute(attributes, "name"),
+				"kind": input_type if input_type in ["password", "hidden"] else "text",
+				"label": pending_label,
+				"placeholder": _attribute(attributes, "placeholder"),
+				"value": _attribute(attributes, "value"),
+			})
+			pending_label = ""
+		elif found.get_string(3) != "":
+			form["fields"].append({
+				"name": _attribute(found.get_string(3), "name"),
+				"kind": "textarea",
+				"label": pending_label,
+				"placeholder": _attribute(found.get_string(3), "placeholder"),
+				"value": found.get_string(4).strip_edges(),
+			})
+			pending_label = ""
+		elif found.get_string(6) != "":
+			form["submit"] = found.get_string(6).strip_edges()
+	return form
+
+
+## Valor de um atributo (name="valor" ou name='valor') numa tag; "" se não tem.
+static func _attribute(attributes: String, attribute_name: String) -> String:
+	var rx := RegEx.new()
+	rx.compile("(?is)\\b" + attribute_name + "\\s*=\\s*(?:\"([^\"]*)\"|'([^']*)')")
+	var found: RegExMatch = rx.search(attributes)
+	if found == null:
+		return ""
+	return found.get_string(1) if found.get_string(1) != "" else found.get_string(2)
+
+
 static func _sub(text: String, pattern: String, replacement: String) -> String:
 	var rx := RegEx.new()
 	if rx.compile(pattern) != OK:

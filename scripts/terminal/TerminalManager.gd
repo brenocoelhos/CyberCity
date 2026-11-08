@@ -79,6 +79,10 @@ var _report_found: Array = []
 ## de encerrar o desafio quando o 'report' veio do app.
 var _last_report: Dictionary = {}
 var _finish_delay: float = 0.0
+## Sites simulados com formulário (navegador do desktop): recado do servidor
+## sobre o último envio e os comentários publicados no blog do desafio de XSS.
+var _web_message: String = ""
+var _web_comments: PackedStringArray = PackedStringArray()
 
 ## Máquinas simuladas do desafio ("hosts"): em qual o jogador está, de onde
 ## veio e por onde passou. Ver HostSim.gd.
@@ -173,6 +177,8 @@ func start_session(challenge_id: String, host: String) -> void:
 	_firewall_rules = {}
 	_router_logged_in = false
 	_report_found = []
+	_web_message = ""
+	_web_comments = PackedStringArray()
 	_prepare_history()
 	_sim.setup(_challenge)
 	_ssh_pending = {}
@@ -1189,12 +1195,121 @@ func browser_fetch(address: String) -> Dictionary:
 		result["status"] = "scope"
 		return result
 	var body: Variant = _sim.page(host_name, path)
+	# O painel do roteador só abre depois do login (a página de entrada avisa).
+	if String(_challenge.get("type", "")) == "router" and path == "/painel" and not _router_logged_in and body != null:
+		_web_message = "Entre no painel primeiro."
+		path = "/"
+		body = _sim.page(host_name, "/")
+		result["path"] = path
 	if body == null:
 		result["status"] = "notfound"
 		return result
 	result["status"] = "ok"
-	result["body"] = String(body)
+	result["body"] = _fill_web_page(String(body))
 	return result
+
+
+## Formulário enviado pelo navegador: "path" é o caminho do formulário (action) e
+## "fields" os valores digitados {nome do campo: texto}. As regras são as dos
+## comandos do terminal ('login', 'postar', 'passwd'). Devolve como o
+## browser_fetch (a página que o servidor responde, em "path"/"body"), mais
+## "alert" (texto de uma janelinha de alerta da página) quando houver.
+func browser_submit(host_name: String, path: String, fields: Dictionary) -> Dictionary:
+	var result := {"status": "notfound", "host": host_name, "path": path, "body": ""}
+	var form: Dictionary = _sim.form(host_name, path)
+	if form.is_empty():
+		return result
+	if not _sim.in_scope(host_name):
+		ChallengeSession.record_attempt(_challenge_id, false)
+		SoundManager.play("error")
+		result["status"] = "scope"
+		return result
+
+	var next_path: String = String(form.get("fail_page", "/"))
+	var alert := ""
+	match String(form.get("handler", "")):
+		"sqli":
+			# O ataque pode estar em qualquer campo (usuário ou senha).
+			var attacked := false
+			for value in fields.values():
+				if _looks_like_sqli_bypass(String(value)):
+					attacked = true
+			if attacked:
+				next_path = String(form.get("ok_page", "/"))
+				_web_message = "Login aceito. O sistema autenticou sem validar a senha real!"
+				ChallengeSession.record_attempt(_challenge_id, true)
+				_finish_delay = 2.2
+				_finish_challenge("Objetivo cumprido: vulnerabilidade de SQL Injection explorada.")
+			else:
+				_web_message = "Usuário ou senha inválidos."
+				ChallengeSession.record_attempt(_challenge_id, false)
+				SoundManager.play("error")
+		"xss":
+			var message: String = String(fields.get("mensagem", "")).strip_edges()
+			next_path = String(form.get("ok_page", "/"))
+			if message == "":
+				_web_message = "Escreva um comentário antes de publicar."
+			else:
+				_web_comments.append(message)
+				_web_message = "Comentário publicado."
+				if message.to_lower().find("<script") != -1:
+					alert = "Este script rodou no navegador de quem abriu a página!\nComo o site não trata o que o usuário digita, um <script> poderia roubar a sessão ou redirecionar a vítima."
+					ChallengeSession.record_attempt(_challenge_id, true)
+					_finish_delay = 3.0
+					_finish_challenge("Objetivo cumprido: vulnerabilidade de XSS demonstrada.")
+		"router_login":
+			if String(fields.get("usuario", "")) == String(_challenge.get("default_user", "")) and String(fields.get("senha", "")) == String(_challenge.get("default_password", "")):
+				_router_logged_in = true
+				next_path = String(form.get("ok_page", "/"))
+				_web_message = "Acesso concedido: o roteador ainda usa a senha de fábrica! Qualquer pessoa com o manual entraria aqui. Troque a senha."
+				ChallengeSession.record_attempt(_challenge_id, true)
+			else:
+				_web_message = "Usuário ou senha incorretos."
+				ChallengeSession.record_attempt(_challenge_id, false)
+				SoundManager.play("error")
+		"router_passwd":
+			if not _router_logged_in:
+				next_path = "/"
+				_web_message = "Entre no painel primeiro."
+			else:
+				var new_password: String = String(fields.get("nova", ""))
+				var problems: PackedStringArray = _password_problems(new_password)
+				if new_password == "" or not problems.is_empty():
+					ChallengeSession.record_attempt(_challenge_id, false)
+					SoundManager.play("error")
+					_web_message = "Senha recusada: " + ("escreva uma nova senha." if new_password == "" else "; ".join(problems) + ".")
+				else:
+					next_path = String(form.get("ok_page", "/painel"))
+					ChallengeSession.record_attempt(_challenge_id, true)
+					_web_message = "Senha do painel alterada."
+					_finish_delay = 2.2
+					_finish_challenge("Objetivo cumprido: roteador protegido com uma senha forte.")
+
+	var page: Variant = _sim.page(host_name, next_path)
+	if page == null:
+		return result
+	result["status"] = "ok"
+	result["path"] = next_path
+	result["body"] = _fill_web_page(String(page))
+	if alert != "":
+		result["alert"] = alert
+	return result
+
+
+## Troca os marcadores das páginas dos sites simulados: {{message}} é o recado
+## do servidor sobre o último envio (aparece uma vez) e {{comments}} a lista de
+## comentários publicados (o que o visitante digitou aparece como texto).
+func _fill_web_page(body: String) -> String:
+	var comments := ""
+	for comment in _web_comments:
+		comments += "<li>%s</li>\n" % _html_escape(String(comment))
+	var message: String = _html_escape(_web_message)
+	_web_message = ""
+	return body.replace("{{message}}", message).replace("{{comments}}", comments if comments != "" else "<li>(nenhum comentário ainda)</li>")
+
+
+func _html_escape(text: String) -> String:
+	return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
 ## O navegador terminou de mostrar uma página: se ela é o objetivo do desafio
