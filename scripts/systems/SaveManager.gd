@@ -21,6 +21,10 @@ extends Node
 signal saved(reason: String)
 
 const SAVE_PATH := "user://savegame.json"
+
+## Arquivo do save. É uma variável para os testes usarem outro arquivo e nunca
+## mexerem no save do jogador.
+var save_path: String = SAVE_PATH
 const SAVE_VERSION := 1
 const AUTOSAVE_SECONDS := 300.0
 const CITY_SCENE := "res://scenes/world/City.tscn"
@@ -85,6 +89,10 @@ func can_save() -> bool:
 	var scene: Node = get_tree().current_scene
 	if scene == null or scene.scene_file_path == MAIN_MENU_SCENE:
 		return false
+	# Durante o duelo final (porta trancada) não se salva: o game over volta ao
+	# último save de antes da luta.
+	if BossManager.is_exit_locked():
+		return false
 	return get_tree().get_first_node_in_group("player") != null
 
 
@@ -98,7 +106,7 @@ func save_game(reason: String = "auto") -> bool:
 
 	# Escreve num arquivo temporário e só depois troca pelo definitivo: se o
 	# jogo fechar no meio, o save anterior continua inteiro.
-	var temp_path: String = SAVE_PATH + ".tmp"
+	var temp_path: String = save_path + ".tmp"
 	var file := FileAccess.open(temp_path, FileAccess.WRITE)
 	if file == null:
 		push_warning("SaveManager: não consegui escrever %s (erro %d)." % [temp_path, FileAccess.get_open_error()])
@@ -108,12 +116,12 @@ func save_game(reason: String = "auto") -> bool:
 	file.close()
 
 	var dir := DirAccess.open("user://")
-	var ok: bool = dir != null and dir.rename(temp_path, SAVE_PATH) == OK
+	var ok: bool = dir != null and dir.rename(temp_path, save_path) == OK
 	if not ok:
 		# Plano B: grava direto no arquivo definitivo.
-		var direct := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+		var direct := FileAccess.open(save_path, FileAccess.WRITE)
 		if direct == null:
-			push_warning("SaveManager: não consegui escrever %s." % SAVE_PATH)
+			push_warning("SaveManager: não consegui escrever %s." % save_path)
 			_announce(false, reason)
 			return false
 		direct.store_string(text)
@@ -126,8 +134,8 @@ func save_game(reason: String = "auto") -> bool:
 
 
 func _announce(success: bool, reason: String) -> void:
-	# Salvar as notas do jogador ao fechar o app é silencioso (sem aviso).
-	if success and reason == "notes":
+	# Salvar as notas ao fechar o app e salvar pelo menu de pausa são silenciosos (o menu mostra o próprio aviso).
+	if success and (reason == "notes" or reason == "pause"):
 		return
 	if success:
 		HUD.show_notice("Jogo salvo", String(REASON_TEXTS.get(reason, "Progresso gravado.")))
@@ -163,7 +171,7 @@ func _collect(reason: String) -> Dictionary:
 # --- Carregar -----------------------------------------------------------------
 
 func has_save() -> bool:
-	return FileAccess.file_exists(SAVE_PATH)
+	return FileAccess.file_exists(save_path)
 
 
 ## Resumo do save para o menu: {"level": int, "saved_at": String}.
@@ -225,9 +233,9 @@ func load_game() -> String:
 
 
 func _read() -> Dictionary:
-	if not FileAccess.file_exists(SAVE_PATH):
+	if not FileAccess.file_exists(save_path):
 		return {}
-	var file := FileAccess.open(SAVE_PATH, FileAccess.READ)
+	var file := FileAccess.open(save_path, FileAccess.READ)
 	if file == null:
 		return {}
 	var parsed: Variant = JSON.parse_string(file.get_as_text())
