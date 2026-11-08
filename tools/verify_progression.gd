@@ -122,6 +122,8 @@ func _check_arrow() -> bool:
 	transition.interior_config = {}
 
 	# --- cidade: o predio da missao e o Terminal Publico ---
+	# Partida ja em andamento: sem o telefonema de abertura (que segura a interface).
+	root.get_node("Leaderboard").start_run("Teste")
 	var city: Node = await _open("res://scenes/world/City.tscn")
 	dialogue.force_close()
 	target = MissionTarget.find_target(city, "m11")
@@ -276,6 +278,7 @@ func _check_leaderboard() -> bool:
 	board.scores_path = test_file
 	DirAccess.remove_absolute(test_file)
 	board.clear_scores()
+	board.cancel_run()
 
 	ok = _check("placar: sem partida, finish_run devolve vazio", board.finish_run().is_empty()) and ok
 	ok = _check("placar: nome vazio vira JOGADOR e nome longo e cortado", board.clean_name("   ") == "JOGADOR" and board.clean_name("ABCDEFGHIJKLMNOP").length() == 10) and ok
