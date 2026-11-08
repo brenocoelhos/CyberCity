@@ -310,8 +310,7 @@ func _new_text_block() -> RichTextLabel:
 	block.scroll_active = false
 	block.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	block.add_theme_color_override("default_color", C_TEXT)
-	var mono := SystemFont.new()
-	mono.font_names = PackedStringArray(["Consolas", "Courier New", "monospace"])
+	var mono: SystemFont = mono_font()
 	block.add_theme_font_override("mono_font", mono)
 	block.add_theme_color_override("font_selected_color", Color.WHITE)
 	block.add_theme_color_override("selection_color", Color("#2f8cff"))

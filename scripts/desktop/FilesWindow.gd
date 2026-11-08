@@ -155,8 +155,7 @@ func _build() -> void:
 	_viewer.bbcode_enabled = true
 	_viewer.selection_enabled = true
 	_viewer.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	var mono := SystemFont.new()
-	mono.font_names = PackedStringArray(["Consolas", "Courier New", "monospace"])
+	var mono: SystemFont = mono_font()
 	_viewer.add_theme_font_override("normal_font", mono)
 	_viewer.add_theme_font_size_override("normal_font_size", 13)
 	right.add_child(_viewer)

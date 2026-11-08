@@ -86,3 +86,12 @@ func _box(fill: Color, border: Color = Color(0, 0, 0, 0), width: int = 0) -> Sty
 	style.content_margin_top = 3
 	style.content_margin_bottom = 3
 	return style
+
+
+## A fonte de largura fixa dos apps (logs, cabeçalhos, código-fonte). A mesma
+## cadeia de reserva do terminal: usa a primeira que existir no sistema, assim
+## o jogo exportado não depende de uma fonte só.
+static func mono_font() -> SystemFont:
+	var font := SystemFont.new()
+	font.font_names = PackedStringArray(["Cascadia Mono", "Consolas", "DejaVu Sans Mono", "Liberation Mono", "Menlo", "Courier New", "monospace"])
+	return font

@@ -167,8 +167,7 @@ func _build() -> void:
 	_head_label.fit_content = true
 	_head_label.scroll_active = false
 	_head_label.selection_enabled = true
-	var mono := SystemFont.new()
-	mono.font_names = PackedStringArray(["Consolas", "Courier New", "monospace"])
+	var mono: SystemFont = mono_font()
 	_head_label.add_theme_font_override("mono_font", mono)
 	_head_label.add_theme_font_size_override("mono_font_size", 12)
 	right.add_child(_head_label)
