@@ -26,6 +26,11 @@ var _address: LineEdit
 var _source_button: Button
 var _view: RichTextLabel
 var _status: Label
+var _scroll: ScrollContainer
+var _blocks: VBoxContainer
+var _forms: Array = []
+var _alert: PanelContainer
+var _alert_label: Label
 
 
 func _ready() -> void:
@@ -112,6 +117,7 @@ func _show_start_page() -> void:
 		text += "\n[b]Favoritos[/b]\n"
 		for bookmark in bookmarks:
 			text += "  [url=%s][color=%s][u]%s[/u][/color][/url]\n" % [bookmark["url"], C_LINK, HtmlLite.escape(String(bookmark["title"]))]
+	_clear_extra_blocks()
 	_view.text = text
 	_status.text = "Pronto"
 
@@ -120,6 +126,7 @@ func _render() -> void:
 	var status: String = String(_current["status"])
 	var path: String = String(_current["path"])
 	var text := ""
+	var extra_parts: Array = []
 	var title := path
 	match status:
 		"ok":
@@ -128,7 +135,9 @@ func _render() -> void:
 				text = _code(body)
 				title = "Código-fonte de " + path
 			elif HtmlLite.looks_like_html(body):
-				text = HtmlLite.render(body)
+				var parts: Array = HtmlLite.blocks(body)
+				text = HtmlLite.render(String(parts[0]["html"]))
+				extra_parts = parts.slice(1)
 				title = HtmlLite.title_of(body)
 				if title == "":
 					title = path
@@ -146,8 +155,20 @@ func _render() -> void:
 		_:
 			text = "[font_size=28][b]Não foi possível acessar este site[/b][/font_size]\n\nNão encontramos o servidor [b]%s[/b]. Confira se o endereço está certo." % HtmlLite.escape(String(_current["host"]))
 			title = "Erro"
+	_clear_extra_blocks()
 	_view.text = text
-	_view.scroll_to_line(0)
+	_scroll.scroll_vertical = 0
+	# Páginas com formulário: o resto da página vem em blocos depois do primeiro.
+	for part in extra_parts:
+		if String(part["type"]) == "form":
+			_add_form(part)
+		else:
+			var rendered: String = HtmlLite.render(String(part["html"]))
+			if rendered == "":
+				continue
+			var more: RichTextLabel = _new_text_block()
+			more.text = rendered
+			_blocks.add_child(more)
 	set_title("Navegador — " + title)
 	_status.text = ("Carregado: " if status == "ok" else "Erro: ") + _address.text
 
@@ -234,18 +255,42 @@ func _build() -> void:
 	page.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	page.add_theme_stylebox_override("panel", _box(C_PAGE))
 	column.add_child(page)
-	_view = RichTextLabel.new()
-	_view.bbcode_enabled = true
-	_view.selection_enabled = true
-	_view.scroll_following = false
-	_view.add_theme_color_override("default_color", C_TEXT)
-	var mono := SystemFont.new()
-	mono.font_names = PackedStringArray(["Consolas", "Courier New", "monospace"])
-	_view.add_theme_font_override("mono_font", mono)
-	_view.add_theme_color_override("font_selected_color", Color.WHITE)
-	_view.add_theme_color_override("selection_color", Color("#2f8cff"))
-	_view.meta_clicked.connect(_on_link)
-	page.add_child(_view)
+	_scroll = ScrollContainer.new()
+	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	page.add_child(_scroll)
+	_blocks = VBoxContainer.new()
+	_blocks.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_blocks.add_theme_constant_override("separation", 10)
+	_scroll.add_child(_blocks)
+	_view = _new_text_block()
+	_blocks.add_child(_view)
+
+	# Janelinha de alerta da página (como o alert() de um site), escondida.
+	_alert = PanelContainer.new()
+	_alert.visible = false
+	_alert.set_anchors_preset(Control.PRESET_CENTER)
+	_alert.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	_alert.grow_vertical = Control.GROW_DIRECTION_BOTH
+	_alert.custom_minimum_size = Vector2(420, 0)
+	_alert.add_theme_stylebox_override("panel", _box(Color("#f4f4f4"), Color("#555b66"), 2))
+	var alert_box := VBoxContainer.new()
+	alert_box.add_theme_constant_override("separation", 10)
+	_alert.add_child(alert_box)
+	var alert_title := Label.new()
+	alert_title.text = "Aviso da página:"
+	alert_title.add_theme_color_override("font_color", Color("#1b1f24"))
+	alert_box.add_child(alert_title)
+	_alert_label = Label.new()
+	_alert_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_alert_label.custom_minimum_size = Vector2(390, 0)
+	_alert_label.add_theme_color_override("font_color", Color("#1b1f24"))
+	alert_box.add_child(_alert_label)
+	var alert_ok := Button.new()
+	alert_ok.text = "OK"
+	alert_ok.size_flags_horizontal = Control.SIZE_SHRINK_END
+	alert_ok.pressed.connect(func() -> void: _alert.visible = false)
+	alert_box.add_child(alert_ok)
+	content.add_child(_alert)
 
 	# Barra de status
 	_status = Label.new()
@@ -253,3 +298,117 @@ func _build() -> void:
 	_status.clip_text = true
 	_status.add_theme_color_override("font_color", Color("#5f8f6a"))
 	column.add_child(_status)
+
+
+## Um bloco de texto da página (títulos, parágrafos, links): cresce com o
+## conteúdo, e quem rola é a página inteira.
+func _new_text_block() -> RichTextLabel:
+	var block := RichTextLabel.new()
+	block.bbcode_enabled = true
+	block.selection_enabled = true
+	block.fit_content = true
+	block.scroll_active = false
+	block.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	block.add_theme_color_override("default_color", C_TEXT)
+	var mono := SystemFont.new()
+	mono.font_names = PackedStringArray(["Consolas", "Courier New", "monospace"])
+	block.add_theme_font_override("mono_font", mono)
+	block.add_theme_color_override("font_selected_color", Color.WHITE)
+	block.add_theme_color_override("selection_color", Color("#2f8cff"))
+	block.meta_clicked.connect(_on_link)
+	return block
+
+
+## Tira os blocos além do primeiro (formulários e textos de páginas anteriores).
+func _clear_extra_blocks() -> void:
+	for i in range(_blocks.get_child_count() - 1, 0, -1):
+		var child: Node = _blocks.get_child(i)
+		_blocks.remove_child(child)
+		child.queue_free()
+	_forms = []
+	_alert.visible = false
+
+
+## Formulário da página: um rótulo e um campo para cada entrada e o botão de
+## enviar. Os dados vão para o "servidor" da máquina (TerminalManager.browser_submit).
+func _add_form(form: Dictionary) -> void:
+	var holder := PanelContainer.new()
+	holder.add_theme_stylebox_override("panel", _box(Color("#e2e7ea"), Color("#9aa5ad"), 1))
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 6)
+	holder.add_child(column)
+	var inputs := {}
+	for field in form["fields"]:
+		if String(field["kind"]) == "hidden":
+			inputs[String(field["name"])] = String(field["value"])
+			continue
+		var caption: String = String(field["label"]) if String(field["label"]) != "" else String(field["name"])
+		var label := Label.new()
+		label.text = caption
+		label.add_theme_color_override("font_color", C_TEXT)
+		column.add_child(label)
+		var control: Control
+		if String(field["kind"]) == "textarea":
+			var area := TextEdit.new()
+			area.custom_minimum_size = Vector2(0, 90)
+			area.placeholder_text = String(field["placeholder"])
+			area.text = String(field["value"])
+			area.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
+			control = area
+		else:
+			var line := LineEdit.new()
+			line.placeholder_text = String(field["placeholder"])
+			line.text = String(field["value"])
+			line.secret = String(field["kind"]) == "password"
+			line.text_submitted.connect(func(_text: String) -> void: _submit_form(form, inputs))
+			control = line
+		column.add_child(control)
+		inputs[String(field["name"])] = control
+	var button := Button.new()
+	button.text = String(form["submit"])
+	button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	button.pressed.connect(func() -> void: _submit_form(form, inputs))
+	column.add_child(button)
+	_blocks.add_child(holder)
+	_forms.append({"form": form, "inputs": inputs, "button": button})
+
+
+## Preenche (se "values" vier) e envia o formulário de número "index" da página.
+## Serve ao botão e aos testes.
+func submit_form(index: int, values: Dictionary = {}) -> void:
+	if index < 0 or index >= _forms.size():
+		return
+	var entry: Dictionary = _forms[index]
+	for field_name in values:
+		var control: Variant = entry["inputs"].get(field_name)
+		if control is LineEdit or control is TextEdit:
+			control.text = String(values[field_name])
+	_submit_form(entry["form"], entry["inputs"])
+
+
+func _submit_form(form: Dictionary, inputs: Dictionary) -> void:
+	var values := {}
+	for field_name in inputs:
+		var control: Variant = inputs[field_name]
+		values[field_name] = String(control.text) if (control is LineEdit or control is TextEdit) else String(control)
+	var host_text: String = _current_host_text()
+	var host_name: String = String(_current.get("host", ""))
+	if host_name == "" or host_text == "":
+		return
+	var action: String = String(form["action"])
+	if action == "":
+		action = String(_current.get("path", "/"))
+	var result: Dictionary = TerminalManager.browser_submit(host_name, action, values)
+	_current = result
+	_showing_source = false
+	_source_button.set_pressed_no_signal(false)
+	var url: String = "http://" + host_text + String(result["path"])
+	_history = _history.slice(0, _index + 1)
+	_history.append(url)
+	_index = _history.size() - 1
+	_address.text = url
+	_render()
+	_back_button.disabled = _index <= 0
+	if result.has("alert"):
+		_alert_label.text = String(result["alert"])
+		_alert.visible = true

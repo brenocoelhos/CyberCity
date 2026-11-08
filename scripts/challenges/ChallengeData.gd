@@ -159,6 +159,28 @@ const CHALLENGES := {
 		"type": "sqli",
 		"title": "Login vulnerável",
 		"mission": "m09",
+		## Desktop: o portal da prefeitura é uma página web em 192.168.0.20 com
+		## um formulário de login. O terminal continua com o comando 'login'.
+		"desktop": true,
+		"apps": ["browser", "terminal", "notes"],
+		"bookmarks": [{"title": "Portal do Servidor (login)", "url": "http://192.168.0.20/"}],
+		"desktop_intro": "O Portal do Servidor da prefeitura tem uma tela de login. Abra o Navegador, vá até o portal (192.168.0.20) e teste se o formulário trata o que o usuário digita. No terminal, 'login <senha>' faz o mesmo teste.",
+		"hosts": {
+			"portal": {
+				"ip": "192.168.0.20",
+				"ports": "80/http",
+				"scope": true,
+				"users": {},
+				"files": {},
+				"web": {
+					"/": "<html><head><title>Portal do Servidor</title></head><body>\n<h1>Portal do Servidor</h1>\n<p>Prefeitura de Cyber City — acesso restrito a funcionários.</p>\n<p>{{message}}</p>\n<form action=\"/login\" method=\"post\">\n<label>Usuário</label><input name=\"usuario\" placeholder=\"seu usuário\">\n<label>Senha</label><input name=\"senha\" type=\"password\" placeholder=\"sua senha\">\n<button>Entrar</button>\n</form>\n</body></html>",
+					"/painel": "<html><head><title>Painel do Servidor</title></head><body>\n<h1>Painel do Servidor</h1>\n<p>{{message}}</p>\n<p>Bem-vindo, administrador. Folha de pagamento, cadastro de funcionários e protocolos.</p>\n</body></html>",
+				},
+				"forms": {
+					"/login": {"handler": "sqli", "ok_page": "/painel", "fail_page": "/"},
+				},
+			},
+		},
 		"hints": [
 			"O sistema cola o que você digita direto dentro de uma consulta SQL.",
 			"Aspas simples ( ' ) podem \"fechar\" o texto que o sistema esperava.",
@@ -173,6 +195,28 @@ const CHALLENGES := {
 		"type": "xss",
 		"title": "Campo de comentário vulnerável",
 		"mission": "m10",
+		## Desktop: o blog da praça é uma página web em 192.168.0.30 com um campo
+		## de comentário. O terminal continua com o comando 'postar'.
+		"desktop": true,
+		"apps": ["browser", "terminal", "notes"],
+		"bookmarks": [{"title": "Blog da Praça — comentários", "url": "http://192.168.0.30/comentarios"}],
+		"desktop_intro": "O Blog da Praça mostra os comentários dos visitantes na página. Abra o Navegador, vá até os comentários (192.168.0.30) e teste se o site trata o que o usuário publica. No terminal, 'postar <mensagem>' faz o mesmo teste.",
+		"hosts": {
+			"blog": {
+				"ip": "192.168.0.30",
+				"ports": "80/http",
+				"scope": true,
+				"users": {},
+				"files": {},
+				"web": {
+					"/": "<html><head><title>Blog da Praça</title></head><body>\n<h1>Blog da Praça</h1>\n<p>Notícias e conversas do bairro.</p>\n<p><a href=\"/comentarios\">Ver os comentários</a></p>\n</body></html>",
+					"/comentarios": "<html><head><title>Comentários — Blog da Praça</title></head><body>\n<h1>Comentários</h1>\n<ul>\n{{comments}}\n</ul>\n<p>{{message}}</p>\n<form action=\"/comentarios\" method=\"post\">\n<label>Seu comentário</label>\n<textarea name=\"mensagem\" placeholder=\"escreva aqui\"></textarea>\n<button>Publicar</button>\n</form>\n</body></html>",
+				},
+				"forms": {
+					"/comentarios": {"handler": "xss", "ok_page": "/comentarios", "fail_page": "/comentarios"},
+				},
+			},
+		},
 		"hints": [
 			"O sistema mostra o comentário na página sem tratar o conteúdo.",
 			"E se o comentário tivesse uma tag HTML, como <b> ou <script>?",
@@ -189,9 +233,32 @@ const CHALLENGES := {
 		"type": "router",
 		"title": "Roteador de fábrica",
 		"mission": "m11",
+		## Desktop: o painel do roteador é uma página web em 192.168.0.1 (login e
+		## troca de senha em formulários). O terminal continua com login/passwd.
+		"desktop": true,
+		"apps": ["browser", "terminal", "notes"],
+		"bookmarks": [{"title": "Painel do roteador NetLink R-200", "url": "http://192.168.0.1/"}],
+		"desktop_intro": "O roteador da casa ainda pode estar do jeito que veio da loja. O manual está no terminal ('read manual.txt'); o painel de administração é uma página web em 192.168.0.1. Entre nele e troque a senha por uma forte.",
+		"hosts": {
+			"roteador": {
+				"ip": "192.168.0.1",
+				"ports": "80/http",
+				"scope": true,
+				"users": {},
+				"files": {},
+				"web": {
+					"/": "<html><head><title>NetLink R-200</title></head><body>\n<h1>NetLink R-200</h1>\n<p>Painel de administração do roteador.</p>\n<p>{{message}}</p>\n<form action=\"/entrar\" method=\"post\">\n<label>Usuário</label><input name=\"usuario\" placeholder=\"usuário\">\n<label>Senha</label><input name=\"senha\" type=\"password\" placeholder=\"senha\">\n<button>Entrar</button>\n</form>\n</body></html>",
+					"/painel": "<html><head><title>NetLink R-200 — Painel</title></head><body>\n<h1>NetLink R-200 — Painel</h1>\n<p>{{message}}</p>\n<p>Wi-fi: CasaWifi (WPA2) — 4 dispositivos conectados.</p>\n<h2>Segurança</h2>\n<form action=\"/senha\" method=\"post\">\n<label>Nova senha do painel</label><input name=\"nova\" type=\"password\" placeholder=\"nova senha\">\n<button>Alterar senha</button>\n</form>\n</body></html>",
+				},
+				"forms": {
+					"/entrar": {"handler": "router_login", "ok_page": "/painel", "fail_page": "/"},
+					"/senha": {"handler": "router_passwd", "ok_page": "/painel", "fail_page": "/painel"},
+				},
+			},
+		},
 		"device": "NetLink R-200",
 		"files": {
-			"manual.txt": "NetLink R-200 — Guia rápido\n\n1. Ligue o roteador na tomada e na internet.\n2. Acesse o painel de administração com o usuário e a senha de fábrica:\n     usuário: admin\n     senha:   admin\n3. Configure o nome e a senha do seu wi-fi.\n\n(Dica do fabricante: troque a senha de fábrica depois do primeiro acesso.)",
+			"manual.txt": "NetLink R-200 — Guia rápido\n\n1. Ligue o roteador na tomada e na internet.\n2. Acesse o painel de administração (http://192.168.0.1) com o usuário e a senha de fábrica:\n     usuário: admin\n     senha:   admin\n3. Configure o nome e a senha do seu wi-fi.\n\n(Dica do fabricante: troque a senha de fábrica depois do primeiro acesso.)",
 		},
 		"default_user": "admin",
 		"default_password": "admin",
