@@ -14,6 +14,7 @@ func _initialize() -> void:
 	var dialogue = root.get_node("DialogueManager")
 	var ok := true
 
+	root.get_node("Leaderboard").start_run("Teste")
 	var city: Node = (load(CITY) as PackedScene).instantiate()
 	root.add_child(city)
 	await process_frame

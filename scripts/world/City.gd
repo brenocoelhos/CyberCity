@@ -57,6 +57,7 @@ const ROAD_PIECES := {
 }
 
 const CityMap := preload("res://scripts/world/CityMap.gd")
+const IntroCall := preload("res://scripts/systems/IntroCall.gd")
 
 ## Mapa grande da cidade (ver CityMap.gd).
 var city_map: CanvasLayer
@@ -85,7 +86,10 @@ func _ready() -> void:
 	camera.reset_smoothing()
 	_setup_minimap()
 	_setup_city_map()
-	CampaignManager.play_opening()
+	# A abertura (telefonema que pergunta o nome, depois o capítulo 1).
+	var intro := IntroCall.new()
+	add_child(intro)
+	intro.play()
 
 func _process(_delta: float) -> void:
 	_update_minimap_dot()
