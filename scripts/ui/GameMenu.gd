@@ -21,9 +21,32 @@ const StudyTools := preload("res://scripts/systems/StudyTools.gd")
 ## não entregar a resposta da m04).
 const CAESAR_REQUIRES_MISSION := "m04"
 
-const COLOR_TITLE := Color(0.3, 0.95, 1.0)
-const COLOR_DIM := Color(0.65, 0.7, 0.8)
-const COLOR_UNREAD := Color(1.0, 0.8, 0.3)
+const CyberIcon := preload("res://scripts/ui/CyberIcon.gd")
+
+## Cores no estilo do iOS (modo escuro).
+const COLOR_TITLE := Color(0.39, 0.7, 1.0)
+const COLOR_DIM := Color(0.6, 0.6, 0.64)
+const COLOR_UNREAD := Color(1.0, 0.62, 0.04)
+const IOS_BLUE := Color(0.04, 0.52, 1.0)
+const IOS_RED := Color(1.0, 0.23, 0.19)
+const IOS_CELL := Color(0.11, 0.11, 0.12)
+const IOS_CELL_HI := Color(0.19, 0.19, 0.21)
+
+## Tamanho do aparelho na tela e das partes dele (em pixels).
+const PHONE_RECT := Rect2(475, 8, 330, 704)
+const SCREEN_INSET := 9.0
+
+## Cada app: cor do ícone e desenho (ver CyberIcon.gd).
+const APP_STYLE := {
+	"MessagesButton": [Color(0.2, 0.78, 0.35), "Mensagens", CyberIcon.Kind.CHAT],
+	"CluesButton": [Color(1.0, 0.58, 0.0), "Pistas", CyberIcon.Kind.MAGNIFIER],
+	"MissionsButton": [Color(1.0, 0.23, 0.19), "Missões", CyberIcon.Kind.MISSION],
+	"ProfileButton": [Color(0.04, 0.52, 1.0), "Perfil", CyberIcon.Kind.PERSON],
+	"SettingsButton": [Color(0.5, 0.5, 0.53), "Ajustes", CyberIcon.Kind.GEAR],
+	"NotesButton": [Color(1.0, 0.78, 0.0), "Notas", CyberIcon.Kind.NOTE],
+	"ToolsButton": [Color(0.19, 0.69, 0.78), "Ferramentas", CyberIcon.Kind.WRENCH],
+	"CloseButton": [Color(0.2, 0.2, 0.22), "Fechar", CyberIcon.Kind.POWER],
+}
 
 @onready var phone: Panel = $Phone
 @onready var clock_label: Label = $Phone/StatusBar/ClockLabel
@@ -73,6 +96,7 @@ func _ready() -> void:
 	_setup_tools_button()
 	_setup_notes_button()
 	_setup_stopwatch()
+	_apply_iphone_look()
 	GameManager.tool_unlocked.connect(func(_id: String): _update_home_labels())
 
 	PhoneManager.unread_changed.connect(func(_count: int): _update_home_labels())
@@ -124,14 +148,10 @@ func _update_clock() -> void:
 ## Cronômetro da partida, na barra de cima do celular (é o tempo que vai para o
 ## placar). O relógio da hora fica na direita.
 func _setup_stopwatch() -> void:
+	# Fica no widget da tela inicial (montado em _apply_iphone_look).
 	_stopwatch_label = Label.new()
-	_stopwatch_label.add_theme_font_size_override("font_size", 13)
-	_stopwatch_label.add_theme_color_override("font_color", COLOR_UNREAD)
-	_stopwatch_label.position = Vector2(112, 0)
-	_stopwatch_label.size = Vector2(170, 26)
-	_stopwatch_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_stopwatch_label.add_theme_font_size_override("font_size", 26)
 	_stopwatch_label.tooltip_text = "Tempo de jogo: é o que vale no placar"
-	$Phone/StatusBar.add_child(_stopwatch_label)
 
 
 # --- Tela inicial ------------------------------------------------------
@@ -141,6 +161,7 @@ func _show_home() -> void:
 	_current_app = ""
 	app_view.visible = false
 	home.visible = true
+	_wallpaper.visible = true
 	_update_home_labels()
 	messages_button.grab_focus()
 
@@ -177,16 +198,13 @@ func _save_notes_if_changed() -> void:
 
 func _update_home_labels() -> void:
 	tools_button.visible = GameManager.is_tool_unlocked("phone_tools")
-	var unread: int = PhoneManager.unread_count()
-	messages_button.text = "Mensagens\n(%d nova%s)" % [unread, "" if unread == 1 else "s"] if unread > 0 else "Mensagens"
-
-	var active_count: int = _active_missions().size()
-	if active_count == 0:
-		clues_button.text = "Pistas"
-	elif active_count == 1:
-		clues_button.text = "Pistas\n(1 missão)"
-	else:
-		clues_button.text = "Pistas\n(%d missões)" % active_count
+	# Como no iPhone: o número aparece numa bolinha vermelha no canto do ícone.
+	_set_badge(messages_button, PhoneManager.unread_count())
+	_set_badge(clues_button, _active_missions().size())
+	if _widget_name != null:
+		var who: String = Leaderboard.player_name if Leaderboard.player_name != "" else "Agente"
+		_widget_name.text = "AGENTE " + who.to_upper()
+		_widget_level.text = "Nível %d · %d/%d XP" % [GameManager.level, GameManager.xp, GameManager.xp_to_next_level()]
 
 
 func _on_back_pressed() -> void:
@@ -200,6 +218,7 @@ func _open_app(app: String) -> void:
 	SoundManager.play("blip")
 	_current_app = app
 	home.visible = false
+	_wallpaper.visible = false
 	app_view.visible = true
 	_render_current_app()
 	scroll.scroll_vertical = 0
@@ -213,25 +232,25 @@ func _render_current_app() -> void:
 
 	match _current_app:
 		"messages":
-			app_title.text = "MENSAGENS"
+			app_title.text = "Mensagens"
 			_render_messages()
 		"clues":
-			app_title.text = "PISTAS"
+			app_title.text = "Pistas"
 			_render_clues()
 		"missions":
-			app_title.text = "MISSÕES"
+			app_title.text = "Missões"
 			_render_missions()
 		"profile":
-			app_title.text = "PERFIL"
+			app_title.text = "Perfil"
 			_render_profile()
 		"tools":
-			app_title.text = "FERRAMENTAS"
+			app_title.text = "Ferramentas"
 			_render_tools()
 		"notes":
-			app_title.text = "NOTAS"
+			app_title.text = "Notas"
 			_render_notes()
 		"settings":
-			app_title.text = "AJUSTES"
+			app_title.text = "Ajustes"
 			_render_settings()
 
 
@@ -240,13 +259,20 @@ func _render_messages() -> void:
 		_add_label("Nenhuma mensagem ainda.", COLOR_DIM)
 		return
 
-	# Mais nova primeiro, como num celular de verdade.
+	# Mais nova primeiro, como num celular de verdade. Cada mensagem é um
+	# balão cinza, com o nome de quem mandou em cima (bolinha azul = nova).
 	for i in range(PhoneManager.messages.size() - 1, -1, -1):
 		var message: Dictionary = PhoneManager.messages[i]
 		var unread: bool = not message["read"]
-		_add_label(("● " if unread else "") + String(message["from"]), COLOR_UNREAD if unread else COLOR_TITLE)
-		_add_label(String(message["text"]))
-		list.add_child(HSeparator.new())
+		_add_label(("●  " if unread else "") + String(message["from"]), IOS_BLUE if unread else COLOR_DIM, 12)
+		var bubble := PanelContainer.new()
+		bubble.add_theme_stylebox_override("panel", _box(Color(0.15, 0.15, 0.17), 16, 12, 9))
+		var text := Label.new()
+		text.text = String(message["text"])
+		text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		text.add_theme_font_size_override("font_size", 14)
+		bubble.add_child(text)
+		list.add_child(bubble)
 
 	PhoneManager.mark_all_read()
 
@@ -456,12 +482,12 @@ func _active_missions() -> Array:
 	return result
 
 
-func _add_label(text: String, color: Color = Color.WHITE) -> void:
+func _add_label(text: String, color: Color = Color.WHITE, font_size: int = 14) -> void:
 	var label := Label.new()
 	label.text = text
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.add_theme_color_override("font_color", color)
-	label.add_theme_font_size_override("font_size", 14)
+	label.add_theme_font_size_override("font_size", font_size)
 	list.add_child(label)
 
 
@@ -486,7 +512,8 @@ func _add_output() -> Label:
 func _add_button(text: String, callback: Callable) -> void:
 	var button := Button.new()
 	button.text = text
-	button.custom_minimum_size = Vector2(0, 36)
+	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	button.custom_minimum_size = Vector2(0, 42)
 	button.pressed.connect(callback)
 	list.add_child(button)
 
@@ -535,3 +562,316 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("open_menu"):
 		toggle()
 		get_viewport().set_input_as_handled()
+
+
+# --- Visual de iPhone ------------------------------------------------------
+# O aparelho é montado aqui por código em cima dos nós da cena (que continuam
+# com os mesmos nomes): corpo com borda de titânio e botões laterais, Dynamic
+# Island, barra de status (hora, sinal, Wi-Fi, bateria), papel de parede,
+# widget com o agente e o cronômetro, ícones arredondados com bolinha de
+# notificação, dock embaixo e a barrinha de "home". Os apps usam o modo
+# escuro do iOS.
+
+var _wallpaper: TextureRect
+var _widget_name: Label
+var _widget_level: Label
+
+
+func _apply_iphone_look() -> void:
+	var font := SystemFont.new()
+	font.font_names = PackedStringArray(["SF Pro Text", "Helvetica Neue", "Segoe UI", "Inter", "Roboto", "Ubuntu", "DejaVu Sans", "Sans-serif"])
+	var bold := SystemFont.new()
+	bold.font_names = font.font_names
+	bold.font_weight = 700
+
+	# Corpo do aparelho
+	phone.position = PHONE_RECT.position
+	phone.size = PHONE_RECT.size
+	phone.theme = _phone_theme(font)
+	var body := _box(Color(0.02, 0.02, 0.03), 56)
+	body.border_color = Color(0.45, 0.46, 0.5)
+	body.set_border_width_all(4)
+	body.shadow_color = Color(0, 0, 0, 0.6)
+	body.shadow_size = 18
+	phone.add_theme_stylebox_override("panel", body)
+	# Botões laterais: ação e volume à esquerda, power à direita.
+	for side in [[-3.0, 112.0, 26.0], [-3.0, 158.0, 48.0], [-3.0, 214.0, 48.0], [PHONE_RECT.size.x - 1.0, 176.0, 74.0]]:
+		var button_part := Panel.new()
+		button_part.add_theme_stylebox_override("panel", _box(Color(0.38, 0.39, 0.43), 2))
+		button_part.position = Vector2(side[0], side[1])
+		button_part.size = Vector2(4, side[2])
+		button_part.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		phone.add_child(button_part)
+		phone.move_child(button_part, 0)
+
+	# Tela: cantos arredondados que "cortam" tudo o que está dentro.
+	var screen: Panel = $Phone/Screen
+	screen.position = Vector2(SCREEN_INSET, SCREEN_INSET)
+	screen.size = PHONE_RECT.size - Vector2(SCREEN_INSET, SCREEN_INSET) * 2.0
+	screen.add_theme_stylebox_override("panel", _box(Color.BLACK, 47))
+	screen.clip_children = CanvasItem.CLIP_CHILDREN_AND_DRAW
+
+	_wallpaper = TextureRect.new()
+	_wallpaper.name = "Wallpaper"
+	var gradient := Gradient.new()
+	gradient.offsets = PackedFloat32Array([0.0, 0.45, 1.0])
+	gradient.colors = PackedColorArray([Color(0.09, 0.2, 0.52), Color(0.36, 0.14, 0.5), Color(0.04, 0.04, 0.12)])
+	var texture := GradientTexture2D.new()
+	texture.gradient = gradient
+	texture.fill_from = Vector2(0.2, 0.0)
+	texture.fill_to = Vector2(0.8, 1.0)
+	_wallpaper.texture = texture
+	_wallpaper.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_wallpaper.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_wallpaper.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	screen.add_child(_wallpaper)
+	screen.move_child(_wallpaper, 0)
+
+	# Barra de status (hora à esquerda, ícones à direita) e Dynamic Island.
+	var status: Control = $Phone/StatusBar
+	status.position = Vector2(24, 20)
+	status.size = Vector2(PHONE_RECT.size.x - 48, 24)
+	phone.move_child(status, phone.get_child_count() - 1)
+	$Phone/StatusBar/NameLabel.visible = false
+	clock_label.position = Vector2(14, 0)
+	clock_label.size = Vector2(60, 24)
+	clock_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	clock_label.add_theme_font_override("font", bold)
+	clock_label.add_theme_font_size_override("font_size", 15)
+	clock_label.add_theme_color_override("font_color", Color.WHITE)
+	var x := status.size.x - 74.0
+	for spec in [[CyberIcon.Kind.SIGNAL, 18.0], [CyberIcon.Kind.WIFI, 18.0], [CyberIcon.Kind.BATTERY, 26.0]]:
+		var icon: CyberIcon = CyberIcon.new()
+		icon.kind = spec[0]
+		icon.color = Color.WHITE
+		icon.line_width = 1.6
+		icon.position = Vector2(x, 5)
+		icon.size = Vector2(spec[1], 13)
+		status.add_child(icon)
+		x += spec[1] + 5.0
+	var island := Panel.new()
+	island.name = "DynamicIsland"
+	island.add_theme_stylebox_override("panel", _box(Color.BLACK, 15))
+	island.position = Vector2((PHONE_RECT.size.x - 100.0) * 0.5, 18)
+	island.size = Vector2(100, 30)
+	island.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	phone.add_child(island)
+
+	# Widget no topo da tela inicial: agente, cronômetro da partida e nível.
+	var widget := Panel.new()
+	widget.add_theme_stylebox_override("panel", _box(Color(1, 1, 1, 0.14), 22))
+	widget.position = Vector2(18, 56)
+	widget.size = Vector2(screen.size.x - 36, 104)
+	widget.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	home.add_child(widget)
+	_widget_name = _widget_label(widget, Vector2(16, 12), 12, Color(1, 1, 1, 0.75), bold)
+	_stopwatch_label.position = Vector2(16, 30)
+	_stopwatch_label.size = Vector2(widget.size.x - 32, 36)
+	_stopwatch_label.add_theme_font_override("font", bold)
+	_stopwatch_label.add_theme_color_override("font_color", Color.WHITE)
+	widget.add_child(_stopwatch_label)
+	_widget_level = _widget_label(widget, Vector2(16, 72), 12, Color(1, 1, 1, 0.75), font)
+
+	# Grade de apps (4 colunas) e dock com os mais usados.
+	apps_grid.columns = 4
+	apps_grid.position = Vector2(18, 180)
+	apps_grid.size = Vector2(screen.size.x - 36, 200)
+	apps_grid.add_theme_constant_override("h_separation", 6)
+	apps_grid.add_theme_constant_override("v_separation", 14)
+
+	var dock_panel := Panel.new()
+	dock_panel.add_theme_stylebox_override("panel", _box(Color(1, 1, 1, 0.16), 30))
+	dock_panel.position = Vector2(12, screen.size.y - 112)
+	dock_panel.size = Vector2(screen.size.x - 24, 88)
+	dock_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	home.add_child(dock_panel)
+	var dock := HBoxContainer.new()
+	dock.name = "Dock"
+	dock.alignment = BoxContainer.ALIGNMENT_CENTER
+	dock.add_theme_constant_override("separation", 4)
+	dock.position = Vector2(8, 10)
+	dock.size = Vector2(dock_panel.size.x - 16, 72)
+	dock_panel.add_child(dock)
+	for button in [messages_button, missions_button, notes_button, settings_button]:
+		button.reparent(dock, false)
+
+	for button in [messages_button, clues_button, missions_button, profile_button, settings_button, notes_button, tools_button, close_button]:
+		_make_app_icon(button, bold)
+
+	# Barrinha de "home" e a dica do teclado (ao lado do aparelho).
+	var bar: Panel = $Phone/HomeIndicator
+	bar.add_theme_stylebox_override("panel", _box(Color(1, 1, 1, 0.85), 3))
+	bar.position = Vector2((PHONE_RECT.size.x - 120.0) * 0.5, PHONE_RECT.size.y - 18)
+	bar.size = Vector2(120, 5)
+	phone.move_child(bar, phone.get_child_count() - 1)
+	var hint: Label = $Phone/HintLabel
+	hint.position = Vector2(PHONE_RECT.size.x + 14, PHONE_RECT.size.y - 30)
+	hint.size = Vector2(170, 20)
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	hint.add_theme_color_override("font_color", Color(0.85, 0.88, 0.95))
+	hint.add_theme_stylebox_override("normal", _box(Color(0, 0, 0, 0.6), 8, 8, 3))
+
+	# Apps: "‹ Início" em azul e título grande, como no iOS.
+	var header: Control = $Phone/Screen/AppView/Header
+	header.position = Vector2(10, 50)
+	header.size = Vector2(screen.size.x - 20, 30)
+	back_button.text = "‹ Início"
+	back_button.flat = true
+	back_button.custom_minimum_size = Vector2(80, 30)
+	back_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	back_button.add_theme_color_override("font_color", IOS_BLUE)
+	back_button.add_theme_color_override("font_hover_color", IOS_BLUE.lightened(0.3))
+	back_button.add_theme_color_override("font_focus_color", IOS_BLUE.lightened(0.3))
+	back_button.add_theme_font_size_override("font_size", 16)
+	var back_focus := _box(Color(1, 1, 1, 0.08), 8, 6, 2)
+	back_button.add_theme_stylebox_override("focus", back_focus)
+	back_button.add_theme_stylebox_override("hover", StyleBoxEmpty.new())
+	back_button.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
+	app_title.reparent(app_view, false)
+	app_title.position = Vector2(18, 82)
+	app_title.size = Vector2(screen.size.x - 36, 36)
+	app_title.add_theme_font_override("font", bold)
+	app_title.add_theme_font_size_override("font_size", 26)
+	app_title.add_theme_color_override("font_color", Color.WHITE)
+	scroll.position = Vector2(14, 126)
+	scroll.size = Vector2(screen.size.x - 28, screen.size.y - 152)
+
+	# Mouse andando por cima de um ícone = ícone selecionado (igual ao teclado).
+	for button in phone.find_children("*", "BaseButton", true, false):
+		button.gui_input.connect(func(event: InputEvent) -> void:
+			if event is InputEventMouseMotion and event.relative.length() > 0.5 \
+					and button.is_visible_in_tree() and not button.has_focus():
+				button.grab_focus())
+
+
+## Transforma um botão da tela inicial num ícone de app: quadrado arredondado
+## colorido com o desenho, nome embaixo e bolinha vermelha de notificação.
+func _make_app_icon(button: Button, bold: Font) -> void:
+	var style: Array = APP_STYLE.get(String(button.name), [Color(0.3, 0.3, 0.32), button.text, CyberIcon.Kind.CHAT])
+	button.text = ""
+	button.custom_minimum_size = Vector2(64, 84)
+	button.tooltip_text = String(style[1])
+	var empty := StyleBoxEmpty.new()
+	for state in ["normal", "hover", "pressed", "disabled"]:
+		button.add_theme_stylebox_override(state, empty)
+	button.add_theme_stylebox_override("focus", _box(Color(1, 1, 1, 0.16), 18))
+
+	var tile := Panel.new()
+	tile.name = "Tile"
+	var tile_style := _box(style[0], 15)
+	tile_style.corner_detail = 10
+	tile_style.shadow_color = Color(0, 0, 0, 0.3)
+	tile_style.shadow_size = 4
+	tile.add_theme_stylebox_override("panel", tile_style)
+	tile.position = Vector2(3, 4)
+	tile.size = Vector2(58, 58)
+	tile.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.add_child(tile)
+
+	var glyph: CyberIcon = CyberIcon.new()
+	glyph.kind = style[2]
+	glyph.color = Color.WHITE
+	glyph.line_width = 2.4
+	glyph.position = Vector2(13, 13)
+	glyph.size = Vector2(32, 32)
+	tile.add_child(glyph)
+
+	var name_label := Label.new()
+	name_label.name = "AppName"
+	name_label.text = String(style[1])
+	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	name_label.add_theme_font_size_override("font_size", 11)
+	name_label.add_theme_color_override("font_color", Color.WHITE)
+	name_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.5))
+	name_label.position = Vector2(-6, 64)
+	name_label.size = Vector2(76, 18)
+	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.add_child(name_label)
+
+	var badge := Label.new()
+	badge.name = "Badge"
+	badge.visible = false
+	badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	badge.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	badge.add_theme_font_override("font", bold)
+	badge.add_theme_font_size_override("font_size", 12)
+	badge.add_theme_color_override("font_color", Color.WHITE)
+	badge.add_theme_stylebox_override("normal", _box(IOS_RED, 11))
+	badge.position = Vector2(48, -4)
+	badge.size = Vector2(22, 22)
+	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.add_child(badge)
+
+
+func _set_badge(button: Button, count: int) -> void:
+	var badge: Label = button.get_node_or_null("Badge")
+	if badge == null:
+		return
+	badge.visible = count > 0
+	badge.text = str(count) if count < 100 else "99+"
+
+
+func _widget_label(parent: Control, at: Vector2, font_size: int, color: Color, font: Font) -> Label:
+	var label := Label.new()
+	label.position = at
+	label.size = Vector2(parent.size.x - 32, 20)
+	label.add_theme_font_override("font", font)
+	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_color_override("font_color", color)
+	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	parent.add_child(label)
+	return label
+
+
+func _box(color: Color, radius: int, margin_x: int = 0, margin_y: int = 0) -> StyleBoxFlat:
+	var box := StyleBoxFlat.new()
+	box.bg_color = color
+	box.set_corner_radius_all(radius)
+	box.corner_detail = 8
+	box.content_margin_left = margin_x
+	box.content_margin_right = margin_x
+	box.content_margin_top = margin_y
+	box.content_margin_bottom = margin_y
+	return box
+
+
+## Tema dos apps: células escuras arredondadas (como as listas do iOS), campos de
+## texto e barra de progresso azul.
+func _phone_theme(font: Font) -> Theme:
+	var theme := Theme.new()
+	theme.default_font = font
+	theme.default_font_size = 14
+	var normal := _box(IOS_CELL, 12, 14, 8)
+	var focus := _box(IOS_CELL_HI, 12, 14, 8)
+	focus.border_color = IOS_BLUE
+	focus.set_border_width_all(2)
+	var pressed := _box(Color(0.25, 0.25, 0.28), 12, 14, 8)
+	for state in ["normal", "disabled"]:
+		theme.set_stylebox(state, "Button", normal)
+	theme.set_stylebox("hover", "Button", normal)
+	theme.set_stylebox("focus", "Button", focus)
+	theme.set_stylebox("pressed", "Button", pressed)
+	theme.set_stylebox("hover_pressed", "Button", pressed)
+	for color_name in ["font_color", "font_hover_color", "font_focus_color", "font_pressed_color"]:
+		theme.set_color(color_name, "Button", Color.WHITE)
+	theme.set_color("font_color", "Label", Color.WHITE)
+	theme.set_constant("shadow_offset_x", "Label", 0)
+	theme.set_constant("shadow_offset_y", "Label", 0)
+	for type in ["LineEdit", "TextEdit"]:
+		theme.set_stylebox("normal", type, _box(IOS_CELL, 10, 10, 6))
+		var edit_focus := _box(IOS_CELL, 10, 10, 6)
+		edit_focus.border_color = IOS_BLUE
+		edit_focus.set_border_width_all(2)
+		theme.set_stylebox("focus", type, edit_focus)
+		theme.set_color("font_color", type, Color.WHITE)
+		theme.set_color("caret_color", type, IOS_BLUE)
+		theme.set_color("font_placeholder_color", type, COLOR_DIM)
+	theme.set_stylebox("background", "ProgressBar", _box(Color(0.2, 0.2, 0.22), 4))
+	theme.set_stylebox("fill", "ProgressBar", _box(IOS_BLUE, 4))
+	var line := StyleBoxLine.new()
+	line.color = Color(0.25, 0.25, 0.27)
+	line.thickness = 1
+	theme.set_stylebox("separator", "HSeparator", line)
+	theme.set_constant("separation", "HSeparator", 14)
+	return theme

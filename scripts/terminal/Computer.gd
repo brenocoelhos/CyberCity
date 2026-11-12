@@ -3,7 +3,8 @@ extends "res://scripts/systems/Interactable.gd"
 ## Computador interativo: abre o terminal fictício (TerminalManager).
 ##
 ## Se "challenge_id" estiver preenchido, este computador oferece um
-## desafio educativo, iniciado pelo comando 'desafio' dentro do terminal.
+## desafio educativo. Quiz abre direto a tela de perguntas; os outros tipos
+## abrem o terminal (ou o desktop, quando o desafio usa o desktop).
 
 @export var challenge_id: String = ""
 ## Nome da máquina no prompt do terminal (kali㉿<host_name>). Se ficar
@@ -17,7 +18,11 @@ func _ready() -> void:
 
 
 func _on_interact() -> void:
-	if ChallengeData.uses_desktop(challenge_id):
+	# Desafio de quiz (perguntas de múltipla escolha) abre direto o quiz,
+	# sem passar pelo terminal e pelo comando 'desafio'.
+	if String(ChallengeData.get_challenge(challenge_id).get("type", "")) == "quiz":
+		ChallengeManager.start(challenge_id)
+	elif ChallengeData.uses_desktop(challenge_id):
 		DesktopManager.open(challenge_id, _resolve_host())
 	else:
 		TerminalManager.open(challenge_id, _resolve_host())

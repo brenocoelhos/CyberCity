@@ -46,6 +46,10 @@ var game_started: bool = false
 ## (usada pelo botão "Continuar").
 var resume_scene_path: String = ""
 
+## NPCs com quem o jogador já conversou (o "!" some depois da 1ª conversa).
+## Chave: ver npc_key() em NPC.gd. Vai junto no save.
+var talked_npcs: Dictionary = {}
+
 
 ## Volta o progresso ao início (usado por "Novo jogo").
 func reset() -> void:
@@ -53,6 +57,7 @@ func reset() -> void:
 	xp = 0
 	total_xp_earned = 0
 	knowledge.clear()
+	talked_npcs.clear()
 	xp_changed.emit(xp, xp_to_next_level(), level)
 
 
@@ -65,6 +70,7 @@ func get_save_data() -> Dictionary:
 		"xp": xp,
 		"total_xp_earned": total_xp_earned,
 		"knowledge": knowledge.duplicate(),
+		"talked_npcs": talked_npcs.keys(),
 	}
 
 
@@ -77,6 +83,9 @@ func load_save_data(data: Dictionary) -> void:
 	var saved_knowledge: Dictionary = data.get("knowledge", {})
 	for concept in saved_knowledge.keys():
 		knowledge[String(concept)] = int(saved_knowledge[concept])
+	talked_npcs.clear()
+	for key in Array(data.get("talked_npcs", [])):
+		talked_npcs[String(key)] = true
 	game_started = true
 	xp_changed.emit(xp, xp_to_next_level(), level)
 

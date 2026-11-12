@@ -32,6 +32,10 @@ var _lock_check: float = 0.0
 
 
 func _ready() -> void:
+	# O balão "[E] Entrar" fica logo acima da cabeça de quem está na porta
+	# (e não lá embaixo, em cima da rua).
+	prompt.offset_top = -48.0
+	prompt.offset_bottom = -32.0
 	prompt.visible = false
 	body_entered.connect(_on_body_entered)
 	body_exited.connect(_on_body_exited)

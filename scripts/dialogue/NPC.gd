@@ -24,22 +24,33 @@ func _ready() -> void:
 		tween.tween_property(marker, "position:y", base_y - 6.0, 0.5)
 		tween.tween_property(marker, "position:y", base_y, 0.5)
 		MissionManager.mission_started.connect(_update_marker.unbind(1))
+		CampaignManager.chapter_unlocked.connect(_update_marker.unbind(1))
 		MissionManager.mission_completed.connect(_update_marker.unbind(1))
 		# Adiado: o interior só define "mission_to_start" depois deste _ready.
 		_update_marker.call_deferred()
 
 
-## Com missão para entregar: "!" só enquanto ela ainda não foi aceita
-## (estado DISPONÍVEL). NPC sem missão mantém o "!" (ver o Guia e os
-## funcionários, que só orientam o jogador).
+## O "!" some depois da primeira conversa com o NPC. NPC que entrega missão
+## volta a mostrar o "!" se a missão dele ficar disponível depois (capítulo
+## novo) e o jogador ainda não a aceitou.
 func _update_marker() -> void:
 	var marker: Label = get_node_or_null("../Marker")
 	if marker == null:
 		return
-	if mission_to_start == "":
+	if mission_to_start != "" \
+			and MissionManager.get_state(mission_to_start) == MissionManager.State.AVAILABLE:
 		marker.visible = true
-	else:
-		marker.visible = MissionManager.get_state(mission_to_start) == MissionManager.State.AVAILABLE
+		return
+	marker.visible = not GameManager.talked_npcs.has(npc_key())
+
+
+## Identifica este NPC entre partidas: cena + prédio (o mesmo interior é usado
+## por várias casas) + nome.
+func npc_key() -> String:
+	var scene: Node = get_tree().current_scene
+	var scene_path: String = scene.scene_file_path if scene else ""
+	var building: String = SceneTransition.interior_title if scene_path.contains("/interiors/") else ""
+	return "%s|%s|%s" % [scene_path, building, npc_name]
 
 
 func _on_interact() -> void:
@@ -47,6 +58,8 @@ func _on_interact() -> void:
 
 	if mission_to_start != "":
 		MissionManager.start_mission(mission_to_start)
+	GameManager.talked_npcs[npc_key()] = true
+	_update_marker()
 
 
 ## Retrato para a caixa de diálogo: o próprio sprite do NPC (só o quadro

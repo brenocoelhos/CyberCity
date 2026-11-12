@@ -9,9 +9,11 @@ extends Panel
 
 signal title_changed
 
-const C_BG := Color("#0a1420")
-const C_BORDER := Color("#2f8cff")
-const C_TITLE := Color("#122238")
+## Moldura no estilo das janelas do Xfce no Kali: barra de título cinza-escuro
+## com o nome centralizado e os botões à direita.
+const C_BG := Color("#14161a")
+const C_BORDER := Color("#3a3d44")
+const C_TITLE := Color("#26282d")
 
 ## Tamanho mínimo ao redimensionar.
 var min_size: Vector2 = Vector2(420, 280)
@@ -28,7 +30,12 @@ var content: Control
 
 
 func _init() -> void:
-	add_theme_stylebox_override("panel", _box(C_BG, C_BORDER, 2))
+	var frame := _box(C_BG, C_BORDER, 1)
+	frame.corner_radius_top_left = 6
+	frame.corner_radius_top_right = 6
+	frame.shadow_color = Color(0, 0, 0, 0.45)
+	frame.shadow_size = 10
+	add_theme_stylebox_override("panel", frame)
 
 	var column := VBoxContainer.new()
 	column.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -36,7 +43,10 @@ func _init() -> void:
 	add_child(column)
 
 	title_bar = PanelContainer.new()
-	title_bar.add_theme_stylebox_override("panel", _box(C_TITLE))
+	var bar := _box(C_TITLE)
+	bar.corner_radius_top_left = 6
+	bar.corner_radius_top_right = 6
+	title_bar.add_theme_stylebox_override("panel", bar)
 	title_bar.custom_minimum_size = Vector2(0, 30)
 	column.add_child(title_bar)
 	var row := HBoxContainer.new()
@@ -45,7 +55,9 @@ func _init() -> void:
 	title_label = Label.new()
 	title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title_label.clip_text = true
-	title_label.add_theme_color_override("font_color", Color("#e8ece9"))
+	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title_label.add_theme_font_size_override("font_size", 13)
+	title_label.add_theme_color_override("font_color", Color("#e6e9ef"))
 	row.add_child(title_label)
 	min_button = _title_button("–", "Minimizar")
 	max_button = _title_button("□", "Maximizar")
@@ -72,6 +84,8 @@ func _title_button(glyph: String, tip: String) -> Button:
 	button.flat = true
 	button.focus_mode = Control.FOCUS_NONE
 	button.custom_minimum_size = Vector2(28, 22)
+	button.add_theme_color_override("font_color", Color("#c9ced8"))
+	button.add_theme_color_override("font_hover_color", Color.WHITE)
 	return button
 
 

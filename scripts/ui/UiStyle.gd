@@ -27,6 +27,9 @@ static func _center_fit(label: Label, grow_up: bool) -> void:
 	else:
 		label.offset_bottom = label.offset_top
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# Sempre na frente do cenário (postes, árvores, prédios).
+	label.z_as_relative = false
+	label.z_index = 50
 
 
 ## Etiqueta de nome (fica acima do personagem/objeto).
@@ -60,7 +63,7 @@ static func prompt(label: Label, text: String) -> void:
 		key.text = "E"
 		key.theme_type_variation = &"KeyCap"
 		key.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		key.position = Vector2(3, 2)
+		key.position = Vector2(4, 2)
 		label.add_child(key)
 	key.visible = has_key
 

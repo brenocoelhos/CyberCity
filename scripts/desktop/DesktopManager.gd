@@ -19,11 +19,42 @@ const Browser := preload("res://scripts/desktop/Browser.gd")
 const NotesWindow := preload("res://scripts/desktop/NotesWindow.gd")
 const MailWindow := preload("res://scripts/desktop/MailWindow.gd")
 const FilesWindow := preload("res://scripts/desktop/FilesWindow.gd")
+const CyberWallpaper := preload("res://scripts/desktop/CyberWallpaper.gd")
+const CyberIcon := preload("res://scripts/ui/CyberIcon.gd")
 
 const C_ACCENT := Color("#2f8cff")
 const C_GREEN := Color("#3dff6e")
 const C_TASKBAR := Color("#0b1622")
-const TASKBAR_HEIGHT := 36.0
+## Painel de cima (estilo Xfce, como no Kali): menu, atalhos, áreas de trabalho,
+## janelas abertas, bandeja e relógio. As janelas ficam abaixo dele.
+const TASKBAR_HEIGHT := 32.0
+const C_PANEL := Color(0.1, 0.11, 0.13, 0.97)
+const C_MENU := Color(0.12, 0.13, 0.15, 0.98)
+const C_MENU_SIDE := Color(0.09, 0.1, 0.12, 1.0)
+const C_HOVER := Color(1, 1, 1, 0.08)
+const C_KALI_BLUE := Color("#367bf0")
+const C_TEXT := Color("#e6e9ef")
+const C_TEXT_DIM := Color("#9aa3b2")
+
+## Como cada app aparece no painel e no menu: [ícone, nome longo, cor, categorias].
+const APP_INFO := {
+	"terminal": [CyberIcon.Kind.TERMINAL, "Emulador de Terminal", Color("#d7dbe3"), ["fav", "01", "09", "16"]],
+	"browser": [CyberIcon.Kind.GLOBE, "Navegador Web", Color("#4aa3ff"), ["fav", "01", "03"]],
+	"mail": [CyberIcon.Kind.MAIL, "Cliente de E-mail", Color("#7cc4ff"), ["fav", "03", "11"]],
+	"files": [CyberIcon.Kind.FOLDER, "Gerenciador de Arquivos", Color("#4a8ff0"), ["fav", "11", "15"]],
+	"notes": [CyberIcon.Kind.NOTE, "Editor de Texto (Notas)", Color("#f2f4f8"), ["fav", "16"]],
+}
+## Categorias do menu, na ordem do menu do Kali (táticas do MITRE ATT&CK).
+const MENU_CATEGORIES := [
+	["fav", "Favoritos"], ["recent", "Usados recentemente"], ["all", "Todos os aplicativos"],
+	["01", "01 - Reconhecimento"], ["02", "02 - Desenvolvimento de recursos"],
+	["03", "03 - Acesso inicial"], ["04", "04 - Execução"], ["05", "05 - Persistência"],
+	["06", "06 - Escalada de privilégios"], ["07", "07 - Evasão de defesa"],
+	["08", "08 - Acesso a credenciais"], ["09", "09 - Descoberta"],
+	["10", "10 - Movimento lateral"], ["11", "11 - Coleta"],
+	["12", "12 - Comando e controle"], ["13", "13 - Exfiltração"], ["14", "14 - Impacto"],
+	["15", "15 - Forense"], ["16", "16 - Serviços e outras ferramentas"],
+]
 const GRIP_SIZE := 18.0
 const MAX_BROWSERS := 4
 
@@ -69,6 +100,18 @@ var _note: PanelContainer
 var _note_label: Label
 var _task_row: HBoxContainer
 var _clock: Label
+## Atalhos do painel (um por app) e o menu de aplicativos.
+var _launchers: Dictionary = {}
+var _app_menu: PanelContainer
+var _menu_button: Button
+var _menu_search: LineEdit
+var _menu_list: VBoxContainer
+var _menu_categories: VBoxContainer
+var _menu_user: Label
+var _menu_category: String = "fav"
+var _recent: Array = []
+var _workspace_buttons: Array = []
+var _workspace: int = 1
 
 
 func _ready() -> void:
@@ -100,6 +143,9 @@ func open(challenge_id: String, host: String) -> void:
 	_apps = Array(_challenge.get("apps", DEFAULT_APPS))
 	for app in _icons:
 		(_icons[app] as Button).visible = _apps.has(app)
+		(_launchers[app] as Button).visible = _apps.has(app)
+	_app_menu.visible = false
+	_switch_workspace(1)
 	_update_note()
 	_root.modulate.a = 0.0
 	create_tween().tween_property(_root, "modulate:a", 1.0, 0.2)
@@ -136,6 +182,16 @@ func _process(_delta: float) -> void:
 func _input(event: InputEvent) -> void:
 	if not _open:
 		return
+	# Menu de aplicativos aberto: clique fora fecha; ESC fecha só o menu.
+	if _app_menu.visible:
+		if event is InputEventMouseButton and event.pressed \
+				and not _app_menu.get_global_rect().has_point(event.position) \
+				and not _menu_button.get_global_rect().has_point(event.position):
+			_app_menu.visible = false
+		elif event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
+			_app_menu.visible = false
+			get_viewport().set_input_as_handled()
+			return
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		if event.pressed:
 			_focus_at(event.position)
@@ -145,7 +201,8 @@ func _input(event: InputEvent) -> void:
 	elif event is InputEventMouseMotion:
 		if not _drag.is_empty():
 			var node: Control = _drag["node"]
-			node.position = _clamp_position(event.position - Vector2(_drag["offset"]), node.size)
+			# A área das janelas começa abaixo do painel de cima.
+			node.position = _clamp_position(event.position - Vector2(_drag["offset"]) - _windows.global_position, node.size)
 		elif not _resize.is_empty():
 			_apply_resize(event.position)
 	elif event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE:
@@ -163,6 +220,10 @@ func _input(event: InputEvent) -> void:
 func open_app(kind: String) -> Control:
 	if not _apps.has(kind):
 		return null
+	_recent.erase(kind)
+	_recent.push_front(kind)
+	if _workspace != 1:
+		_switch_workspace(1)
 	match kind:
 		"terminal":
 			var node: Control = _terminal_entry["node"]
@@ -453,6 +514,20 @@ func _add_task_button(entry: Dictionary) -> void:
 	button.focus_mode = Control.FOCUS_NONE
 	button.clip_text = true
 	button.custom_minimum_size = Vector2(150, 0)
+	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	button.add_theme_font_size_override("font_size", 12)
+	button.add_theme_color_override("font_color", C_TEXT_DIM)
+	button.add_theme_color_override("font_pressed_color", Color.WHITE)
+	button.add_theme_color_override("font_hover_color", Color.WHITE)
+	button.add_theme_color_override("font_hover_pressed_color", Color.WHITE)
+	# Janela da frente: fundo mais claro e risco azul embaixo, como no Xfce.
+	var active := _row_style(Color(1, 1, 1, 0.1))
+	active.border_color = C_KALI_BLUE
+	active.border_width_bottom = 2
+	button.add_theme_stylebox_override("normal", _row_style(Color(0, 0, 0, 0)))
+	button.add_theme_stylebox_override("hover", _row_style(C_HOVER))
+	button.add_theme_stylebox_override("pressed", active)
+	button.add_theme_stylebox_override("hover_pressed", active)
 	button.pressed.connect(_on_task_pressed.bind(entry["node"]))
 	_task_row.add_child(button)
 	entry["button"] = button
@@ -521,6 +596,9 @@ func _find_entry_of(node: Node) -> Dictionary:
 
 
 # --- Montagem -------------------------------------------------------------------------
+# Visual inspirado no Kali Linux (Xfce): painel escuro no topo, menu de
+# aplicativos com categorias, papel de parede azul geométrico e ícones na área de
+# trabalho. A identidade é a do CYBER-OS (emblema do hexágono com cadeado).
 
 func _build() -> void:
 	_root = Control.new()
@@ -528,48 +606,29 @@ func _build() -> void:
 	_root.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(_root)
 
-	# Papel de parede: degradê escuro com o nome do sistema.
-	var gradient := Gradient.new()
-	gradient.colors = PackedColorArray([Color("#0a2748"), Color("#04070d")])
-	var texture := GradientTexture2D.new()
-	texture.gradient = gradient
-	texture.fill_from = Vector2(0.5, 0)
-	texture.fill_to = Vector2(0.5, 1)
-	var wallpaper := TextureRect.new()
-	wallpaper.texture = texture
+	var wallpaper: Control = CyberWallpaper.new()
 	wallpaper.set_anchors_preset(Control.PRESET_FULL_RECT)
-	wallpaper.stretch_mode = TextureRect.STRETCH_SCALE
-	wallpaper.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_root.add_child(wallpaper)
 
-	var logo := Label.new()
-	logo.text = "CYBER-OS"
-	logo.set_anchors_preset(Control.PRESET_CENTER)
-	logo.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	logo.grow_vertical = Control.GROW_DIRECTION_BOTH
-	logo.add_theme_font_size_override("font_size", 72)
-	logo.add_theme_color_override("font_color", Color(0.18, 0.55, 1.0, 0.12))
-	logo.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_root.add_child(logo)
-
-	# Ícones
+	# Ícones da área de trabalho (abaixo do painel)
 	var icons := VBoxContainer.new()
-	icons.position = Vector2(20, 20)
-	icons.add_theme_constant_override("separation", 14)
+	icons.position = Vector2(14, TASKBAR_HEIGHT + 14)
+	icons.add_theme_constant_override("separation", 8)
 	_root.add_child(icons)
 	for app in APPS:
-		var icon: Button = _make_icon(String(APPS[app][0]), String(APPS[app][1]), func() -> void: open_app(String(app)))
+		var icon: Button = _make_icon(String(app), String(APPS[app][1]), func() -> void: open_app(String(app)))
 		_icons[app] = icon
 		icons.add_child(icon)
 
 	# Recado do desafio
 	_note = PanelContainer.new()
-	_note.position = Vector2(170, 24)
+	_note.position = Vector2(130, TASKBAR_HEIGHT + 16)
 	_note.custom_minimum_size = Vector2(360, 0)
 	var note_style := StyleBoxFlat.new()
-	note_style.bg_color = Color("#14202e")
+	note_style.bg_color = Color(0.08, 0.1, 0.14, 0.92)
 	note_style.border_color = Color("#ffd75f")
-	note_style.set_border_width_all(2)
+	note_style.border_width_left = 4
+	note_style.set_corner_radius_all(6)
 	note_style.set_content_margin_all(12)
 	_note.add_theme_stylebox_override("panel", note_style)
 	_root.add_child(_note)
@@ -579,54 +638,349 @@ func _build() -> void:
 	_note_label.add_theme_color_override("font_color", Color("#ffd75f"))
 	_note.add_child(_note_label)
 
-	# Área das janelas (cobre a tela inteira, mas só as janelas pegam o mouse)
+	# Área das janelas: abaixo do painel; só as janelas pegam o mouse.
 	_windows = Control.new()
 	_windows.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_windows.offset_top = TASKBAR_HEIGHT
 	_windows.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_root.add_child(_windows)
 
-	# Barra de tarefas
-	var taskbar := PanelContainer.new()
-	taskbar.anchor_top = 1.0
-	taskbar.anchor_right = 1.0
-	taskbar.anchor_bottom = 1.0
-	taskbar.offset_top = -TASKBAR_HEIGHT
+	_build_panel()
+	_build_app_menu()
+
+
+func _build_panel() -> void:
+	var panel := PanelContainer.new()
+	panel.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	panel.offset_bottom = TASKBAR_HEIGHT
 	var bar_style := StyleBoxFlat.new()
-	bar_style.bg_color = C_TASKBAR
-	bar_style.border_color = C_ACCENT
-	bar_style.border_width_top = 2
-	bar_style.content_margin_left = 10
-	bar_style.content_margin_right = 10
-	taskbar.add_theme_stylebox_override("panel", bar_style)
-	_root.add_child(taskbar)
+	bar_style.bg_color = C_PANEL
+	bar_style.border_color = Color(1, 1, 1, 0.06)
+	bar_style.border_width_bottom = 1
+	bar_style.content_margin_left = 4
+	bar_style.content_margin_right = 6
+	panel.add_theme_stylebox_override("panel", bar_style)
+	_root.add_child(panel)
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 8)
-	taskbar.add_child(row)
-	var brand := Label.new()
-	brand.text = "CYBER-OS"
-	brand.add_theme_color_override("font_color", C_GREEN)
-	row.add_child(brand)
+	row.add_theme_constant_override("separation", 2)
+	panel.add_child(row)
+
+	# Botão do menu (emblema azul) e atalhos dos apps
+	_menu_button = _panel_button(CyberIcon.Kind.EMBLEM, C_KALI_BLUE, "Aplicativos")
+	_menu_button.custom_minimum_size = Vector2(34, 30)
+	_menu_button.pressed.connect(_toggle_app_menu)
+	row.add_child(_menu_button)
+	row.add_child(_panel_separator())
+	for app in APP_INFO:
+		var info: Array = APP_INFO[app]
+		var launcher := _panel_button(info[0], info[2], String(info[1]))
+		launcher.pressed.connect(func() -> void: open_app(String(app)))
+		_launchers[app] = launcher
+		row.add_child(launcher)
+	row.add_child(_panel_separator())
+
+	# Áreas de trabalho 1 a 4
+	for i in range(1, 5):
+		var ws := Button.new()
+		ws.text = str(i)
+		ws.focus_mode = Control.FOCUS_NONE
+		ws.custom_minimum_size = Vector2(24, 0)
+		ws.tooltip_text = "Área de trabalho %d" % i
+		ws.add_theme_font_size_override("font_size", 12)
+		ws.pressed.connect(_switch_workspace.bind(i))
+		_workspace_buttons.append(ws)
+		row.add_child(ws)
+	row.add_child(_panel_separator())
+
+	# Janelas abertas
 	_task_row = HBoxContainer.new()
-	_task_row.add_theme_constant_override("separation", 6)
+	_task_row.add_theme_constant_override("separation", 2)
 	_task_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(_task_row)
+
+	# Bandeja: rede, volume, notificações, relógio, bloquear e desligar
+	for spec in [[CyberIcon.Kind.MONITOR, "Rede: laboratório da missão (conectado)"], [CyberIcon.Kind.VOLUME, "Volume"], [CyberIcon.Kind.BELL, "Notificações"]]:
+		var tray := CyberIcon.new()
+		tray.kind = spec[0]
+		tray.color = C_TEXT
+		tray.line_width = 1.4
+		tray.custom_minimum_size = Vector2(26, 16)
+		tray.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		tray.tooltip_text = spec[1]
+		tray.mouse_filter = Control.MOUSE_FILTER_PASS
+		row.add_child(tray)
 	_clock = Label.new()
+	_clock.add_theme_color_override("font_color", C_TEXT)
+	_clock.add_theme_font_size_override("font_size", 13)
+	_clock.custom_minimum_size = Vector2(52, 0)
+	_clock.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	row.add_child(_clock)
-	var power := Button.new()
-	power.text = "Desligar"
-	power.focus_mode = Control.FOCUS_NONE
-	power.tooltip_text = "Fecha o computador (ESC sem janelas abertas)"
+	var lock := _panel_button(CyberIcon.Kind.LOCK, C_TEXT, "Bloquear tela (fecha o computador)")
+	lock.pressed.connect(close)
+	row.add_child(lock)
+	var power := _panel_button(CyberIcon.Kind.POWER, C_TEXT, "Desligar: fecha o computador (ESC sem janelas abertas)")
 	power.pressed.connect(close)
 	row.add_child(power)
 
 
-func _make_icon(glyph: String, title: String, action: Callable) -> Button:
+## Menu de aplicativos (estilo Whisker Menu): busca no topo, categorias à
+## esquerda, apps à direita e o usuário embaixo.
+func _build_app_menu() -> void:
+	_app_menu = PanelContainer.new()
+	_app_menu.visible = false
+	_app_menu.position = Vector2(4, TASKBAR_HEIGHT + 2)
+	_app_menu.custom_minimum_size = Vector2(500, 430)
+	var style := StyleBoxFlat.new()
+	style.bg_color = C_MENU
+	style.border_color = Color(1, 1, 1, 0.08)
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(6)
+	style.set_content_margin_all(8)
+	style.shadow_color = Color(0, 0, 0, 0.45)
+	style.shadow_size = 12
+	_app_menu.add_theme_stylebox_override("panel", style)
+	_root.add_child(_app_menu)
+
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 8)
+	_app_menu.add_child(column)
+
+	_menu_search = LineEdit.new()
+	_menu_search.placeholder_text = "Buscar aplicativo..."
+	_menu_search.clear_button_enabled = true
+	var search_style := StyleBoxFlat.new()
+	search_style.bg_color = Color(0.07, 0.08, 0.1)
+	search_style.border_color = C_KALI_BLUE
+	search_style.set_border_width_all(1)
+	search_style.set_corner_radius_all(14)
+	search_style.content_margin_left = 14
+	search_style.content_margin_right = 10
+	search_style.content_margin_top = 4
+	search_style.content_margin_bottom = 4
+	_menu_search.add_theme_stylebox_override("normal", search_style)
+	_menu_search.add_theme_stylebox_override("focus", search_style)
+	_menu_search.add_theme_color_override("font_color", C_TEXT)
+	_menu_search.text_changed.connect(func(_text: String) -> void: _render_menu_apps())
+	column.add_child(_menu_search)
+
+	var body := HBoxContainer.new()
+	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body.add_theme_constant_override("separation", 6)
+	column.add_child(body)
+	var side := PanelContainer.new()
+	var side_style := StyleBoxFlat.new()
+	side_style.bg_color = C_MENU_SIDE
+	side_style.set_corner_radius_all(4)
+	side_style.set_content_margin_all(4)
+	side.add_theme_stylebox_override("panel", side_style)
+	side.custom_minimum_size = Vector2(230, 0)
+	body.add_child(side)
+	_menu_categories = VBoxContainer.new()
+	_menu_categories.add_theme_constant_override("separation", 0)
+	side.add_child(_menu_categories)
+	for category in MENU_CATEGORIES:
+		var button := _menu_row(String(category[1]), 12)
+		button.pressed.connect(func() -> void:
+			_menu_category = String(category[0])
+			_menu_search.text = ""
+			_render_menu_apps())
+		button.set_meta("category", String(category[0]))
+		_menu_categories.add_child(button)
+	var apps_panel := PanelContainer.new()
+	apps_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	apps_panel.add_theme_stylebox_override("panel", side_style)
+	body.add_child(apps_panel)
+	_menu_list = VBoxContainer.new()
+	_menu_list.add_theme_constant_override("separation", 0)
+	apps_panel.add_child(_menu_list)
+
+	var footer := HBoxContainer.new()
+	footer.add_theme_constant_override("separation", 8)
+	column.add_child(footer)
+	var avatar := CyberIcon.new()
+	avatar.kind = CyberIcon.Kind.PERSON
+	avatar.color = C_KALI_BLUE
+	avatar.custom_minimum_size = Vector2(22, 22)
+	footer.add_child(avatar)
+	_menu_user = Label.new()
+	_menu_user.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_menu_user.add_theme_color_override("font_color", C_TEXT)
+	_menu_user.add_theme_font_size_override("font_size", 13)
+	footer.add_child(_menu_user)
+	var all_apps := _panel_button(CyberIcon.Kind.GRID, C_TEXT_DIM, "Todos os aplicativos")
+	all_apps.pressed.connect(func() -> void:
+		_menu_category = "all"
+		_render_menu_apps())
+	footer.add_child(all_apps)
+	var off := _panel_button(CyberIcon.Kind.POWER, C_KALI_BLUE, "Desligar o computador")
+	off.pressed.connect(close)
+	footer.add_child(off)
+
+
+func _toggle_app_menu() -> void:
+	_app_menu.visible = not _app_menu.visible
+	if _app_menu.visible:
+		SoundManager.play("blip")
+		_menu_category = "fav"
+		_menu_search.text = ""
+		var who: String = Leaderboard.player_name.to_lower() if Leaderboard.player_name != "" else "agente"
+		_menu_user.text = who
+		_render_menu_apps()
+
+
+## Lista da direita do menu: os apps instalados neste laboratório que estão na
+## categoria escolhida (ou que batem com a busca).
+func _render_menu_apps() -> void:
+	for child in _menu_list.get_children():
+		_menu_list.remove_child(child)
+		child.queue_free()
+	var query: String = _menu_search.text.strip_edges().to_lower()
+	for button in _menu_categories.get_children():
+		var selected: bool = query == "" and String(button.get_meta("category")) == _menu_category
+		button.add_theme_stylebox_override("normal", _row_style(C_KALI_BLUE.darkened(0.35) if selected else Color(0, 0, 0, 0)))
+
+	var ids: Array = []
+	if query == "" and _menu_category == "recent":
+		ids = _recent.filter(func(id) -> bool: return _apps.has(id))
+	else:
+		for app in APP_INFO:
+			if not _apps.has(app):
+				continue
+			var info: Array = APP_INFO[app]
+			var matches: bool
+			if query != "":
+				matches = String(info[1]).to_lower().contains(query) or String(APPS[app][1]).to_lower().contains(query)
+			else:
+				matches = _menu_category == "all" or (info[3] as Array).has(_menu_category)
+			if matches:
+				ids.append(app)
+
+	if ids.is_empty():
+		var empty := Label.new()
+		empty.text = "Nenhum aplicativo aqui neste laboratório." if query == "" else "Nada encontrado."
+		empty.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		empty.custom_minimum_size = Vector2(220, 0)
+		empty.add_theme_color_override("font_color", C_TEXT_DIM)
+		empty.add_theme_font_size_override("font_size", 12)
+		_menu_list.add_child(empty)
+		return
+	for app in ids:
+		var info: Array = APP_INFO[app]
+		var button := _menu_row("      " + String(info[1]), 13)
+		var glyph := CyberIcon.new()
+		glyph.kind = info[0]
+		glyph.color = info[2]
+		glyph.line_width = 1.4
+		glyph.position = Vector2(6, 5)
+		glyph.size = Vector2(18, 18)
+		button.add_child(glyph)
+		button.pressed.connect(func() -> void:
+			_app_menu.visible = false
+			open_app(String(app)))
+		_menu_list.add_child(button)
+
+
+func _menu_row(text: String, font_size: int) -> Button:
 	var button := Button.new()
-	button.text = "%s\n%s" % [glyph, title]
-	button.custom_minimum_size = Vector2(110, 84)
-	button.flat = true
+	button.text = text
+	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	button.focus_mode = Control.FOCUS_NONE
-	button.add_theme_color_override("font_color", Color("#e8ece9"))
-	button.add_theme_color_override("font_hover_color", C_GREEN)
-	button.pressed.connect(action)
+	button.clip_text = true
+	button.custom_minimum_size = Vector2(0, 21 if font_size <= 12 else 28)
+	button.add_theme_font_size_override("font_size", font_size)
+	button.add_theme_color_override("font_color", C_TEXT)
+	button.add_theme_color_override("font_hover_color", Color.WHITE)
+	button.add_theme_stylebox_override("normal", _row_style(Color(0, 0, 0, 0)))
+	button.add_theme_stylebox_override("hover", _row_style(C_HOVER))
+	button.add_theme_stylebox_override("pressed", _row_style(C_KALI_BLUE.darkened(0.2)))
+	return button
+
+
+func _row_style(color: Color) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = color
+	style.set_corner_radius_all(3)
+	style.content_margin_left = 8
+	style.content_margin_right = 6
+	return style
+
+
+func _switch_workspace(index: int) -> void:
+	_workspace = index
+	# As janelas e o recado ficam na área 1; as outras áreas estão vazias.
+	_windows.visible = index == 1
+	_note.visible = index == 1 and _note_label.text != ""
+	for i in _workspace_buttons.size():
+		var active: bool = i + 1 == index
+		var button: Button = _workspace_buttons[i]
+		button.add_theme_stylebox_override("normal", _row_style(C_KALI_BLUE if active else Color(0, 0, 0, 0)))
+		button.add_theme_stylebox_override("hover", _row_style(C_KALI_BLUE if active else C_HOVER))
+		button.add_theme_stylebox_override("pressed", _row_style(C_KALI_BLUE))
+		button.add_theme_color_override("font_color", Color.WHITE if active else C_TEXT_DIM)
+
+
+func _panel_button(kind: int, color: Color, tip: String) -> Button:
+	var button := Button.new()
+	button.focus_mode = Control.FOCUS_NONE
+	button.tooltip_text = tip
+	button.custom_minimum_size = Vector2(28, 30)
+	var empty := StyleBoxEmpty.new()
+	button.add_theme_stylebox_override("normal", empty)
+	button.add_theme_stylebox_override("hover", _row_style(C_HOVER))
+	button.add_theme_stylebox_override("pressed", _row_style(Color(1, 1, 1, 0.14)))
+	var glyph := CyberIcon.new()
+	glyph.kind = kind
+	glyph.color = color
+	glyph.line_width = 1.5
+	glyph.set_anchors_preset(Control.PRESET_FULL_RECT)
+	glyph.offset_left = 6
+	glyph.offset_top = 7
+	glyph.offset_right = -6
+	glyph.offset_bottom = -7
+	button.add_child(glyph)
+	return button
+
+
+func _panel_separator() -> Control:
+	var line := ColorRect.new()
+	line.color = Color(1, 1, 1, 0.12)
+	line.custom_minimum_size = Vector2(1, 18)
+	line.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var holder := MarginContainer.new()
+	holder.add_theme_constant_override("margin_left", 4)
+	holder.add_theme_constant_override("margin_right", 4)
+	holder.add_child(line)
+	return holder
+
+
+## Ícone da área de trabalho: desenho do app e o nome embaixo, como no Xfce.
+func _make_icon(app: String, title: String, action: Callable) -> Button:
+	var button := Button.new()
+	button.text = ""
+	button.tooltip_text = title
+	button.custom_minimum_size = Vector2(84, 74)
+	button.focus_mode = Control.FOCUS_NONE
+	button.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
+	button.add_theme_stylebox_override("hover", _row_style(Color(1, 1, 1, 0.12)))
+	button.add_theme_stylebox_override("pressed", _row_style(Color(0.21, 0.48, 0.94, 0.35)))
+	var info: Array = APP_INFO.get(app, [CyberIcon.Kind.MONITOR, title, C_TEXT, []])
+	var glyph := CyberIcon.new()
+	glyph.kind = info[0]
+	glyph.color = info[2]
+	glyph.line_width = 2.0
+	glyph.position = Vector2(22, 6)
+	glyph.size = Vector2(40, 40)
+	button.add_child(glyph)
+	var label := Label.new()
+	label.text = title
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", 12)
+	label.add_theme_color_override("font_color", Color.WHITE)
+	label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
+	label.add_theme_constant_override("shadow_offset_x", 1)
+	label.add_theme_constant_override("shadow_offset_y", 1)
+	label.position = Vector2(0, 50)
+	label.size = Vector2(84, 20)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.add_child(label)
 	return button

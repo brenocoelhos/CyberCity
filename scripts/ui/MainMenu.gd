@@ -55,12 +55,19 @@ func _ready() -> void:
 
 	_setup_scores()
 
-	# Mouse em cima de um botão = botão selecionado. Assim o mouse e o teclado
-	# mostram sempre o mesmo destaque, e só um botão fica aceso por vez.
+	# Mouse andando em cima de um botão = botão selecionado. Assim o mouse e o
+	# teclado mostram o mesmo destaque, e só um botão fica aceso por vez. Só
+	# conta movimento de verdade do mouse: um "mouse entrou" sem o mouse se
+	# mexer não pode roubar o foco que as setas acabaram de mudar.
 	for button in find_children("*", "BaseButton", true, false):
-		button.mouse_entered.connect(func() -> void:
-			if button.is_visible_in_tree() and not button.disabled:
+		button.focus_mode = Control.FOCUS_ALL
+		button.gui_input.connect(func(event: InputEvent) -> void:
+			if event is InputEventMouseMotion and event.relative.length() > 0.5 \
+					and button.is_visible_in_tree() and not button.disabled \
+					and not button.has_focus():
 				button.grab_focus())
+	# Clicar no fundo não pode tirar o foco dos botões.
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	controls_panel.visible = false
 	_show_main_buttons()
@@ -166,6 +173,43 @@ func _close_controls() -> void:
 
 func _on_quit_pressed() -> void:
 	get_tree().quit()
+
+
+## Setas (ou W/S) sem nenhum botão com foco: seleciona o primeiro botão da
+## tela aberta, em vez de a tecla não fazer nada.
+func _input(event: InputEvent) -> void:
+	var nav: bool = event.is_action_pressed("ui_up") or event.is_action_pressed("ui_down") \
+		or event.is_action_pressed("ui_left") or event.is_action_pressed("ui_right")
+	var ws: bool = event.is_action_pressed("move_up") or event.is_action_pressed("move_down")
+	if not (nav or ws) or options_panel.visible:
+		return
+	var buttons: Array[Button] = _visible_buttons()
+	if buttons.is_empty():
+		return
+	var focused: Control = get_viewport().gui_get_focus_owner()
+	if focused == null or not buttons.has(focused):
+		buttons[0].grab_focus()
+		get_viewport().set_input_as_handled()
+	elif ws and not nav:
+		# W/S também andam pelo menu (com volta do fim para o começo).
+		var step: int = -1 if event.is_action_pressed("move_up") else 1
+		buttons[posmod(buttons.find(focused) + step, buttons.size())].grab_focus()
+		get_viewport().set_input_as_handled()
+
+
+func _visible_buttons() -> Array[Button]:
+	var parent: Control = main_buttons
+	if controls_panel.visible:
+		parent = controls_panel
+	elif scores_panel != null and scores_panel.visible:
+		parent = scores_panel
+	elif not main_buttons.visible:
+		return []
+	var result: Array[Button] = []
+	for child in parent.get_children():
+		if child is Button and child.visible and not child.disabled:
+			result.append(child)
+	return result
 
 
 func _unhandled_input(event: InputEvent) -> void:
