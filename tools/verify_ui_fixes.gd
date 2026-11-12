@@ -111,8 +111,28 @@ func _check_phone() -> bool:
 	ok = _check("celular: bolinha vermelha com 1 mensagem nova", badge.visible and badge.text == "1") and ok
 	ok = _check("celular: os apps viraram ícones com nome", phone.messages_button.get_node("AppName").text == "Mensagens") and ok
 	ok = _check("celular: widget com o cronômetro", phone._stopwatch_label.text.begins_with("TEMPO")) and ok
+	ok = _check("celular: sem ícone Fechar", not phone.close_button.visible) and ok
 	phone._open_app("messages")
 	ok = _check("celular: o app tem título como no iOS", phone.app_title.text == "Mensagens") and ok
+	var rows: Array = phone.list.get_children().filter(func(n: Node) -> bool: return n is Button)
+	ok = _check("mensagens: lista de conversas (estilo WhatsApp) com o contato", rows.size() == 1) and ok
+	rows[0].pressed.emit()
+	ok = _check("mensagens: tocar na conversa abre o chat do contato", phone._chat_with == "Teste") and ok
+	phone._on_back_pressed()
+	ok = _check("mensagens: voltar sai do chat para a lista", phone._chat_with == "" and phone._current_app == "messages") and ok
+	phone._open_app("notes")
+	ok = _check("notas: editor estilo Bloco de Notas na lista", phone.list.find_children("*", "TextEdit", true, false).size() == 1) and ok
+	phone._show_home()
+	var outside := InputEventMouseButton.new()
+	outside.button_index = MOUSE_BUTTON_LEFT
+	outside.pressed = true
+	outside.position = Vector2(60, 360)
+	phone._input(outside)
+	ok = _check("celular: clicar fora do aparelho fecha", not phone.is_active()) and ok
+	phone.open()
+	var esc := _key(KEY_ESCAPE)
+	phone._input(esc)
+	ok = _check("celular: ESC na tela inicial fecha", not phone.is_active()) and ok
 	phone.close()
 	messages.reset()
 	return ok
@@ -146,6 +166,8 @@ func _check_desktop() -> bool:
 	ok = _check("desktop: área de trabalho 2 está vazia", not desktop._windows.visible) and ok
 	desktop.open_app("notes")
 	ok = _check("desktop: abrir um app volta para a área 1", desktop._workspace == 1 and desktop._windows.visible) and ok
+	desktop._icons["mail"].pressed.emit()
+	ok = _check("desktop: clicar no ícone E-mail da área de trabalho abre o app", desktop.window_count("mail") == 1) and ok
 	desktop.close()
 	return ok
 

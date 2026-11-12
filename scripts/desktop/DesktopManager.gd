@@ -963,6 +963,7 @@ func _make_icon(app: String, title: String, action: Callable) -> Button:
 	button.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
 	button.add_theme_stylebox_override("hover", _row_style(Color(1, 1, 1, 0.12)))
 	button.add_theme_stylebox_override("pressed", _row_style(Color(0.21, 0.48, 0.94, 0.35)))
+	button.pressed.connect(action)
 	var info: Array = APP_INFO.get(app, [CyberIcon.Kind.MONITOR, title, C_TEXT, []])
 	var glyph := CyberIcon.new()
 	glyph.kind = info[0]

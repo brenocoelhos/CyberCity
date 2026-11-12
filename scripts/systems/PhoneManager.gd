@@ -93,6 +93,7 @@ func load_save_data(data: Dictionary) -> void:
 				"from": String(entry.get("from", "")),
 				"text": String(entry.get("text", "")),
 				"read": bool(entry.get("read", true)),
+				"time": String(entry.get("time", "")),
 			})
 	var revealed: Dictionary = data.get("revealed", {})
 	for mission_id in revealed.keys():
@@ -103,7 +104,8 @@ func load_save_data(data: Dictionary) -> void:
 # --- Mensagens ---------------------------------------------------------
 
 func send_message(from: String, text: String) -> void:
-	var message := {"from": from, "text": text, "read": false}
+	# A hora de chegada aparece no balão do app Mensagens (estilo WhatsApp).
+	var message := {"from": from, "text": text, "read": false, "time": Time.get_time_string_from_system().substr(0, 5)}
 	messages.append(message)
 	message_received.emit(message)
 	unread_changed.emit(unread_count())

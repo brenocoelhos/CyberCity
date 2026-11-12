@@ -22,6 +22,7 @@ const StudyTools := preload("res://scripts/systems/StudyTools.gd")
 const CAESAR_REQUIRES_MISSION := "m04"
 
 const CyberIcon := preload("res://scripts/ui/CyberIcon.gd")
+const DesktopWindowScript := preload("res://scripts/desktop/DesktopWindow.gd")
 
 ## Cores no estilo do iOS (modo escuro).
 const COLOR_TITLE := Color(0.39, 0.7, 1.0)
@@ -209,14 +210,42 @@ func _update_home_labels() -> void:
 
 func _on_back_pressed() -> void:
 	SoundManager.play("blip")
+	# Dentro de uma conversa, voltar leva para a lista de conversas.
+	if _current_app == "messages" and _chat_with != "":
+		_chat_with = ""
+		_render_current_app()
+		_focus_first_button()
+		return
 	_show_home()
 
 
 # --- Apps --------------------------------------------------------------
+# Cada app imita um app de verdade: Mensagens (WhatsApp), Notas (Bloco de
+# Notas), Missões (Lembretes), Pistas (Google Keep), Perfil e Ajustes (iOS).
+# Tudo é montado dentro de "list" (a lista que rola); o topo e o fundo de cada
+# app ("chrome") mudam conforme o app, em _set_chrome().
+
+## Conversa aberta no app Mensagens ("" = lista de conversas).
+var _chat_with: String = ""
+var _app_bg: Panel
+var _app_top: Control
+var _app_bottom: Control
+
+const WA_BG := Color("#0b141a")
+const WA_BAR := Color("#1f2c34")
+const WA_BUBBLE := Color("#202c33")
+const WA_GREEN := Color("#00a884")
+const WA_TEXT := Color("#e9edef")
+const WA_DIM := Color("#8696a0")
+const NP_BG := Color("#1c1c1c")
+const NP_BAR := Color("#2b2b2b")
+const AVATAR_COLORS := [Color("#25a3a3"), Color("#d9534f"), Color("#7e57c2"), Color("#f0a030"), Color("#3b82f6"), Color("#22a06b"), Color("#d6448b")]
+
 
 func _open_app(app: String) -> void:
 	SoundManager.play("blip")
 	_current_app = app
+	_chat_with = ""
 	home.visible = false
 	_wallpaper.visible = false
 	app_view.visible = true
@@ -229,6 +258,10 @@ func _render_current_app() -> void:
 	for child in list.get_children():
 		list.remove_child(child)
 		child.queue_free()
+	for holder in [_app_top, _app_bottom]:
+		for child in holder.get_children():
+			holder.remove_child(child)
+			child.queue_free()
 
 	match _current_app:
 		"messages":
@@ -236,46 +269,287 @@ func _render_current_app() -> void:
 			_render_messages()
 		"clues":
 			app_title.text = "Pistas"
+			_set_chrome("ios", Color("#0d0d0f"))
 			_render_clues()
 		"missions":
 			app_title.text = "Missões"
+			_set_chrome("ios", Color.BLACK)
 			_render_missions()
 		"profile":
 			app_title.text = "Perfil"
+			_set_chrome("ios", Color.BLACK)
 			_render_profile()
 		"tools":
 			app_title.text = "Ferramentas"
+			_set_chrome("ios", Color.BLACK)
 			_render_tools()
 		"notes":
 			app_title.text = "Notas"
 			_render_notes()
 		"settings":
 			app_title.text = "Ajustes"
+			_set_chrome("ios", Color.BLACK)
 			_render_settings()
 
 
+## Topo e fundo do app. "ios": "‹ Início" e título grande. "custom": o app
+## monta a própria barra de cima em _app_top (altura top_h) e de baixo em
+## _app_bottom (altura bottom_h).
+func _set_chrome(mode: String, background: Color, top_h: float = 0.0, bottom_h: float = 0.0) -> void:
+	var screen_size: Vector2 = $Phone/Screen.size
+	_app_bg.add_theme_stylebox_override("panel", _box(background, 0))
+	var ios: bool = mode == "ios"
+	$Phone/Screen/AppView/Header.visible = ios
+	app_title.visible = ios
+	_app_top.size = Vector2(screen_size.x, top_h)
+	_app_bottom.position = Vector2(0, screen_size.y - bottom_h)
+	_app_bottom.size = Vector2(screen_size.x, bottom_h)
+	if ios:
+		scroll.position = Vector2(14, 126)
+		scroll.size = Vector2(screen_size.x - 28, screen_size.y - 152)
+	else:
+		scroll.position = Vector2(0, top_h)
+		scroll.size = Vector2(screen_size.x, screen_size.y - top_h - bottom_h)
+
+
+## Barra colorida de cima (cobre a área da hora, como nos apps de verdade).
+func _top_bar(color: Color, height: float) -> Panel:
+	var bar := Panel.new()
+	bar.add_theme_stylebox_override("panel", _box(color, 0))
+	bar.size = Vector2($Phone/Screen.size.x, height)
+	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_app_top.add_child(bar)
+	return bar
+
+
+func _flat_button(text: String, color: Color, font_size: int, callback: Callable) -> Button:
+	var button := Button.new()
+	button.text = text
+	button.flat = true
+	button.add_theme_color_override("font_color", color)
+	button.add_theme_color_override("font_hover_color", color.lightened(0.25))
+	button.add_theme_color_override("font_focus_color", color.lightened(0.25))
+	button.add_theme_font_size_override("font_size", font_size)
+	var focus := _box(Color(1, 1, 1, 0.1), 8, 4, 0)
+	button.add_theme_stylebox_override("focus", focus)
+	button.add_theme_stylebox_override("hover", focus)
+	button.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
+	button.add_theme_stylebox_override("pressed", focus)
+	button.pressed.connect(callback)
+	return button
+
+
+func _text(parent: Node, text: String, color: Color, font_size: int, bold: bool = false) -> Label:
+	var label := Label.new()
+	label.text = text
+	label.add_theme_color_override("font_color", color)
+	label.add_theme_font_size_override("font_size", font_size)
+	if bold:
+		label.add_theme_font_override("font", _bold_font)
+	parent.add_child(label)
+	return label
+
+
+## Círculo com as iniciais (foto de perfil), cor fixa por nome.
+func _avatar(name_text: String, diameter: float) -> Panel:
+	var circle := Panel.new()
+	var color: Color = AVATAR_COLORS[absi(name_text.hash()) % AVATAR_COLORS.size()]
+	circle.add_theme_stylebox_override("panel", _box(color, int(diameter / 2.0)))
+	circle.custom_minimum_size = Vector2(diameter, diameter)
+	circle.size = Vector2(diameter, diameter)
+	circle.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var initials := ""
+	for word in name_text.replace("(", "").replace(")", "").split(" ", false):
+		if initials.length() < 2 and word.length() > 0 and word[0] == word[0].to_upper():
+			initials += word[0]
+	var label := _text(circle, initials if initials != "" else "?", Color.WHITE, int(diameter * 0.38), true)
+	label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	return circle
+
+
+func _spacer(height: float) -> void:
+	var gap := Control.new()
+	gap.custom_minimum_size = Vector2(0, height)
+	list.add_child(gap)
+
+
+# --- Mensagens (estilo WhatsApp) ----------------------------------------------
+
 func _render_messages() -> void:
+	if _chat_with == "":
+		_render_chat_list()
+	else:
+		_render_chat()
+
+
+## Lista de conversas: uma por contato, com a última mensagem, a hora e a
+## bolinha verde de não lidas.
+func _render_chat_list() -> void:
+	_set_chrome("custom", WA_BG, 116, 0)
+	var bar := _top_bar(WA_BG, 116)
+	var back := _flat_button("‹", WA_TEXT, 26, _on_back_pressed)
+	back.position = Vector2(6, 48)
+	_app_top.add_child(back)
+	var title := _text(bar, "Mensagens", WA_TEXT, 22, true)
+	title.position = Vector2(36, 50)
+	var search := Panel.new()
+	search.add_theme_stylebox_override("panel", _box(Color("#202c33"), 18))
+	search.position = Vector2(14, 82)
+	search.size = Vector2(bar.size.x - 28, 30)
+	bar.add_child(search)
+	var hint := _text(search, "Pesquisar", WA_DIM, 13)
+	hint.position = Vector2(34, 5)
+	var glass := CyberIcon.new()
+	glass.kind = CyberIcon.Kind.MAGNIFIER
+	glass.color = WA_DIM
+	glass.line_width = 1.5
+	glass.position = Vector2(10, 7)
+	glass.size = Vector2(16, 16)
+	search.add_child(glass)
+
 	if PhoneManager.messages.is_empty():
-		_add_label("Nenhuma mensagem ainda.", COLOR_DIM)
+		_spacer(20)
+		var empty := _text(list, "Nenhuma conversa ainda.", WA_DIM, 14)
+		empty.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		return
 
-	# Mais nova primeiro, como num celular de verdade. Cada mensagem é um
-	# balão cinza, com o nome de quem mandou em cima (bolinha azul = nova).
+	# Contatos na ordem da mensagem mais recente.
+	var order: Array = []
 	for i in range(PhoneManager.messages.size() - 1, -1, -1):
-		var message: Dictionary = PhoneManager.messages[i]
-		var unread: bool = not message["read"]
-		_add_label(("●  " if unread else "") + String(message["from"]), IOS_BLUE if unread else COLOR_DIM, 12)
-		var bubble := PanelContainer.new()
-		bubble.add_theme_stylebox_override("panel", _box(Color(0.15, 0.15, 0.17), 16, 12, 9))
-		var text := Label.new()
-		text.text = String(message["text"])
-		text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		text.add_theme_font_size_override("font_size", 14)
-		bubble.add_child(text)
-		list.add_child(bubble)
+		var sender: String = String(PhoneManager.messages[i]["from"])
+		if not order.has(sender):
+			order.append(sender)
+	for sender in order:
+		var last: Dictionary = {}
+		var unread := 0
+		for message in PhoneManager.messages:
+			if String(message["from"]) == sender:
+				last = message
+				if not message["read"]:
+					unread += 1
+		list.add_child(_chat_row(sender, last, unread))
 
+
+func _chat_row(sender: String, last: Dictionary, unread: int) -> Button:
+	var row := Button.new()
+	row.custom_minimum_size = Vector2(0, 72)
+	row.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
+	row.add_theme_stylebox_override("hover", _box(Color("#202c33"), 0))
+	row.add_theme_stylebox_override("focus", _box(Color("#202c33"), 0))
+	row.add_theme_stylebox_override("pressed", _box(Color("#2a3942"), 0))
+	row.pressed.connect(func() -> void:
+		SoundManager.play("blip")
+		_chat_with = sender
+		_render_current_app()
+		_focus_first_button())
+	var width: float = $Phone/Screen.size.x
+	var avatar := _avatar(sender, 48)
+	avatar.position = Vector2(14, 12)
+	row.add_child(avatar)
+	var name_label := _text(row, sender, WA_TEXT, 15, true)
+	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	name_label.position = Vector2(74, 14)
+	name_label.size = Vector2(width - 140, 20)
+	var preview := _text(row, String(last.get("text", "")).get_slice("\n", 0), WA_DIM, 13)
+	preview.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	preview.position = Vector2(74, 38)
+	preview.size = Vector2(width - 118, 20)
+	var time := _text(row, String(last.get("time", "")), WA_GREEN if unread > 0 else WA_DIM, 11)
+	time.position = Vector2(width - 56, 16)
+	time.size = Vector2(44, 16)
+	time.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	if unread > 0:
+		var badge := _text(row, str(unread), Color("#0b141a"), 11, true)
+		badge.add_theme_stylebox_override("normal", _box(Color("#25d366"), 10))
+		badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		badge.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		badge.position = Vector2(width - 34, 38)
+		badge.size = Vector2(20, 20)
+	for child in row.get_children():
+		if child is Control:
+			child.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return row
+
+
+## Conversa com um contato: barra verde-escura com foto e nome, balões cinza
+## com a hora no canto e a barra "Mensagem" embaixo (só enfeite: o jogador
+## não responde por aqui).
+func _render_chat() -> void:
+	_set_chrome("custom", WA_BG, 100, 64)
+	var bar := _top_bar(WA_BAR, 100)
+	var back := _flat_button("‹", WA_TEXT, 28, _on_back_pressed)
+	back.position = Vector2(4, 50)
+	_app_top.add_child(back)
+	var avatar := _avatar(_chat_with, 38)
+	avatar.position = Vector2(34, 52)
+	bar.add_child(avatar)
+	var name_label := _text(bar, _chat_with, WA_TEXT, 15, true)
+	name_label.position = Vector2(80, 52)
+	name_label.size = Vector2(bar.size.x - 96, 20)
+	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	_text(bar, "online", WA_DIM, 12).position = Vector2(80, 72)
+
+	_spacer(10)
+	var chip_row := CenterContainer.new()
+	var chip := _text(chip_row, "HOJE", WA_DIM, 11, true)
+	chip.add_theme_stylebox_override("normal", _box(Color("#182229"), 7, 10, 3))
+	list.add_child(chip_row)
+	for message in PhoneManager.messages:
+		if String(message["from"]) != _chat_with:
+			continue
+		var line := MarginContainer.new()
+		line.add_theme_constant_override("margin_left", 10)
+		line.add_theme_constant_override("margin_right", 46)
+		line.add_theme_constant_override("margin_top", 3)
+		line.add_theme_constant_override("margin_bottom", 3)
+		var bubble := PanelContainer.new()
+		var bubble_style := _box(WA_BUBBLE, 10, 10, 6)
+		bubble_style.corner_radius_top_left = 0
+		bubble.add_theme_stylebox_override("panel", bubble_style)
+		bubble.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		var column := VBoxContainer.new()
+		column.add_theme_constant_override("separation", 0)
+		var text := _text(column, String(message["text"]), WA_TEXT, 14)
+		text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		text.custom_minimum_size = Vector2(200, 0)
+		var time := _text(column, String(message.get("time", "")), WA_DIM, 10)
+		time.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		bubble.add_child(column)
+		line.add_child(bubble)
+		list.add_child(line)
+	_spacer(8)
 	PhoneManager.mark_all_read()
 
+	# Barra de digitar (enfeite)
+	var input := Panel.new()
+	input.add_theme_stylebox_override("panel", _box(Color("#2a3942"), 20))
+	input.position = Vector2(8, 10)
+	input.size = Vector2(_app_bottom.size.x - 66, 40)
+	_app_bottom.add_child(input)
+	_text(input, "Mensagem", WA_DIM, 14).position = Vector2(16, 10)
+	var mic := Panel.new()
+	mic.add_theme_stylebox_override("panel", _box(WA_GREEN, 20))
+	mic.position = Vector2(_app_bottom.size.x - 52, 10)
+	mic.size = Vector2(40, 40)
+	_app_bottom.add_child(mic)
+	var mic_icon := CyberIcon.new()
+	mic_icon.kind = CyberIcon.Kind.CHAT
+	mic_icon.color = Color.WHITE
+	mic_icon.position = Vector2(10, 10)
+	mic_icon.size = Vector2(20, 20)
+	mic.add_child(mic_icon)
+	_app_bottom.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# A conversa abre já no fim, na mensagem mais nova.
+	_scroll_to_end.call_deferred()
+
+
+func _scroll_to_end() -> void:
+	scroll.scroll_vertical = int(scroll.get_v_scroll_bar().max_value)
+
+
+# --- Pistas (estilo Google Keep) ----------------------------------------------
 
 func _render_clues() -> void:
 	var active: Array = _active_missions()
@@ -286,18 +560,38 @@ func _render_clues() -> void:
 
 	for mission in active:
 		var mission_id: String = String(mission["id"])
-		_add_label(String(mission["title"]), COLOR_TITLE)
-		_add_label("Objetivo: " + String(mission["objective"]), COLOR_DIM)
-
+		var card := PanelContainer.new()
+		var style := _box(Color("#5b5014"), 12, 14, 12)
+		style.border_color = Color("#7a6c1e")
+		style.set_border_width_all(1)
+		card.add_theme_stylebox_override("panel", style)
+		var column := VBoxContainer.new()
+		column.add_theme_constant_override("separation", 6)
+		card.add_child(column)
+		var title := _text(column, String(mission["title"]), Color("#fff8d6"), 15, true)
+		title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		var objective := _text(column, String(mission["objective"]), Color("#e9e2b8"), 12)
+		objective.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		var clues: PackedStringArray = PhoneManager.get_revealed_clues(mission_id)
 		for i in range(clues.size()):
-			_add_label("Pista %d: %s" % [i + 1, clues[i]])
-
+			var clue := _text(column, "☐  Pista %d: %s" % [i + 1, clues[i]], Color.WHITE, 13)
+			clue.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		if PhoneManager.has_more_clues(mission_id):
-			_add_button("Revelar próxima pista", _on_reveal_clue.bind(mission_id))
+			var reveal := Button.new()
+			reveal.text = "+  Revelar próxima pista"
+			reveal.alignment = HORIZONTAL_ALIGNMENT_LEFT
+			reveal.add_theme_stylebox_override("normal", _box(Color(0, 0, 0, 0.22), 16, 12, 6))
+			reveal.add_theme_stylebox_override("hover", _box(Color(0, 0, 0, 0.35), 16, 12, 6))
+			var reveal_focus := _box(Color(0, 0, 0, 0.35), 16, 12, 6)
+			reveal_focus.border_color = Color("#fff8d6")
+			reveal_focus.set_border_width_all(1)
+			reveal.add_theme_stylebox_override("focus", reveal_focus)
+			reveal.pressed.connect(_on_reveal_clue.bind(mission_id))
+			column.add_child(reveal)
 		else:
-			_add_label("(todas as pistas já foram reveladas)", COLOR_DIM)
-		list.add_child(HSeparator.new())
+			_text(column, "Todas as pistas já foram reveladas.", Color("#d8cf9a"), 11)
+		list.add_child(card)
+		_spacer(4)
 
 
 func _on_reveal_clue(mission_id: String) -> void:
@@ -309,63 +603,192 @@ func _on_reveal_clue(mission_id: String) -> void:
 	_focus_first_button()
 
 
-func _render_missions() -> void:
-	for mission in MissionManager.missions.values():
-		var state: int = mission["state"]
-		var color: Color = COLOR_TITLE if state == MissionManager.State.ACTIVE else Color.WHITE
-		_add_label("[%s] %s" % [MissionManager.state_to_text(state), String(mission["title"])], color)
-		_add_label(String(mission["description"]))
-		_add_label("Local: %s\nDificuldade: %s · Recompensa: %d XP" % [
-			String(mission["location"]),
-			String(mission["difficulty"]),
-			int(mission["xp"]),
-		], COLOR_DIM)
-		list.add_child(HSeparator.new())
+# --- Missões (estilo Lembretes) -----------------------------------------------
 
+func _render_missions() -> void:
+	var groups := [
+		[MissionManager.State.ACTIVE, "Em andamento", IOS_BLUE],
+		[MissionManager.State.AVAILABLE, "Disponíveis", Color("#ff9f0a")],
+		[MissionManager.State.COMPLETED, "Concluídas", Color("#30d158")],
+		[MissionManager.State.LOCKED, "Bloqueadas", Color("#8e8e93")],
+		[MissionManager.State.FAILED, "Falhou", IOS_RED],
+	]
+	for group in groups:
+		var items: Array = MissionManager.missions.values().filter(func(m) -> bool: return int(m["state"]) == int(group[0]))
+		if items.is_empty():
+			continue
+		var header := HBoxContainer.new()
+		var name_label := _text(header, String(group[1]), group[2], 18, true)
+		name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_text(header, str(items.size()), group[2], 18, true)
+		list.add_child(header)
+		var card := PanelContainer.new()
+		card.add_theme_stylebox_override("panel", _box(IOS_CELL, 12, 12, 8))
+		var column := VBoxContainer.new()
+		column.add_theme_constant_override("separation", 8)
+		card.add_child(column)
+		for i in items.size():
+			var mission: Dictionary = items[i]
+			if i > 0:
+				column.add_child(HSeparator.new())
+			var row := HBoxContainer.new()
+			row.add_theme_constant_override("separation", 10)
+			var check := Label.new()
+			check.text = "✓" if int(group[0]) == MissionManager.State.COMPLETED else ""
+			check.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			check.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+			check.custom_minimum_size = Vector2(22, 22)
+			check.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+			var ring := _box(group[2] if int(group[0]) == MissionManager.State.COMPLETED else Color(0, 0, 0, 0), 11)
+			ring.border_color = group[2]
+			ring.set_border_width_all(2)
+			check.add_theme_stylebox_override("normal", ring)
+			check.add_theme_color_override("font_color", Color.BLACK)
+			row.add_child(check)
+			var texts := VBoxContainer.new()
+			texts.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			texts.add_theme_constant_override("separation", 2)
+			var title := _text(texts, String(mission["title"]), Color.WHITE if int(group[0]) != MissionManager.State.COMPLETED else COLOR_DIM, 14, true)
+			title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			var description := _text(texts, String(mission["description"]), Color("#c7c7cc"), 12)
+			description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			_text(texts, "%s · %s · %d XP" % [String(mission["location"]), String(mission["difficulty"]), int(mission["xp"])], COLOR_DIM, 11).autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			row.add_child(texts)
+			column.add_child(row)
+		list.add_child(card)
+		_spacer(8)
+
+
+# --- Perfil -------------------------------------------------------------------
 
 func _render_profile() -> void:
+	var who: String = Leaderboard.player_name if Leaderboard.player_name != "" else "Hacker"
+	var avatar_row := CenterContainer.new()
+	avatar_row.add_child(_avatar(who, 84))
+	list.add_child(avatar_row)
+
+	_add_label("AGENTE %s" % Leaderboard.player_name if Leaderboard.player_name != "" else "HACKER", Color.WHITE, 22)
+	var name_label: Label = list.get_child(list.get_child_count() - 1)
+	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_label.add_theme_font_override("font", _bold_font)
+	_add_label("Tempo de jogo: %s" % Leaderboard.format_clock(Leaderboard.elapsed_msec()), COLOR_DIM, 13)
+	(list.get_child(list.get_child_count() - 1) as Label).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	if CampaignManager.is_game_completed:
-		_add_label("CASO ENCERRADO — todas as missões concluídas!", COLOR_UNREAD)
+		_add_label("CASO ENCERRADO — todas as missões concluídas!", COLOR_UNREAD, 13)
+		(list.get_child(list.get_child_count() - 1) as Label).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_spacer(6)
 
-	_add_label("AGENTE %s" % Leaderboard.player_name if Leaderboard.player_name != "" else "HACKER", COLOR_TITLE)
-	_add_label("Tempo de jogo: %s" % Leaderboard.format_clock(Leaderboard.elapsed_msec()), COLOR_DIM)
-	_add_label("Nível: %d" % GameManager.level)
+	# Três números lado a lado, como os resumos do app Saúde.
+	var done: int = MissionManager.missions.values().filter(func(m) -> bool: return int(m["state"]) == MissionManager.State.COMPLETED).size()
+	var stats := HBoxContainer.new()
+	stats.add_theme_constant_override("separation", 8)
+	for stat in [["Nível", str(GameManager.level), IOS_BLUE], ["XP total", str(GameManager.total_xp_earned), Color("#ff9f0a")], ["Missões", "%d/%d" % [done, MissionManager.missions.size()], Color("#30d158")]]:
+		var box := PanelContainer.new()
+		box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		box.add_theme_stylebox_override("panel", _box(IOS_CELL, 12, 8, 8))
+		var column := VBoxContainer.new()
+		column.add_theme_constant_override("separation", 0)
+		box.add_child(column)
+		_text(column, String(stat[1]), stat[2], 20, true).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_text(column, String(stat[0]), COLOR_DIM, 11).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		stats.add_child(box)
+	list.add_child(stats)
 
+	_add_label("Nível: %d" % GameManager.level, Color.WHITE, 13)
 	var bar := ProgressBar.new()
 	bar.max_value = GameManager.xp_to_next_level()
 	bar.value = GameManager.xp
 	bar.show_percentage = false
-	bar.custom_minimum_size = Vector2(0, 16)
+	bar.custom_minimum_size = Vector2(0, 10)
 	list.add_child(bar)
-	_add_label("XP: %d/%d   (total: %d)" % [GameManager.xp, GameManager.xp_to_next_level(), GameManager.total_xp_earned], COLOR_DIM)
+	_add_label("XP: %d/%d para o próximo nível" % [GameManager.xp, GameManager.xp_to_next_level()], COLOR_DIM, 12)
 
-	list.add_child(HSeparator.new())
-	_add_label("CONHECIMENTOS", COLOR_TITLE)
+	_spacer(6)
+	_add_label("CONHECIMENTOS", COLOR_DIM, 12)
+	var card := PanelContainer.new()
+	card.add_theme_stylebox_override("panel", _box(IOS_CELL, 12, 12, 10))
+	var column2 := VBoxContainer.new()
+	column2.add_theme_constant_override("separation", 6)
+	card.add_child(column2)
 	if GameManager.knowledge.is_empty():
-		_add_label("Nenhum conceito aprendido ainda — complete uma missão.", COLOR_DIM)
-		return
-	for concept in GameManager.knowledge.keys():
-		var reinforced: int = int(GameManager.knowledge[concept])
-		_add_label("%s  %s" % [String(concept), "■".repeat(mini(reinforced, 5)) + "□".repeat(maxi(0, 5 - reinforced))])
+		_text(column2, "Nenhum conceito aprendido ainda — complete uma missão.", COLOR_DIM, 13).autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	else:
+		for concept in GameManager.knowledge.keys():
+			var reinforced: int = int(GameManager.knowledge[concept])
+			var row := HBoxContainer.new()
+			var concept_label := _text(row, String(concept), Color.WHITE, 13)
+			concept_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			concept_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			_text(row, "★".repeat(mini(reinforced, 5)) + "☆".repeat(maxi(0, 5 - reinforced)), Color("#ffd60a"), 12)
+			column2.add_child(row)
+	list.add_child(card)
 
 
-## App Notas: bloco de notas livre do jogador. O jogo nunca lê o texto; é para
-## quem quer anotar pistas, IPs e senhas e resolver os enigmas por conta própria.
+# --- Notas (estilo Bloco de Notas) --------------------------------------------
+
+## Bloco de notas livre do jogador. O jogo nunca lê o texto; é para quem quer
+## anotar pistas, IPs e senhas e resolver os enigmas por conta própria.
 func _render_notes() -> void:
-	_add_label("Suas anotações. Só você lê isto: o jogo não usa o texto.", COLOR_DIM)
+	_set_chrome("custom", NP_BG, 112, 30)
+	_top_bar(NP_BAR, 112)
+	var back := _flat_button("‹", Color.WHITE, 26, _on_back_pressed)
+	back.position = Vector2(4, 46)
+	_app_top.add_child(back)
+	var tab := Panel.new()
+	var tab_style := _box(NP_BG, 0)
+	tab_style.corner_radius_top_left = 8
+	tab_style.corner_radius_top_right = 8
+	tab.add_theme_stylebox_override("panel", tab_style)
+	tab.position = Vector2(34, 50)
+	tab.size = Vector2(150, 30)
+	_app_top.add_child(tab)
+	_text(tab, "anotacoes.txt", Color.WHITE, 12).position = Vector2(12, 7)
+	var close_x := _text(tab, "×", COLOR_DIM, 14)
+	close_x.position = Vector2(130, 5)
+	var menu_row := HBoxContainer.new()
+	menu_row.position = Vector2(10, 84)
+	menu_row.add_theme_constant_override("separation", 14)
+	_app_top.add_child(menu_row)
+	for entry in ["Arquivo", "Editar", "Exibir"]:
+		_text(menu_row, entry, Color("#e6e6e6"), 12)
+	var line := ColorRect.new()
+	line.color = Color(1, 1, 1, 0.08)
+	line.position = Vector2(0, 111)
+	line.size = Vector2(_app_top.size.x, 1)
+	_app_top.add_child(line)
+
 	var editor := TextEdit.new()
 	editor.name = "NotesEditor"
 	editor.placeholder_text = "Anote pistas, endereços, senhas achadas, o que falta fazer..."
 	editor.text = PlayerNotes.text
 	editor.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
-	editor.custom_minimum_size = Vector2(0, 360)
+	editor.custom_minimum_size = Vector2(0, scroll.size.y - 2)
+	editor.add_theme_font_override("font", DesktopWindowScript.mono_font())
+	editor.add_theme_font_size_override("font_size", 13)
+	editor.add_theme_color_override("font_color", Color("#f0f0f0"))
+	editor.add_theme_color_override("caret_color", Color.WHITE)
+	editor.add_theme_color_override("font_placeholder_color", Color("#7a7a7a"))
+	var page := _box(NP_BG, 0, 12, 10)
+	editor.add_theme_stylebox_override("normal", page)
+	editor.add_theme_stylebox_override("focus", page)
 	list.add_child(editor)
 
-	var counter := Label.new()
-	counter.add_theme_font_size_override("font_size", 12)
-	counter.add_theme_color_override("font_color", COLOR_DIM)
-	counter.text = "%d / %d" % [PlayerNotes.text.length(), PlayerNotes.MAX_LENGTH]
-	list.add_child(counter)
+	# Barra de status: linha/coluna e caracteres, como no Bloco de Notas.
+	var status_bar := Panel.new()
+	status_bar.add_theme_stylebox_override("panel", _box(NP_BAR, 0))
+	status_bar.size = _app_bottom.size
+	_app_bottom.add_child(status_bar)
+	var position_label := _text(status_bar, "", Color("#cfcfcf"), 11)
+	position_label.position = Vector2(12, 7)
+	var counter := _text(status_bar, "", Color("#cfcfcf"), 11)
+	counter.position = Vector2(status_bar.size.x - 150, 7)
+	counter.size = Vector2(136, 16)
+	counter.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	var refresh_status := func() -> void:
+		position_label.text = "Ln %d, Col %d" % [editor.get_caret_line() + 1, editor.get_caret_column() + 1]
+		counter.text = "%d / %d   UTF-8" % [PlayerNotes.text.length(), PlayerNotes.MAX_LENGTH]
+	refresh_status.call()
+	editor.caret_changed.connect(refresh_status)
 
 	editor.text_changed.connect(func():
 		PlayerNotes.set_text(editor.text)
@@ -374,7 +797,7 @@ func _render_notes() -> void:
 			editor.text = PlayerNotes.text
 			editor.set_caret_line(editor.get_line_count() - 1)
 			editor.set_caret_column(editor.get_line(editor.get_line_count() - 1).length())
-		counter.text = "%d / %d" % [PlayerNotes.text.length(), PlayerNotes.MAX_LENGTH]
+		refresh_status.call()
 		_notes_dirty = true)
 
 
@@ -417,17 +840,102 @@ func _render_tools() -> void:
 			password_out.text += "\n- " + problem)
 
 
+## Ajustes no estilo do iOS: grupos de linhas com ícone colorido à esquerda e
+## "›" à direita; a seta de missão é um interruptor.
 func _render_settings() -> void:
-	_add_button("Volume e tela", _on_options_pressed)
+	var who: String = Leaderboard.player_name if Leaderboard.player_name != "" else "Agente"
+	var account := _settings_group()
+	var account_row := HBoxContainer.new()
+	account_row.add_theme_constant_override("separation", 12)
+	account_row.add_child(_avatar(who, 52))
+	var account_text := VBoxContainer.new()
+	_text(account_text, who, Color.WHITE, 17, true)
+	_text(account_text, "Agente da Central Cyber City · Nível %d" % GameManager.level, COLOR_DIM, 12)
+	account_row.add_child(account_text)
+	account.add_child(account_row)
+	_spacer(10)
+
+	var group := _settings_group()
+	_settings_row(group, "Volume e tela", Color("#8e8e93"), CyberIcon.Kind.GEAR, _on_options_pressed)
 	# A seta de missão é liberada pelo nível; depois dela dá para desligar.
 	if GameManager.is_tool_unlocked("mission_arrow"):
-		_add_button("Seta de missão: %s" % ("ligada" if Settings.mission_arrow else "desligada"), _on_arrow_toggled)
+		group.add_child(HSeparator.new())
+		var toggle := CheckButton.new()
+		toggle.text = "Seta de missão"
+		toggle.button_pressed = Settings.mission_arrow
+		toggle.add_theme_color_override("font_color", Color.WHITE)
+		toggle.add_theme_color_override("font_hover_color", Color.WHITE)
+		toggle.add_theme_color_override("font_pressed_color", Color.WHITE)
+		toggle.add_theme_color_override("font_focus_color", Color.WHITE)
+		for state in ["normal", "hover", "pressed", "hover_pressed"]:
+			toggle.add_theme_stylebox_override(state, _box(Color(0, 0, 0, 0), 8, 44, 6))
+		toggle.add_theme_stylebox_override("focus", _box(Color(1, 1, 1, 0.08), 8, 44, 6))
+		toggle.toggled.connect(func(_on: bool) -> void: _on_arrow_toggled())
+		var tile := _settings_icon(Color("#ff9f0a"), CyberIcon.Kind.MISSION)
+		tile.position = Vector2(4, 6)
+		toggle.add_child(tile)
+		group.add_child(toggle)
 	else:
-		_add_label("Seta de missão: libera no nível %d" % int(GameManager.TOOL_UNLOCK_LEVELS["mission_arrow"]), COLOR_DIM)
-	_add_button("Menu principal", _on_main_menu_pressed)
+		group.add_child(HSeparator.new())
+		_text(group, "Seta de missão: libera no nível %d" % int(GameManager.TOOL_UNLOCK_LEVELS["mission_arrow"]), COLOR_DIM, 13)
+	_spacer(10)
+
+	var exit_group := _settings_group()
+	_settings_row(exit_group, "Menu principal", IOS_BLUE, CyberIcon.Kind.CITY, _on_main_menu_pressed)
 	# No navegador (exportação Web) não existe "fechar o jogo".
 	if not OS.has_feature("web"):
-		_add_button("Sair do jogo", _on_quit_pressed)
+		exit_group.add_child(HSeparator.new())
+		_settings_row(exit_group, "Sair do jogo", IOS_RED, CyberIcon.Kind.POWER, _on_quit_pressed)
+
+
+func _settings_group() -> VBoxContainer:
+	var card := PanelContainer.new()
+	card.add_theme_stylebox_override("panel", _box(IOS_CELL, 12, 8, 6))
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 2)
+	card.add_child(column)
+	list.add_child(card)
+	return column
+
+
+func _settings_icon(color: Color, kind: int) -> Panel:
+	var tile := Panel.new()
+	tile.add_theme_stylebox_override("panel", _box(color, 7))
+	tile.size = Vector2(28, 28)
+	tile.custom_minimum_size = Vector2(28, 28)
+	tile.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var glyph := CyberIcon.new()
+	glyph.kind = kind
+	glyph.color = Color.WHITE
+	glyph.line_width = 1.6
+	glyph.position = Vector2(5, 5)
+	glyph.size = Vector2(18, 18)
+	tile.add_child(glyph)
+	return tile
+
+
+func _settings_row(group: VBoxContainer, text: String, color: Color, kind: int, callback: Callable) -> void:
+	var button := Button.new()
+	button.text = text
+	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	button.custom_minimum_size = Vector2(0, 40)
+	for state in ["normal", "hover", "pressed", "hover_pressed"]:
+		button.add_theme_stylebox_override(state, _box(Color(0, 0, 0, 0), 8, 44, 6))
+	button.add_theme_stylebox_override("focus", _box(Color(1, 1, 1, 0.08), 8, 44, 6))
+	button.pressed.connect(callback)
+	var tile := _settings_icon(color, kind)
+	tile.position = Vector2(4, 6)
+	button.add_child(tile)
+	var chevron := Label.new()
+	chevron.text = "›"
+	chevron.add_theme_color_override("font_color", COLOR_DIM)
+	chevron.add_theme_font_size_override("font_size", 20)
+	chevron.set_anchors_preset(Control.PRESET_CENTER_RIGHT)
+	chevron.offset_left = -22
+	chevron.offset_top = -14
+	chevron.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.add_child(chevron)
+	group.add_child(button)
 
 
 # --- Ajustes -----------------------------------------------------------
@@ -435,8 +943,6 @@ func _render_settings() -> void:
 func _on_arrow_toggled() -> void:
 	SoundManager.play("blip")
 	Settings.set_mission_arrow(not Settings.mission_arrow)
-	_render_current_app()
-	_focus_first_button()
 
 
 func _on_options_pressed() -> void:
@@ -519,11 +1025,12 @@ func _add_button(text: String, callback: Callable) -> void:
 
 
 func _focus_first_button() -> void:
-	for child in list.get_children():
-		if child is Button or child is LineEdit or child is TextEdit:
+	for child in list.find_children("*", "", true, false):
+		if (child is BaseButton or child is LineEdit or child is TextEdit) and child.is_visible_in_tree():
 			child.grab_focus()
 			return
-	back_button.grab_focus()
+	if back_button.is_visible_in_tree():
+		back_button.grab_focus()
 
 
 # --- Teclado -----------------------------------------------------------
@@ -533,9 +1040,19 @@ func _input(event: InputEvent) -> void:
 	# botão com foco "comeria" o TAB (que no Godot troca o foco).
 	if not _active or options_panel.visible:
 		return
+	# Clique fora do aparelho fecha o celular (o clique não passa para o jogo).
+	if event is InputEventMouseButton and event.pressed \
+			and not phone.get_global_rect().has_point(event.position):
+		toggle()
+		get_viewport().set_input_as_handled()
+		return
 	if app_view.visible and event.is_action_pressed("ui_cancel"):
-		# ESC dentro de um app volta para a tela inicial do celular.
+		# ESC dentro de um app volta (conversa -> lista -> tela inicial).
 		_on_back_pressed()
+		get_viewport().set_input_as_handled()
+	elif home.visible and event.is_action_pressed("ui_cancel"):
+		# ESC na tela inicial fecha o celular.
+		toggle()
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("open_menu"):
 		# Escrevendo num campo (notas, ferramentas), o TAB é do campo e não
@@ -573,6 +1090,7 @@ func _unhandled_input(event: InputEvent) -> void:
 # escuro do iOS.
 
 var _wallpaper: TextureRect
+var _bold_font: Font
 var _widget_name: Label
 var _widget_level: Label
 
@@ -583,6 +1101,7 @@ func _apply_iphone_look() -> void:
 	var bold := SystemFont.new()
 	bold.font_names = font.font_names
 	bold.font_weight = 700
+	_bold_font = bold
 
 	# Corpo do aparelho
 	phone.position = PHONE_RECT.position
@@ -735,6 +1254,23 @@ func _apply_iphone_look() -> void:
 	app_title.add_theme_color_override("font_color", Color.WHITE)
 	scroll.position = Vector2(14, 126)
 	scroll.size = Vector2(screen.size.x - 28, screen.size.y - 152)
+	# Como no iPhone, sem barra de rolagem à vista (roda do mouse e setas rolam).
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
+	# Fundo e barras próprias de cada app (ver _set_chrome).
+	_app_bg = Panel.new()
+	_app_bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_app_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	app_view.add_child(_app_bg)
+	app_view.move_child(_app_bg, 0)
+	_app_top = Control.new()
+	_app_top.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	app_view.add_child(_app_top)
+	_app_bottom = Control.new()
+	_app_bottom.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	app_view.add_child(_app_bottom)
+
+	# Sem ícone "Fechar": clicar fora do aparelho ou ESC na tela inicial fecha.
+	close_button.visible = false
 
 	# Mouse andando por cima de um ícone = ícone selecionado (igual ao teclado).
 	for button in phone.find_children("*", "BaseButton", true, false):
