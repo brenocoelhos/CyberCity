@@ -66,6 +66,7 @@ script = ExtResource("1")
 z_index = -2
 texture_repeat = 2
 texture = ExtResource("iw_floor")
+texture_scale = Vector2(3, 3)
 polygon = PackedVector2Array(32, 32, 416, 32, 416, 288, 32, 288)
 
 [node name="Walls" type="Node2D" parent="."]
@@ -79,8 +80,10 @@ position = Vector2(224, 16)
 shape = SubResource("RectangleShape2D_h_full")
 
 [node name="Sprite2D" type="Sprite2D" parent="Walls/WallTop"]
+texture_filter = 2
+scale = Vector2(0.333333, 0.333333)
 texture = ExtResource("iw_wall_top")
-offset = Vector2(0, -20)
+offset = Vector2(0, -60)
 z_index = 1
 
 [node name="WallLeft" type="StaticBody2D" parent="Walls"]
@@ -92,10 +95,12 @@ position = Vector2(16, 160)
 shape = SubResource("RectangleShape2D_v")
 
 [node name="Sprite2D" type="Sprite2D" parent="Walls/WallLeft"]
+texture_filter = 2
 texture_repeat = 2
+scale = Vector2(0.333333, 0.333333)
 texture = ExtResource("iw_wall_left")
 region_enabled = true
-region_rect = Rect2(0, 0, 32, 320)
+region_rect = Rect2(0, 0, 96, 960)
 
 [node name="WallRight" type="StaticBody2D" parent="Walls"]
 collision_layer = 1
@@ -106,10 +111,12 @@ position = Vector2(432, 160)
 shape = SubResource("RectangleShape2D_v")
 
 [node name="Sprite2D" type="Sprite2D" parent="Walls/WallRight"]
+texture_filter = 2
 texture_repeat = 2
+scale = Vector2(0.333333, 0.333333)
 texture = ExtResource("iw_wall_right")
 region_enabled = true
-region_rect = Rect2(0, 0, 32, 320)
+region_rect = Rect2(0, 0, 96, 960)
 
 [node name="WallBottom" type="StaticBody2D" parent="Walls"]
 collision_layer = 1
@@ -120,8 +127,10 @@ position = Vector2(224, 304)
 shape = SubResource("RectangleShape2D_h_full")
 
 [node name="Sprite2D" type="Sprite2D" parent="Walls/WallBottom"]
+texture_filter = 2
+scale = Vector2(0.333333, 0.333333)
 texture = ExtResource("iw_wall_bottom")
-offset = Vector2(0, 8)
+offset = Vector2(0, 24)
 z_index = 1
 
 [node name="Decor" type="Node2D" parent="."]

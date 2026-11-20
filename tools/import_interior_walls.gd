@@ -7,18 +7,22 @@ extends SceneTree
 ##
 ## Saída (assets/environment/interior/), no tamanho certo do mundo (1 pixel da
 ## textura = 1 unidade do mapa; a sala tem 448×320, unidade de 32×32):
-##   wall_top.png     448×72  painel | janela | janela | painel
-##   wall_bottom.png  448×72  painel | painel | porta automática | painel | painel
-##   wall_left.png     32×42  painel lateral esquerdo (repete na vertical)
-##   wall_right.png    32×29  painel lateral direito (repete na vertical)
-##   floor.png         32×32  piso de metal escuro (repete)
+##   wall_top.png     1344×216  painel | janela | janela | painel
+##   wall_bottom.png  1344×216  painel | painel | porta automática | painel | painel
+##   wall_left.png      96×125  painel lateral esquerdo (repete na vertical)
+##   wall_right.png     96×86   painel lateral direito (repete na vertical)
+##   floor.png          96×96   piso de metal escuro (repete)
+## (3 pixels por unidade do mapa; a sala tem 448×320 unidades.)
 ## A redução usa Lanczos (as artes originais têm ~400 px de altura); no jogo a
 ## textura é desenhada sem suavização (Nearest), como o resto do pixel art.
 
 const SRC := "res://assets/source/interior/"
 const OUT := "res://assets/environment/interior/"
-const ROOM_WIDTH := 448
-const WALL_HEIGHT := 72
+## 3 pixels de textura por unidade do mapa: no jogo o Sprite2D usa scale 1/3
+## e filtro Linear, o que deixa as paredes nítidas mesmo em tela cheia.
+const DENSITY := 3
+const ROOM_WIDTH := 448 * DENSITY
+const WALL_HEIGHT := 72 * DENSITY
 
 
 func _initialize() -> void:
@@ -34,8 +38,8 @@ func _initialize() -> void:
 
 	_save(_strip([left, top_window, top_window, right], WALL_HEIGHT, ROOM_WIDTH), "wall_top")
 	_save(_strip([left, right, door, left, right], WALL_HEIGHT, ROOM_WIDTH), "wall_bottom")
-	_save(_fit_width(left, 32), "wall_left")
-	_save(_fit_width(right, 32), "wall_right")
+	_save(_fit_width(left, 32 * DENSITY), "wall_left")
+	_save(_fit_width(right, 32 * DENSITY), "wall_right")
 	_save(_floor_tile(), "floor")
 	print("Paredes e piso dos interiores gerados em ", OUT)
 	quit(0)
@@ -93,8 +97,15 @@ func _solid(image: Image) -> Image:
 	return image
 
 
-## Piso de placas de metal escuro com rebites e um fio de luz ciano.
+## Piso de placas de metal escuro com rebites e um fio de luz ciano, desenhado
+## a 1 pixel por unidade e ampliado 3x sem suavizar (combina com as paredes).
 func _floor_tile() -> Image:
+	var tile := _floor_tile_small()
+	tile.resize(32 * DENSITY, 32 * DENSITY, Image.INTERPOLATE_NEAREST)
+	return tile
+
+
+func _floor_tile_small() -> Image:
 	var tile := Image.create(32, 32, false, Image.FORMAT_RGBA8)
 	tile.fill(Color("#161c27"))
 	for i in 32:

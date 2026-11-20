@@ -12,14 +12,14 @@ size = Vector2(18, 12)
 size = Vector2(44, 44)
 
 [node name="NPC" type="Node2D"]
-texture_filter = 1
+texture_filter = 4
 script = ExtResource("1")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 texture = ExtResource("npc_design")
 position = Vector2(0, -19.625)
 scale = Vector2(0.125, 0.125)
-texture_filter = 1
+texture_filter = 4
 
 [node name="NameLabel" type="Label" parent="."]
 offset_left = -40.0

@@ -101,6 +101,8 @@ func _update_marker() -> void:
 			show_marker = true
 	var marker: Label = $MissionMarker
 	marker.visible = show_marker
+	# A porta também avisa: amarela, coluna de luz alta e "!" logo acima dela.
+	$Door.mission_door = show_marker
 	if show_marker and _marker_tween == null:
 		# O "!" sobe e desce devagar para chamar atenção.
 		var base_y := marker.position.y

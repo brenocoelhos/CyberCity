@@ -21,9 +21,20 @@ const UiStyle := preload("res://scripts/ui/UiStyle.gd")
 @onready var prompt: Label = $PromptLabel
 
 ## Cores do marcador de entrada (a luz no chão, como nos marcadores de missão
-## de jogos de mundo aberto): amarelo = pode entrar, cinza = trancada.
-const MARKER_OPEN := Color(1.0, 0.82, 0.18)
+## de jogos de mundo aberto): amarelo forte = porta da missão (com coluna de
+## luz alta e "!" em cima), azul-claro discreto = outras portas abertas,
+## cinza = trancada.
+const MARKER_MISSION := Color(1.0, 0.82, 0.18)
+const MARKER_OPEN := Color(0.45, 0.78, 1.0)
 const MARKER_LOCKED := Color(0.62, 0.66, 0.74)
+
+## Ligado pelo Building quando há missão para fazer neste prédio.
+var mission_door: bool = false:
+	set(value):
+		mission_door = value
+		if _mission_mark:
+			_mission_mark.visible = value
+var _mission_mark: Label
 
 var _player_in_range: bool = false
 var _marker: Node2D
@@ -48,6 +59,22 @@ func _ready() -> void:
 	_marker.draw.connect(_draw_marker)
 	add_child(_marker)
 	move_child(_marker, 0)
+	# "!" logo acima da porta: aparece mesmo de perto, quando o "!" do telhado
+	# já saiu da tela.
+	_mission_mark = Label.new()
+	_mission_mark.text = "!"
+	_mission_mark.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_mission_mark.add_theme_color_override("font_color", MARKER_MISSION)
+	_mission_mark.add_theme_color_override("font_outline_color", Color(0.1, 0.05, 0.0))
+	_mission_mark.add_theme_constant_override("outline_size", 6)
+	_mission_mark.add_theme_font_size_override("font_size", 22)
+	_mission_mark.position = Vector2(-10, -84)
+	_mission_mark.size = Vector2(20, 28)
+	_mission_mark.z_as_relative = false
+	_mission_mark.z_index = 50
+	_mission_mark.visible = mission_door
+	_mission_mark.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_mission_mark)
 
 
 func _process(delta: float) -> void:
@@ -58,22 +85,27 @@ func _process(delta: float) -> void:
 		_lock_check = 0.5
 		_update_lock_state()
 	_marker.queue_redraw()
+	if _mission_mark.visible:
+		_mission_mark.position.y = -84.0 - 5.0 * (0.5 + 0.5 * sin(_marker_time * 4.0))
 
 
 ## Marcador de entrada: disco de luz achatado no chão, anel que pulsa e uma
 ## coluna de luz suave subindo. Soma luz sobre o cenário (blend aditivo).
 func _draw_marker() -> void:
-	var color: Color = MARKER_LOCKED if locked else MARKER_OPEN
+	var color: Color = MARKER_LOCKED if locked else (MARKER_MISSION if mission_door else MARKER_OPEN)
 	var pulse: float = 0.5 + 0.5 * sin(_marker_time * 3.2)
+	# Portas comuns: luz mais fraca e coluna baixa; a da missão chama atenção.
+	var strength: float = 1.0 if mission_door else 0.55
+	var column: float = 96.0 if mission_door else 40.0
 	_marker.draw_set_transform(Vector2.ZERO, 0.0, Vector2(1.0, 0.5))
 	for i in range(6):
-		_marker.draw_circle(Vector2.ZERO, 24.0 - i * 3.5, Color(color, 0.05 + i * 0.035))
-	_marker.draw_arc(Vector2.ZERO, 19.0 + pulse * 2.5, 0.0, TAU, 40, Color(color, 0.55 + pulse * 0.4), 2.5)
+		_marker.draw_circle(Vector2.ZERO, 24.0 - i * 3.5, Color(color, (0.05 + i * 0.035) * strength))
+	_marker.draw_arc(Vector2.ZERO, 19.0 + pulse * 2.5, 0.0, TAU, 40, Color(color, (0.55 + pulse * 0.4) * strength), 2.5)
 	_marker.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-	var base := Color(color, 0.0 if locked else 0.28 + pulse * 0.12)
+	var base := Color(color, 0.0 if locked else (0.28 + pulse * 0.12) * strength)
 	var top := Color(color, 0.0)
 	_marker.draw_polygon(
-		PackedVector2Array([Vector2(-17, 0), Vector2(17, 0), Vector2(13, -56), Vector2(-13, -56)]),
+		PackedVector2Array([Vector2(-17, 0), Vector2(17, 0), Vector2(13, -column), Vector2(-13, -column)]),
 		PackedColorArray([base, base, top, top]))
 
 

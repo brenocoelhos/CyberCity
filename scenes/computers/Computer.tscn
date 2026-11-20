@@ -4,10 +4,10 @@
 [ext_resource type="Script" path="res://scripts/terminal/Computer.gd" id="2"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_trigger"]
-size = Vector2(46, 40)
+size = Vector2(60, 48)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_desk"]
-size = Vector2(50, 8)
+size = Vector2(62, 8)
 
 [node name="Computer" type="Area2D"]
 collision_layer = 0
@@ -20,7 +20,7 @@ shape = SubResource("RectangleShape2D_trigger")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 texture = ExtResource("1")
-scale = Vector2(0.7, 0.7)
+scale = Vector2(0.85, 0.85)
 
 [node name="Desk" type="StaticBody2D" parent="."]
 collision_mask = 0
@@ -31,16 +31,16 @@ shape = SubResource("RectangleShape2D_desk")
 
 [node name="NameLabel" type="Label" parent="."]
 offset_left = -40.0
-offset_top = -30.0
+offset_top = -48.0
 offset_right = 40.0
-offset_bottom = -12.0
+offset_bottom = -30.0
 horizontal_alignment = 1
 text = "🖥️ Computador"
 
 [node name="PromptLabel" type="Label" parent="."]
 offset_left = -40.0
-offset_top = 20.0
+offset_top = 30.0
 offset_right = 40.0
-offset_bottom = 38.0
+offset_bottom = 48.0
 horizontal_alignment = 1
 text = "[E] Acessar"

@@ -805,13 +805,13 @@ func _render_notes() -> void:
 ## César só abre depois da missão de criptografia (m04), para não entregar a
 ## resposta dela; nenhuma missão depende destas ferramentas.
 func _render_tools() -> void:
-	_add_label("Apoios de estudo. Digite e veja o resultado na hora.", COLOR_DIM)
+	_add_label("Apoios de estudo: digite e veja o resultado na hora.", COLOR_DIM, 12)
 
-	_add_label("Cifra de César", COLOR_TITLE)
+	var caesar := _tool_card("Cifra de César", Color("#5e5ce6"), CyberIcon.Kind.LOCK)
 	if CAESAR_REQUIRES_MISSION == "" or MissionManager.is_completed(CAESAR_REQUIRES_MISSION):
-		var text_input: LineEdit = _add_input("Texto (ex.: VHJXUR)")
-		var shift_input: LineEdit = _add_input("Deslocamento (ex.: 3)", "3")
-		var caesar_out: Label = _add_output()
+		var text_input: LineEdit = _add_input("Texto (ex.: VHJXUR)", "", caesar)
+		var shift_input: LineEdit = _add_input("Deslocamento (ex.: 3)", "3", caesar)
+		var caesar_out: Label = _add_output(caesar)
 		var update_caesar := func():
 			var shift: int = int(shift_input.text) if shift_input.text.is_valid_int() else 0
 			caesar_out.text = "Decifrar (−%d): %s\nCifrar (+%d): %s" % [shift, StudyTools.caesar(text_input.text, -shift), shift, StudyTools.caesar(text_input.text, shift)]
@@ -819,17 +819,17 @@ func _render_tools() -> void:
 		shift_input.text_changed.connect(func(_t: String): update_caesar.call())
 		update_caesar.call()
 	else:
-		_add_label("Libera depois da missão de criptografia.", COLOR_DIM)
+		_text(caesar, "Libera depois da missão de criptografia.", COLOR_DIM, 12)
 
-	_add_label("Hash (MD5 e SHA-256)", COLOR_TITLE)
-	var hash_input: LineEdit = _add_input("Texto para calcular o hash")
-	var hash_out: Label = _add_output()
+	var hashing := _tool_card("Hash (MD5 e SHA-256)", Color("#30b0c7"), CyberIcon.Kind.DOCUMENT)
+	var hash_input: LineEdit = _add_input("Texto para calcular o hash", "", hashing)
+	var hash_out: Label = _add_output(hashing)
 	hash_input.text_changed.connect(func(value: String):
 		hash_out.text = "MD5: %s\nSHA-256: %s" % [StudyTools.md5(value), StudyTools.sha256(value)] if value != "" else "")
 
-	_add_label("Força de senha", COLOR_TITLE)
-	var password_input: LineEdit = _add_input("Digite uma senha para avaliar")
-	var password_out: Label = _add_output()
+	var strength := _tool_card("Força de senha", Color("#34c759"), CyberIcon.Kind.SHIELD)
+	var password_input: LineEdit = _add_input("Digite uma senha para avaliar", "", strength)
+	var password_out: Label = _add_output(strength)
 	password_input.text_changed.connect(func(value: String):
 		if value == "":
 			password_out.text = ""
@@ -838,6 +838,24 @@ func _render_tools() -> void:
 		password_out.text = "Força: %s" % StudyTools.password_strength(value)
 		for problem in problems:
 			password_out.text += "\n- " + problem)
+
+
+## Cartão de uma ferramenta: ícone colorido + título em cima, campos embaixo.
+func _tool_card(title: String, color: Color, kind: int) -> VBoxContainer:
+	var card := PanelContainer.new()
+	card.add_theme_stylebox_override("panel", _box(IOS_CELL, 14, 12, 10))
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 8)
+	card.add_child(column)
+	var header := HBoxContainer.new()
+	header.add_theme_constant_override("separation", 10)
+	header.add_child(_settings_icon(color, kind))
+	var label := _text(header, title, Color.WHITE, 15, true)
+	label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	column.add_child(header)
+	list.add_child(card)
+	_spacer(4)
+	return column
 
 
 ## Ajustes no estilo do iOS: grupos de linhas com ícone colorido à esquerda e
@@ -997,21 +1015,23 @@ func _add_label(text: String, color: Color = Color.WHITE, font_size: int = 14) -
 	list.add_child(label)
 
 
-func _add_input(placeholder: String, initial: String = "") -> LineEdit:
+func _add_input(placeholder: String, initial: String = "", parent: Node = null) -> LineEdit:
 	var input := LineEdit.new()
 	input.placeholder_text = placeholder
 	input.text = initial
 	input.custom_minimum_size = Vector2(0, 32)
-	list.add_child(input)
+	(parent if parent else list).add_child(input)
 	return input
 
 
 ## Rótulo onde uma ferramenta mostra o resultado (quebra até hashes longos).
-func _add_output() -> Label:
+func _add_output(parent: Node = null) -> Label:
 	var label := Label.new()
 	label.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
-	label.add_theme_font_size_override("font_size", 13)
-	list.add_child(label)
+	label.add_theme_font_size_override("font_size", 12)
+	label.add_theme_font_override("font", DesktopWindowScript.mono_font())
+	label.add_theme_color_override("font_color", Color("#64d2ff"))
+	(parent if parent else list).add_child(label)
 	return label
 
 

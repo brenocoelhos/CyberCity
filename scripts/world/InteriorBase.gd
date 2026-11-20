@@ -11,6 +11,53 @@ func _ready() -> void:
 	title_label.text = SceneTransition.interior_title
 	_apply_config(SceneTransition.interior_config)
 	_apply_saved_spawn()
+	_setup_room_camera()
+	var lighting := Node2D.new()
+	lighting.name = "Lighting"
+	lighting.set_script(preload("res://scripts/world/InteriorLighting.gd"))
+	add_child(lighting)
+	_start_ambient()
+
+
+## Som ambiente de cada sala, em loop e baixinho (ver tools/gen_ambient_sounds.py).
+const AMBIENT := {
+	"OfficeInterior": "res://assets/audio/ambient_office.wav",
+	"TechCenterInterior": "res://assets/audio/ambient_lab.wav",
+	"AppInterior": "res://assets/audio/ambient_cafe.wav",
+	"HouseInterior": "res://assets/audio/ambient_house.wav",
+}
+
+
+func _start_ambient() -> void:
+	var path: String = AMBIENT.get(String(name), "")
+	if path == "" or not ResourceLoader.exists(path):
+		return
+	var stream: AudioStreamWAV = (load(path) as AudioStreamWAV).duplicate()
+	stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	stream.loop_begin = 0
+	stream.loop_end = int(stream.get_length() * stream.mix_rate)
+	var player := AudioStreamPlayer.new()
+	player.name = "Ambient"
+	player.stream = stream
+	player.volume_db = -16.0
+	add_child(player)
+	player.play()
+
+
+## Câmera fixa no centro da sala, com zoom que mostra a sala inteira (parede
+## de cima com as janelas até a porta embaixo). 1,78 deixa os móveis em pixel
+## art com tamanho exato de 2 pixels de tela numa tela Full HD (sem borrar).
+const ROOM_CENTER := Vector2(224, 154)
+const ROOM_ZOOM := 1.78
+
+
+func _setup_room_camera() -> void:
+	var camera := Camera2D.new()
+	camera.name = "RoomCamera"
+	camera.position = ROOM_CENTER
+	camera.zoom = Vector2(ROOM_ZOOM, ROOM_ZOOM)
+	add_child(camera)
+	camera.make_current()
 
 
 ## Aplica o que o prédio pediu (ver Building.gd): quais NPC e computador

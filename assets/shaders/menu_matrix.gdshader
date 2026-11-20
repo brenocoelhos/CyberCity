@@ -3,7 +3,9 @@ shader_type canvas_item;
 // janelas acesas e piso em grade com perspectiva (estilo "cidade digital").
 // Use em um ColorRect que cobre a tela inteira (Material > Shader Material).
 
-uniform vec4 rain_color : source_color = vec4(0.18, 1.0, 0.42, 1.0);
+uniform vec4 rain_color : source_color = vec4(0.3, 0.75, 1.0, 1.0);
+// Segunda cor da chuva (algumas colunas ficam roxas, como os neons do HUD).
+uniform vec4 rain_color_2 : source_color = vec4(0.7, 0.4, 1.0, 1.0);
 uniform float horizon : hint_range(0.5, 0.95) = 0.77;
 uniform float rain_speed = 0.3;
 uniform float grid_speed = 0.6;
@@ -104,23 +106,25 @@ void fragment() {
 	vec3 col = vec3(0.0);
 	if (uv.y < horizon) {
 		float sky = uv.y / horizon;
-		col = mix(vec3(0.0, 0.015, 0.008), vec3(0.0, 0.11, 0.05), pow(sky, 2.0));
+		col = mix(vec3(0.003, 0.000, 0.015), vec3(0.015, 0.000, 0.110), pow(sky, 2.0));
 
 		vec2 s1 = skyline(uv, 28.0, 11.0, 0.55, aspect);
-		col = mix(col, vec3(0.0, 0.07, 0.03), s1.x);
+		col = mix(col, vec3(0.008, 0.000, 0.070), s1.x);
 		col += rain_color.rgb * s1.y * 0.25;
 
 		vec2 s2 = skyline(uv, 14.0, 37.0, 0.8, aspect);
-		col = mix(col, vec3(0.0, 0.02, 0.01), s2.x);
+		col = mix(col, vec3(0.004, 0.000, 0.020), s2.x);
 		col += rain_color.rgb * s2.y * 0.55;
 
-		col += rain_color.rgb * rain(uv, aspect);
+		// Algumas colunas de código ficam roxas, as outras ciano.
+		vec3 rain_tint = mix(rain_color.rgb, rain_color_2.rgb, step(0.68, h11(floor(uv.x * 48.0) + 3.0)));
+		col += rain_tint * rain(uv, aspect);
 		col += rain_color.rgb * 0.45 * exp(-(horizon - uv.y) * 35.0);
 	} else {
 		float fade = smoothstep(0.0, 0.3, p);
 		float grid = max(gl.x, gl.y) * fade;
 		float nodes = gl.x * gl.y * fade;
-		col = vec3(0.0, 0.012, 0.006);
+		col = vec3(0.002, 0.000, 0.012);
 		col += rain_color.rgb * grid * (0.7 - 0.3 * p);
 		col += rain_color.rgb * nodes * 0.9;
 		col += rain_color.rgb * 0.4 * exp(-p * 10.0);
