@@ -1,4 +1,4 @@
-[gd_scene load_steps=19 format=3]
+[gd_scene load_steps=32 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/InteriorBase.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/world/ExitDoor.gd" id="3"]
@@ -12,9 +12,37 @@
 [ext_resource type="Texture2D" path="res://assets/environment/interior/wall_left.png" id="iw_wall_left"]
 [ext_resource type="Texture2D" path="res://assets/environment/interior/wall_right.png" id="iw_wall_right"]
 [ext_resource type="Texture2D" path="res://assets/environment/interior/floor.png" id="iw_floor"]
-[ext_resource type="Texture2D" path="res://assets/environment/cyber/planter.png" id="deco_planter"]
-[ext_resource type="Texture2D" path="res://assets/environment/server_rack.png" id="deco_rack"]
-[ext_resource type="Texture2D" path="res://assets/environment/screen_prop.png" id="deco_screen"]
+[ext_resource type="Texture2D" path="res://assets/environment/interior/props/crystals.png" id="p_crystals"]
+[ext_resource type="Texture2D" path="res://assets/environment/interior/props/holo_rug.png" id="p_holo_rug"]
+[ext_resource type="Texture2D" path="res://assets/environment/interior/props/lab_bench.png" id="p_lab_bench"]
+[ext_resource type="Texture2D" path="res://assets/environment/interior/props/plant.png" id="p_plant"]
+[ext_resource type="Texture2D" path="res://assets/environment/interior/props/rack.png" id="p_rack"]
+[ext_resource type="Texture2D" path="res://assets/environment/interior/props/screen_dna.png" id="p_screen_dna"]
+[ext_resource type="Texture2D" path="res://assets/environment/interior/props/screen_graph.png" id="p_screen_graph"]
+[ext_resource type="Texture2D" path="res://assets/environment/interior/props/tube.png" id="p_tube"]
+[ext_resource type="Texture2D" path="res://assets/environment/interior/props/tube_big.png" id="p_tube_big"]
+[ext_resource type="Script" path="res://scripts/world/HoloPulse.gd" id="holo_pulse"]
+
+[sub_resource type="RectangleShape2D" id="shape_Tube1"]
+size = Vector2(36, 24)
+
+[sub_resource type="RectangleShape2D" id="shape_Tube2"]
+size = Vector2(36, 24)
+
+[sub_resource type="RectangleShape2D" id="shape_TubeBig1"]
+size = Vector2(56, 24)
+
+[sub_resource type="RectangleShape2D" id="shape_Rack1"]
+size = Vector2(40, 24)
+
+[sub_resource type="RectangleShape2D" id="shape_LabBench1"]
+size = Vector2(96, 24)
+
+[sub_resource type="RectangleShape2D" id="shape_Plant1"]
+size = Vector2(28, 24)
+
+[sub_resource type="RectangleShape2D" id="shape_Plant2"]
+size = Vector2(28, 24)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_h_full"]
 size = Vector2(448, 32)
@@ -25,11 +53,12 @@ size = Vector2(32, 320)
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_door"]
 size = Vector2(32, 32)
 
-
 [node name="TechCenterInterior" type="Node2D"]
+y_sort_enabled = true
 script = ExtResource("1")
 
 [node name="Floor" type="Polygon2D" parent="."]
+z_index = -2
 texture_repeat = 2
 texture = ExtResource("iw_floor")
 polygon = PackedVector2Array(32, 32, 416, 32, 416, 288, 32, 288)
@@ -91,25 +120,133 @@ offset = Vector2(0, 8)
 z_index = 1
 
 [node name="Decor" type="Node2D" parent="."]
+y_sort_enabled = true
 
-[node name="Planter0" type="Sprite2D" parent="Decor"]
-position = Vector2(72, 258)
-texture = ExtResource("deco_planter")
+[node name="ScreenDna1" type="Sprite2D" parent="Decor"]
+position = Vector2(225, 30)
+scale = Vector2(0.75, 0.75)
+texture = ExtResource("p_screen_dna")
+offset = Vector2(0, -26)
+z_index = 2
+
+[node name="ScreenGraph1" type="Sprite2D" parent="Decor"]
+position = Vector2(78, 30)
+scale = Vector2(0.75, 0.75)
+texture = ExtResource("p_screen_graph")
+offset = Vector2(0, -22)
+z_index = 2
+
+[node name="ScreenGraph2" type="Sprite2D" parent="Decor"]
+position = Vector2(372, 30)
+scale = Vector2(0.75, 0.75)
+texture = ExtResource("p_screen_graph")
+offset = Vector2(0, -22)
+z_index = 2
+
+[node name="Tube1" type="Sprite2D" parent="Decor"]
+position = Vector2(46, 118)
+scale = Vector2(0.75, 0.75)
+texture = ExtResource("p_tube")
+offset = Vector2(0, -52)
+
+[node name="Body" type="StaticBody2D" parent="Decor/Tube1"]
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Decor/Tube1/Body"]
+position = Vector2(0, -14)
+shape = SubResource("shape_Tube1")
+
+[node name="Tube2" type="Sprite2D" parent="Decor"]
+position = Vector2(46, 170)
+scale = Vector2(0.75, 0.75)
+texture = ExtResource("p_tube")
+offset = Vector2(0, -52)
+
+[node name="Body" type="StaticBody2D" parent="Decor/Tube2"]
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Decor/Tube2/Body"]
+position = Vector2(0, -14)
+shape = SubResource("shape_Tube2")
+
+[node name="TubeBig1" type="Sprite2D" parent="Decor"]
+position = Vector2(396, 154)
+scale = Vector2(0.75, 0.75)
+texture = ExtResource("p_tube_big")
+offset = Vector2(0, -66)
+
+[node name="Body" type="StaticBody2D" parent="Decor/TubeBig1"]
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Decor/TubeBig1/Body"]
+position = Vector2(0, -14)
+shape = SubResource("shape_TubeBig1")
 
 [node name="Rack1" type="Sprite2D" parent="Decor"]
-position = Vector2(398, 140)
-scale = Vector2(2, 2)
-texture = ExtResource("deco_rack")
+position = Vector2(400, 222)
+scale = Vector2(0.75, 0.75)
+texture = ExtResource("p_rack")
+offset = Vector2(0, -50)
 
-[node name="Rack2" type="Sprite2D" parent="Decor"]
-position = Vector2(398, 176)
-scale = Vector2(2, 2)
-texture = ExtResource("deco_rack")
+[node name="Body" type="StaticBody2D" parent="Decor/Rack1"]
+collision_mask = 0
 
-[node name="Screen3" type="Sprite2D" parent="Decor"]
-position = Vector2(398, 212)
-scale = Vector2(2, 2)
-texture = ExtResource("deco_screen")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Decor/Rack1/Body"]
+position = Vector2(0, -14)
+shape = SubResource("shape_Rack1")
+
+[node name="LabBench1" type="Sprite2D" parent="Decor"]
+position = Vector2(326, 268)
+scale = Vector2(0.75, 0.75)
+texture = ExtResource("p_lab_bench")
+offset = Vector2(0, -30)
+
+[node name="Body" type="StaticBody2D" parent="Decor/LabBench1"]
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Decor/LabBench1/Body"]
+position = Vector2(0, -14)
+shape = SubResource("shape_LabBench1")
+
+[node name="Crystals1" type="Sprite2D" parent="Decor"]
+position = Vector2(268, 268)
+scale = Vector2(0.75, 0.75)
+texture = ExtResource("p_crystals")
+offset = Vector2(0, 0)
+z_index = -1
+
+[node name="HoloRug1" type="Sprite2D" parent="Decor"]
+position = Vector2(225, 236)
+scale = Vector2(0.75, 0.75)
+texture = ExtResource("p_holo_rug")
+offset = Vector2(0, 0)
+z_index = -1
+
+[node name="Plant1" type="Sprite2D" parent="Decor"]
+position = Vector2(400, 72)
+scale = Vector2(0.75, 0.75)
+texture = ExtResource("p_plant")
+offset = Vector2(0, -32)
+
+[node name="Body" type="StaticBody2D" parent="Decor/Plant1"]
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Decor/Plant1/Body"]
+position = Vector2(0, -14)
+shape = SubResource("shape_Plant1")
+
+[node name="Plant2" type="Sprite2D" parent="Decor"]
+position = Vector2(50, 274)
+scale = Vector2(0.75, 0.75)
+texture = ExtResource("p_plant")
+offset = Vector2(0, -32)
+
+[node name="Body" type="StaticBody2D" parent="Decor/Plant2"]
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Decor/Plant2/Body"]
+position = Vector2(0, -14)
+shape = SubResource("shape_Plant2")
 
 [node name="Computer1" parent="." instance=ExtResource("5")]
 position = Vector2(120, 90)

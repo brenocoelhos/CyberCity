@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3]
+[gd_scene load_steps=35 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/InteriorBase.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/world/ExitDoor.gd" id="3"]
@@ -12,8 +12,46 @@
 [ext_resource type="Texture2D" path="res://assets/environment/interior/wall_left.png" id="iw_wall_left"]
 [ext_resource type="Texture2D" path="res://assets/environment/interior/wall_right.png" id="iw_wall_right"]
 [ext_resource type="Texture2D" path="res://assets/environment/interior/floor.png" id="iw_floor"]
-[ext_resource type="Texture2D" path="res://assets/environment/cyber/planter.png" id="deco_planter"]
-[ext_resource type="Texture2D" path="res://assets/environment/server_rack.png" id="deco_rack"]
+[ext_resource type="Texture2D" path="res://assets/environment/interior/props/armchair.png" id="p_armchair"]
+[ext_resource type="Texture2D" path="res://assets/environment/interior/props/hologram.png" id="p_hologram"]
+[ext_resource type="Texture2D" path="res://assets/environment/interior/props/plant.png" id="p_plant"]
+[ext_resource type="Texture2D" path="res://assets/environment/interior/props/poster.png" id="p_poster"]
+[ext_resource type="Texture2D" path="res://assets/environment/interior/props/rack.png" id="p_rack"]
+[ext_resource type="Texture2D" path="res://assets/environment/interior/props/screen_triple.png" id="p_screen_triple"]
+[ext_resource type="Texture2D" path="res://assets/environment/interior/props/sofa.png" id="p_sofa"]
+[ext_resource type="Texture2D" path="res://assets/environment/interior/props/vending.png" id="p_vending"]
+[ext_resource type="Script" path="res://scripts/world/HoloPulse.gd" id="holo_pulse"]
+[ext_resource type="Texture2D" path="res://assets/environment/interior/props/holo_globe.png" id="p_holo_globe"]
+
+[sub_resource type="RectangleShape2D" id="shape_Plant1"]
+size = Vector2(28, 24)
+
+[sub_resource type="RectangleShape2D" id="shape_Plant2"]
+size = Vector2(28, 24)
+
+[sub_resource type="RectangleShape2D" id="shape_Plant3"]
+size = Vector2(28, 24)
+
+[sub_resource type="RectangleShape2D" id="shape_Plant4"]
+size = Vector2(28, 24)
+
+[sub_resource type="RectangleShape2D" id="shape_Rack1"]
+size = Vector2(40, 24)
+
+[sub_resource type="RectangleShape2D" id="shape_Rack2"]
+size = Vector2(40, 24)
+
+[sub_resource type="RectangleShape2D" id="shape_Vending1"]
+size = Vector2(52, 24)
+
+[sub_resource type="RectangleShape2D" id="shape_Armchair1"]
+size = Vector2(44, 24)
+
+[sub_resource type="RectangleShape2D" id="shape_Hologram1"]
+size = Vector2(120, 24)
+
+[sub_resource type="RectangleShape2D" id="shape_Sofa1"]
+size = Vector2(88, 24)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_h_full"]
 size = Vector2(448, 32)
@@ -25,9 +63,11 @@ size = Vector2(32, 320)
 size = Vector2(32, 32)
 
 [node name="OfficeInterior" type="Node2D"]
+y_sort_enabled = true
 script = ExtResource("1")
 
 [node name="Floor" type="Polygon2D" parent="."]
+z_index = -2
 texture_repeat = 2
 texture = ExtResource("iw_floor")
 polygon = PackedVector2Array(32, 32, 416, 32, 416, 288, 32, 288)
@@ -89,25 +129,163 @@ offset = Vector2(0, 8)
 z_index = 1
 
 [node name="Decor" type="Node2D" parent="."]
+y_sort_enabled = true
 
-[node name="Planter0" type="Sprite2D" parent="Decor"]
-position = Vector2(72, 258)
-texture = ExtResource("deco_planter")
+[node name="ScreenTriple1" type="Sprite2D" parent="Decor"]
+position = Vector2(225, 30)
+scale = Vector2(0.75, 0.75)
+texture = ExtResource("p_screen_triple")
+offset = Vector2(0, -28)
+z_index = 2
+
+[node name="Poster1" type="Sprite2D" parent="Decor"]
+position = Vector2(78, 30)
+scale = Vector2(0.75, 0.75)
+texture = ExtResource("p_poster")
+offset = Vector2(0, -28)
+z_index = 2
+
+[node name="Poster2" type="Sprite2D" parent="Decor"]
+position = Vector2(372, 30)
+scale = Vector2(0.75, 0.75)
+texture = ExtResource("p_poster")
+offset = Vector2(0, -28)
+z_index = 2
+
+[node name="Plant1" type="Sprite2D" parent="Decor"]
+position = Vector2(48, 74)
+scale = Vector2(0.75, 0.75)
+texture = ExtResource("p_plant")
+offset = Vector2(0, -32)
+
+[node name="Body" type="StaticBody2D" parent="Decor/Plant1"]
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Decor/Plant1/Body"]
+position = Vector2(0, -14)
+shape = SubResource("shape_Plant1")
+
+[node name="Plant2" type="Sprite2D" parent="Decor"]
+position = Vector2(400, 74)
+scale = Vector2(0.75, 0.75)
+texture = ExtResource("p_plant")
+offset = Vector2(0, -32)
+
+[node name="Body" type="StaticBody2D" parent="Decor/Plant2"]
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Decor/Plant2/Body"]
+position = Vector2(0, -14)
+shape = SubResource("shape_Plant2")
+
+[node name="Plant3" type="Sprite2D" parent="Decor"]
+position = Vector2(50, 274)
+scale = Vector2(0.75, 0.75)
+texture = ExtResource("p_plant")
+offset = Vector2(0, -32)
+
+[node name="Body" type="StaticBody2D" parent="Decor/Plant3"]
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Decor/Plant3/Body"]
+position = Vector2(0, -14)
+shape = SubResource("shape_Plant3")
+
+[node name="Plant4" type="Sprite2D" parent="Decor"]
+position = Vector2(398, 274)
+scale = Vector2(0.75, 0.75)
+texture = ExtResource("p_plant")
+offset = Vector2(0, -32)
+
+[node name="Body" type="StaticBody2D" parent="Decor/Plant4"]
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Decor/Plant4/Body"]
+position = Vector2(0, -14)
+shape = SubResource("shape_Plant4")
 
 [node name="Rack1" type="Sprite2D" parent="Decor"]
-position = Vector2(398, 140)
-scale = Vector2(2, 2)
-texture = ExtResource("deco_rack")
+position = Vector2(48, 158)
+scale = Vector2(0.75, 0.75)
+texture = ExtResource("p_rack")
+offset = Vector2(0, -50)
+
+[node name="Body" type="StaticBody2D" parent="Decor/Rack1"]
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Decor/Rack1/Body"]
+position = Vector2(0, -14)
+shape = SubResource("shape_Rack1")
 
 [node name="Rack2" type="Sprite2D" parent="Decor"]
-position = Vector2(398, 176)
-scale = Vector2(2, 2)
-texture = ExtResource("deco_rack")
+position = Vector2(48, 196)
+scale = Vector2(0.75, 0.75)
+texture = ExtResource("p_rack")
+offset = Vector2(0, -50)
 
-[node name="Rack3" type="Sprite2D" parent="Decor"]
-position = Vector2(398, 212)
-scale = Vector2(2, 2)
-texture = ExtResource("deco_rack")
+[node name="Body" type="StaticBody2D" parent="Decor/Rack2"]
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Decor/Rack2/Body"]
+position = Vector2(0, -14)
+shape = SubResource("shape_Rack2")
+
+[node name="Vending1" type="Sprite2D" parent="Decor"]
+position = Vector2(400, 132)
+scale = Vector2(0.75, 0.75)
+texture = ExtResource("p_vending")
+offset = Vector2(0, -52)
+
+[node name="Body" type="StaticBody2D" parent="Decor/Vending1"]
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Decor/Vending1/Body"]
+position = Vector2(0, -14)
+shape = SubResource("shape_Vending1")
+
+[node name="Armchair1" type="Sprite2D" parent="Decor"]
+position = Vector2(398, 176)
+scale = Vector2(0.75, 0.75)
+texture = ExtResource("p_armchair")
+offset = Vector2(0, -26)
+
+[node name="Body" type="StaticBody2D" parent="Decor/Armchair1"]
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Decor/Armchair1/Body"]
+position = Vector2(0, -14)
+shape = SubResource("shape_Armchair1")
+
+[node name="Hologram1" type="Sprite2D" parent="Decor"]
+position = Vector2(318, 226)
+scale = Vector2(0.75, 0.75)
+texture = ExtResource("p_hologram")
+offset = Vector2(0, -60)
+
+[node name="Body" type="StaticBody2D" parent="Decor/Hologram1"]
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Decor/Hologram1/Body"]
+position = Vector2(0, -14)
+shape = SubResource("shape_Hologram1")
+
+[node name="Globe" type="Sprite2D" parent="Decor/Hologram1"]
+position = Vector2(0, -86)
+texture = ExtResource("p_holo_globe")
+script = ExtResource("holo_pulse")
+
+[node name="Sofa1" type="Sprite2D" parent="Decor"]
+position = Vector2(306, 276)
+scale = Vector2(0.75, 0.75)
+texture = ExtResource("p_sofa")
+offset = Vector2(0, -28)
+
+[node name="Body" type="StaticBody2D" parent="Decor/Sofa1"]
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Decor/Sofa1/Body"]
+position = Vector2(0, -14)
+shape = SubResource("shape_Sofa1")
 
 [node name="Computer1" parent="." instance=ExtResource("5")]
 position = Vector2(120, 90)
