@@ -41,20 +41,21 @@ tip = 18.0
 accents = false
 
 [node name="Icon" type="Control" parent="Location"]
-offset_left = 12.0
-offset_top = 10.0
-offset_right = 44.0
-offset_bottom = 42.0
+offset_left = 10.0
+offset_top = 7.0
+offset_right = 48.0
+offset_bottom = 45.0
 mouse_filter = 2
 script = ExtResource("3")
 kind = 5
 
 [node name="TitleLabel" type="Label" parent="Location"]
-offset_left = 54.0
-offset_top = 5.0
-offset_right = 270.0
+offset_left = 56.0
+offset_top = 3.0
+offset_right = 284.0
 offset_bottom = 27.0
 theme_type_variation = &"HudTitle"
+theme_override_font_sizes/font_size = 19
 text = "CYBER CITY"
 text_overrun_behavior = 3
 
@@ -275,10 +276,10 @@ vertical_alignment = 1
 [node name="Notification" type="Control" parent="."]
 visible = false
 anchors_preset = 0
-offset_left = 400.0
-offset_top = 16.0
-offset_right = 780.0
-offset_bottom = 84.0
+offset_left = 462.0
+offset_top = 14.0
+offset_right = 842.0
+offset_bottom = 82.0
 mouse_filter = 2
 
 [node name="Frame" type="Control" parent="Notification"]

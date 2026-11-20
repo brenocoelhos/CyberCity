@@ -9,17 +9,34 @@ extends Control
 ## e deixe-o como PRIMEIRO filho do card (assim ele fica atrás do texto).
 ## Tudo aparece no editor (é @tool) e é ajustável no Inspetor.
 
-@export var fill_color: Color = Color(0.02, 0.07, 0.12, 0.88):
+## Cor de cima do fundo. Com "fill_bottom" (alfa > 0) o fundo vira um degradê.
+@export var fill_color: Color = Color(0.05, 0.09, 0.3, 0.94):
 	set(v):
 		fill_color = v
 		queue_redraw()
-@export var border_color: Color = Color(0.25, 0.85, 1.0, 0.95):
+## Cor de baixo do fundo (alfa 0 = fundo de uma cor só).
+@export var fill_bottom: Color = Color(0.25, 0.08, 0.46, 0.94):
+	set(v):
+		fill_bottom = v
+		queue_redraw()
+@export var border_color: Color = Color(0.42, 0.85, 1.0, 1.0):
 	set(v):
 		border_color = v
 		queue_redraw()
 @export var border_width: float = 2.0:
 	set(v):
 		border_width = v
+		queue_redraw()
+
+## Cantos arredondados (px). Acima de 0, vale no lugar dos cortes e da ponta.
+@export var radius: float = 14.0:
+	set(v):
+		radius = v
+		queue_redraw()
+## Cor do brilho em volta (alfa 0 = mesma cor da borda).
+@export var glow_color: Color = Color(0.6, 0.38, 1.0, 1.0):
+	set(v):
+		glow_color = v
 		queue_redraw()
 
 @export_group("Cantos cortados (px)")
@@ -58,7 +75,7 @@ extends Control
 		inner_line = v
 		queue_redraw()
 ## Traços mais claros e grossos nas bordas de cima e de baixo (detalhe sci-fi).
-@export var accents: bool = true:
+@export var accents: bool = false:
 	set(v):
 		accents = v
 		queue_redraw()
@@ -81,6 +98,8 @@ func _ready() -> void:
 
 
 func _shape(rect: Rect2, shrink: float = 0.0) -> PackedVector2Array:
+	if radius > 0.0:
+		return _rounded(rect, maxf(2.0, radius - shrink * 0.6))
 	var x0 := rect.position.x
 	var y0 := rect.position.y
 	var x1 := rect.end.x
@@ -115,6 +134,20 @@ func _shape(rect: Rect2, shrink: float = 0.0) -> PackedVector2Array:
 	return clean
 
 
+func _rounded(rect: Rect2, r: float) -> PackedVector2Array:
+	r = minf(r, minf(rect.size.x, rect.size.y) * 0.5)
+	var pts := PackedVector2Array()
+	var centers := [
+		Vector2(rect.end.x - r, rect.position.y + r), Vector2(rect.end.x - r, rect.end.y - r),
+		Vector2(rect.position.x + r, rect.end.y - r), Vector2(rect.position.x + r, rect.position.y + r)]
+	for corner in 4:
+		var start := -PI * 0.5 + corner * PI * 0.5
+		for i in 7:
+			var a := start + i * (PI * 0.5) / 6.0
+			pts.append(centers[corner] + Vector2(cos(a), sin(a)) * r)
+	return pts
+
+
 func _closed(pts: PackedVector2Array) -> PackedVector2Array:
 	var out := pts.duplicate()
 	out.append(pts[0])
@@ -136,13 +169,26 @@ func _draw() -> void:
 		fill = fill.lerp(Color(edge.r, edge.g, edge.b, fill.a), 0.18)
 
 	if glow:
-		var g := edge
-		g.a = 0.10 if not highlighted else 0.2
-		draw_polyline(line, g, border_width + 8.0, true)
-		g.a = 0.18 if not highlighted else 0.32
+		# Brilho em duas camadas: a cor do brilho por fora, a da borda por dentro.
+		var outer_glow := glow_color if glow_color.a > 0.0 else edge
+		var g := outer_glow
+		g.a = 0.2 if not highlighted else 0.35
+		draw_polyline(line, g, border_width + 10.0, true)
+		g = edge
+		g.a = 0.3 if not highlighted else 0.5
 		draw_polyline(line, g, border_width + 4.0, true)
 
-	draw_colored_polygon(outer, fill)
+	if fill_bottom.a > 0.0:
+		# Degradê de cima (fill_color) para baixo (fill_bottom).
+		var bottom := fill_bottom
+		if highlighted:
+			bottom = bottom.lerp(Color(edge.r, edge.g, edge.b, bottom.a), 0.18)
+		var colors := PackedColorArray()
+		for p in outer:
+			colors.append(fill.lerp(bottom, clampf(p.y / maxf(size.y, 1.0), 0.0, 1.0)))
+		draw_polygon(outer, colors)
+	else:
+		draw_colored_polygon(outer, fill)
 
 	if inner_line:
 		var inset := 4.0 + border_width

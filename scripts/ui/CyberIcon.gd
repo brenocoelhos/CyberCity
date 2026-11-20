@@ -4,7 +4,7 @@ extends Control
 ## Ícones simples de linha neon desenhados por código (sem imagens), no
 ## mesmo estilo das molduras do HUD. Escolha o desenho em "Kind" no Inspetor.
 
-enum Kind { MONITOR, SERVER, PHONE, SIGNAL, MISSION, BUILDING, CHAT, CITY, MAGNIFIER, PERSON, GEAR, NOTE, WRENCH, POWER, WIFI, BATTERY, TERMINAL, FOLDER, GLOBE, MAIL, LOCK, BELL, VOLUME, EMBLEM, GRID }
+enum Kind { MONITOR, SERVER, PHONE, SIGNAL, MISSION, BUILDING, CHAT, CITY, MAGNIFIER, PERSON, GEAR, NOTE, WRENCH, POWER, WIFI, BATTERY, TERMINAL, FOLDER, GLOBE, MAIL, LOCK, BELL, VOLUME, EMBLEM, GRID, HOUSE, DATABASE, SHIELD, DIAMOND, SUN, DOCUMENT }
 
 @export var kind: Kind = Kind.MONITOR:
 	set(v):
@@ -191,3 +191,34 @@ func _draw() -> void:
 			for row in 3:
 				for col in 3:
 					_fill(0.12 + col * 0.28, 0.12 + row * 0.28, 0.32 + col * 0.28, 0.32 + row * 0.28, color)
+		Kind.HOUSE:
+			draw_colored_polygon(PackedVector2Array([_p(0.5, 0.08), _p(0.94, 0.48), _p(0.06, 0.48)]), color)
+			_fill(0.18, 0.46, 0.82, 0.92, color)
+			_fill(0.42, 0.62, 0.58, 0.92, Color(0.05, 0.08, 0.2, color.a))
+			_fill(0.66, 0.14, 0.76, 0.34, color)
+		Kind.DATABASE:
+			var rd := minf(size.x, size.y)
+			for i in 3:
+				var y := 0.24 + i * 0.26
+				draw_rect(Rect2(_p(0.16, y), Vector2(rd * 0.68, rd * 0.18)), color)
+				draw_arc(_p(0.5, y), rd * 0.34, 0.0, PI, 16, Color(0.05, 0.08, 0.2, color.a), line_width * 0.8, true)
+			draw_circle(_p(0.5, 0.2), rd * 0.06, Color(0.05, 0.08, 0.2, color.a))
+		Kind.SHIELD:
+			var shield := PackedVector2Array([_p(0.5, 0.06), _p(0.88, 0.2), _p(0.84, 0.56), _p(0.5, 0.94), _p(0.16, 0.56), _p(0.12, 0.2)])
+			draw_colored_polygon(shield, color)
+			draw_polyline(PackedVector2Array([_p(0.32, 0.5), _p(0.46, 0.64), _p(0.7, 0.36)]), Color(0.05, 0.08, 0.2, color.a), line_width * 1.3, true)
+		Kind.DIAMOND:
+			var outer := PackedVector2Array([_p(0.5, 0.04), _p(0.96, 0.5), _p(0.5, 0.96), _p(0.04, 0.5), _p(0.5, 0.04)])
+			draw_polyline(outer, color, line_width * 1.2, true)
+			draw_colored_polygon(PackedVector2Array([_p(0.5, 0.3), _p(0.7, 0.5), _p(0.5, 0.7), _p(0.3, 0.5)]), color)
+		Kind.SUN:
+			var rs := minf(size.x, size.y)
+			draw_circle(_p(0.5, 0.5), rs * 0.22, color)
+			for i in 8:
+				var a := i * TAU / 8.0
+				draw_line(_p(0.5, 0.5) + Vector2(cos(a), sin(a)) * rs * 0.32, _p(0.5, 0.5) + Vector2(cos(a), sin(a)) * rs * 0.46, color, line_width * 1.2, true)
+		Kind.DOCUMENT:
+			_fill(0.2, 0.08, 0.8, 0.92, faint)
+			_box(0.2, 0.08, 0.8, 0.92)
+			for i in 4:
+				draw_line(_p(0.32, 0.3 + i * 0.15), _p(0.68 if i < 3 else 0.52, 0.3 + i * 0.15), color, line_width * 0.8)

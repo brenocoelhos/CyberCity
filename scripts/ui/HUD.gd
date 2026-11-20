@@ -17,11 +17,23 @@ const UiStyle := preload("res://scripts/ui/UiStyle.gd")
 
 ## Subtítulo mostrado embaixo do nome de cada prédio.
 const LOCATION_SUBTITLES := {
-	"TechCorp Ltda.": "Infraestrutura e Tecnologia",
-	"DataSoft Sistemas": "Software e Dados",
-	"Centro de Tecnologia": "Pesquisa e Segurança",
+	"TechCorp Ltda.": "Empresa de Tecnologia",
+	"DataSoft Sistemas": "Soluções em Software",
+	"Centro de Tecnologia": "Pesquisa e Desenvolvimento",
 	"Loja Eletrônica": "Comércio e Aplicações",
 }
+## Ícone do cartão de local para cada prédio (casas usam a casinha).
+const LOCATION_ICONS := {
+	"TechCorp Ltda.": CyberIcon.Kind.BUILDING,
+	"DataSoft Sistemas": CyberIcon.Kind.DATABASE,
+	"Centro de Tecnologia": CyberIcon.Kind.GEAR,
+	"Loja Eletrônica": CyberIcon.Kind.BUILDING,
+}
+## Cor dos ícones dos cartões (ciano vivo).
+const ICON_COLOR := Color(0.55, 0.9, 1.0)
+
+var _clock_time: Label
+var _clock_date: Label
 
 const TAB_SIZE := Vector2(126, 66)
 const TAB_GAP := 8.0
@@ -78,7 +90,65 @@ func _ready() -> void:
 	phone_button.pressed.connect(_on_phone_button_pressed)
 	_phone_button_x = phone_button.position.x
 	_add_mission_arrow()
+	_apply_vivid_style()
 	_refresh()
+
+
+## Visual "neon vivo": ícones ciano, ícone de losango na missão, barras em
+## degradê ciano→roxo e o relógio com a data ao lado do cartão do local.
+func _apply_vivid_style() -> void:
+	for icon in find_children("*", "Control", true, false):
+		if icon is CyberIcon and icon.get_parent() != phone_button:
+			icon.color = ICON_COLOR
+	($Mission/Icon as CyberIcon).kind = CyberIcon.Kind.DIAMOND
+	var gradient := Gradient.new()
+	gradient.colors = PackedColorArray([Color(0.2, 0.85, 1.0), Color(0.62, 0.35, 1.0)])
+	var texture := GradientTexture2D.new()
+	texture.gradient = gradient
+	texture.width = 64
+	texture.height = 4
+	var fill := StyleBoxTexture.new()
+	fill.texture = texture
+	for bar in [xp_bar, mission_bar]:
+		bar.add_theme_stylebox_override("fill", fill)
+
+	# Relógio: sol, hora e data (do computador).
+	var clock := Control.new()
+	clock.name = "Clock"
+	clock.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	clock.position = Vector2(318, 14)
+	clock.size = Vector2(132, 52)
+	add_child(clock)
+	var frame: CyberFrame = CyberFrame.new()
+	frame.set_anchors_preset(Control.PRESET_FULL_RECT)
+	clock.add_child(frame)
+	var sun: CyberIcon = CyberIcon.new()
+	sun.kind = CyberIcon.Kind.SUN
+	sun.color = Color(1.0, 0.82, 0.3)
+	sun.position = Vector2(10, 12)
+	sun.size = Vector2(28, 28)
+	clock.add_child(sun)
+	_clock_time = Label.new()
+	_clock_time.theme_type_variation = &"HudTitle"
+	_clock_time.add_theme_font_size_override("font_size", 20)
+	_clock_time.position = Vector2(44, 4)
+	clock.add_child(_clock_time)
+	_clock_date = Label.new()
+	_clock_date.theme_type_variation = &"HudSmall"
+	_clock_date.position = Vector2(46, 29)
+	clock.add_child(_clock_date)
+	_update_clock()
+	var timer := Timer.new()
+	timer.wait_time = 1.0
+	timer.autostart = true
+	timer.timeout.connect(_update_clock)
+	add_child(timer)
+
+
+func _update_clock() -> void:
+	var now: Dictionary = Time.get_datetime_dict_from_system()
+	_clock_time.text = "%02d:%02d" % [now["hour"], now["minute"]]
+	_clock_date.text = "%02d/%02d/%d" % [now["day"], now["month"], now["year"]]
 
 
 ## A seta que aponta para a missão (liberada pelo nível, ver MissionArrow.gd)
@@ -128,14 +198,19 @@ func _on_scene_changed() -> void:
 	var path: String = scene.scene_file_path
 	if path.contains("/interiors/"):
 		var title: String = SceneTransition.interior_title
-		location_title.text = title.to_upper() if title != "" else "INTERIOR"
+		location_title.text = title if title != "" else "Interior"
 		if LOCATION_SUBTITLES.has(title):
 			location_subtitle.text = LOCATION_SUBTITLES[title]
 		elif title.begins_with("Casa"):
 			location_subtitle.text = "Residência"
 		else:
 			location_subtitle.text = "Interior"
-		location_icon.kind = CyberIcon.Kind.BUILDING
+		if LOCATION_ICONS.has(title):
+			location_icon.kind = LOCATION_ICONS[title]
+		elif title.begins_with("Casa"):
+			location_icon.kind = CyberIcon.Kind.HOUSE
+		else:
+			location_icon.kind = CyberIcon.Kind.BUILDING
 	else:
 		location_title.text = "CYBER CITY"
 		location_subtitle.text = "Centro da cidade"
@@ -183,7 +258,8 @@ func _build_station_tabs() -> void:
 
 		var name_text := _computer_name(computer)
 		var icon: CyberIcon = CyberIcon.new()
-		icon.kind = CyberIcon.Kind.SERVER if _looks_like_server(name_text) else CyberIcon.Kind.MONITOR
+		icon.kind = _station_icon(name_text)
+		icon.color = ICON_COLOR
 		icon.position = Vector2((TAB_SIZE.x - 30.0) * 0.5, 8)
 		icon.size = Vector2(30, 28)
 		tab.add_child(icon)
@@ -226,6 +302,22 @@ func _computer_name(computer: Node) -> String:
 	if name_label == null or name_label.text.strip_edges() == "":
 		return "Computador"
 	return UiStyle.clean_name(name_label.text)
+
+
+## Ícone da aba conforme o nome do computador.
+func _station_icon(text: String) -> int:
+	var t := text.to_lower()
+	if t.contains("firewall"):
+		return CyberIcon.Kind.SHIELD
+	if t.contains("registro") or t.contains("acesso"):
+		return CyberIcon.Kind.PERSON
+	if t.contains("log"):
+		return CyberIcon.Kind.DOCUMENT
+	if t.contains("coment"):
+		return CyberIcon.Kind.CHAT
+	if _looks_like_server(text):
+		return CyberIcon.Kind.SERVER
+	return CyberIcon.Kind.MONITOR
 
 
 func _looks_like_server(text: String) -> bool:
