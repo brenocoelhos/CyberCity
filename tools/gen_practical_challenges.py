@@ -1,5 +1,13 @@
-import json, hashlib, re
-P='/home/claude/cybercity/scripts/challenges/ChallengeData.gd'
+#!/usr/bin/env python3
+"""Gera os desafios práticos das missões 02 a 05 dentro de ChallengeData.gd.
+
+Uso (na pasta do projeto):  python3 tools/gen_practical_challenges.py
+Substitui as entradas c_senhas, c_hash, c_cripto e c_phishing. Os hashes
+SHA-256 oficiais do desafio de hash e o texto cifrado da m04 são calculados
+aqui, então sempre batem com o conteúdo dos arquivos.
+"""
+import json, hashlib, os
+P=os.path.join(os.path.dirname(os.path.abspath(__file__)),'..','scripts','challenges','ChallengeData.gd')
 def sha(t): return hashlib.sha256(t.encode('utf-8')).hexdigest()
 def caesar(t,k): return ''.join(chr(65+(ord(c)-65+k)%26) if 'A'<=c<='Z' else c for c in t)
 
@@ -140,7 +148,7 @@ def gd(v, ind=1):
         if ind>=3: return '{'+', '.join('%s: %s'%(gd(k),gd(x,ind+1)) for k,x in v.items())+'}'
         return '{\n'+''.join(t+'\t%s: %s,\n'%(gd(k),gd(x,ind+1)) for k,x in v.items())+t+'}'
 s=open(P,encoding='utf-8').read()
-start=s.index('\t"c_senhas": {')
+start=s.index('\t## Missões 02 a 05') if '\t## Missões 02 a 05' in s else s.index('\t"c_senhas": {')
 end=s.index('\t## A partir daqui: desafios "de rede"')
 block=('\t## Missões 02 a 05: desafios práticos do tipo "report" (eram quizzes).\n'
  '\t## O jogador investiga arquivos no terminal (ou o e-mail no desktop) com\n'
