@@ -46,6 +46,7 @@ const APP_STYLE := {
 	"SettingsButton": [Color(0.5, 0.5, 0.53), "Ajustes", CyberIcon.Kind.GEAR],
 	"NotesButton": [Color(1.0, 0.78, 0.0), "Notas", CyberIcon.Kind.NOTE],
 	"ToolsButton": [Color(0.19, 0.69, 0.78), "Ferramentas", CyberIcon.Kind.WRENCH],
+	"InventoryButton": [Color(0.75, 0.45, 0.15), "Mochila", CyberIcon.Kind.FOLDER],
 	"CloseButton": [Color(0.2, 0.2, 0.22), "Fechar", CyberIcon.Kind.POWER],
 }
 
@@ -96,6 +97,7 @@ func _ready() -> void:
 
 	_setup_tools_button()
 	_setup_notes_button()
+	_setup_inventory_button()
 	_setup_stopwatch()
 	_apply_iphone_look()
 	GameManager.tool_unlocked.connect(func(_id: String): _update_home_labels())
@@ -185,6 +187,15 @@ func _setup_notes_button() -> void:
 	notes_button.pressed.connect(_open_app.bind("notes"))
 	apps_grid.add_child(notes_button)
 	apps_grid.move_child(notes_button, close_button.get_index())
+
+
+func _setup_inventory_button() -> void:
+	var button := profile_button.duplicate(0) as Button
+	button.name = "InventoryButton"
+	button.text = "Mochila"
+	button.pressed.connect(_open_app.bind("inventory"))
+	apps_grid.add_child(button)
+	apps_grid.move_child(button, close_button.get_index())
 
 
 ## Grava o jogo (sem aviso na tela) quando o jogador sai do app Notas depois
@@ -286,6 +297,10 @@ func _render_current_app() -> void:
 		"notes":
 			app_title.text = "Notas"
 			_render_notes()
+		"inventory":
+			app_title.text = "Mochila"
+			_set_chrome("ios", Color.BLACK)
+			_render_inventory()
 		"settings":
 			app_title.text = "Ajustes"
 			_set_chrome("ios", Color.BLACK)
@@ -838,6 +853,55 @@ func _render_tools() -> void:
 		password_out.text = "Força: %s" % StudyTools.password_strength(value)
 		for problem in problems:
 			password_out.text += "\n- " + problem)
+
+
+## Mochila: os itens que o agente já tem (um por missão concluída) e, no fim,
+## os que ainda faltam, com a missão que dá cada um.
+func _render_inventory() -> void:
+	var owned: Array[String] = Inventory.get_items()
+	_add_label("%d de %d itens" % [owned.size(), Inventory.ITEMS.size()], COLOR_DIM, 12)
+	_spacer(4)
+	for item_id in owned:
+		_inventory_row(item_id, true)
+	var missing: Array = []
+	for item_id in Inventory.ITEMS.keys():
+		if not owned.has(item_id):
+			missing.append(item_id)
+	if missing.is_empty():
+		return
+	_spacer(8)
+	_add_label("AINDA FALTAM", COLOR_DIM, 11)
+	for item_id in missing:
+		_inventory_row(item_id, false)
+
+
+func _inventory_row(item_id: String, owned: bool) -> void:
+	var info: Array = Inventory.item_info(item_id)
+	var card := PanelContainer.new()
+	card.add_theme_stylebox_override("panel", _box(IOS_CELL, 14, 12, 10))
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+	card.add_child(row)
+	var color: Color = info[3] if owned else Color(0.3, 0.3, 0.33)
+	var icon: Control = _settings_icon(color, int(info[2]))
+	icon.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	row.add_child(icon)
+	var column := VBoxContainer.new()
+	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	column.add_theme_constant_override("separation", 2)
+	row.add_child(column)
+	var mission_id: String = Inventory.source_mission(item_id)
+	if owned:
+		_text(column, String(info[0]), Color.WHITE, 15, true)
+		var desc := _text(column, String(info[1]), COLOR_DIM, 12)
+		desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		if mission_id != "":
+			_text(column, "Ganho na Missão %s" % mission_id.substr(1), color.lightened(0.3), 11)
+	else:
+		_text(column, "???", Color(0.55, 0.55, 0.6), 15, true)
+		_text(column, "Conclua a Missão %s" % mission_id.substr(1) if mission_id != "" else "Ainda não encontrado", Color(0.45, 0.45, 0.5), 12)
+	list.add_child(card)
+	_spacer(4)
 
 
 ## Cartão de uma ferramenta: ícone colorido + título em cima, campos embaixo.

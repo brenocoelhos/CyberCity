@@ -127,6 +127,7 @@ func _on_new_game_pressed() -> void:
 	CampaignManager.reset()
 	PhoneManager.reset()
 	PlayerNotes.reset()
+	Inventory.reset()
 	ChallengeSession.reset()
 	# O nome e o cronômetro novos começam no telefonema da abertura (IntroCall.gd).
 	Leaderboard.cancel_run()

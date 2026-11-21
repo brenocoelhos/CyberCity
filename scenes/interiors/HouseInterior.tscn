@@ -1,4 +1,4 @@
-[gd_scene load_steps=30 format=3]
+[gd_scene load_steps=31 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/InteriorBase.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/world/ExitDoor.gd" id="3"]
@@ -18,7 +18,11 @@
 [ext_resource type="Texture2D" path="res://assets/environment/interior/props/shelf.png" id="p_shelf"]
 [ext_resource type="Texture2D" path="res://assets/environment/interior/props/sofa.png" id="p_sofa"]
 [ext_resource type="Texture2D" path="res://assets/environment/interior/props/tv.png" id="p_tv"]
-[ext_resource type="Script" path="res://scripts/world/HoloPulse.gd" id="holo_pulse"]
+[ext_resource type="PackedScene" path="res://scenes/props/Bed.tscn" id="bed_scene"]
+[ext_resource type="Texture2D" path="res://assets/environment/interior/props/nightstand.png" id="p_nightstand"]
+
+[sub_resource type="RectangleShape2D" id="shape_Nightstand1"]
+size = Vector2(22, 12)
 
 [sub_resource type="RectangleShape2D" id="shape_Sofa1"]
 size = Vector2(88, 24)
@@ -36,9 +40,6 @@ size = Vector2(40, 24)
 size = Vector2(28, 24)
 
 [sub_resource type="RectangleShape2D" id="shape_Plant2"]
-size = Vector2(28, 24)
-
-[sub_resource type="RectangleShape2D" id="shape_Plant3"]
 size = Vector2(28, 24)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_h_full"]
@@ -176,7 +177,7 @@ offset = Vector2(0, 0)
 z_index = -1
 
 [node name="Shelf1" type="Sprite2D" parent="Decor"]
-position = Vector2(400, 120)
+position = Vector2(56, 186)
 scale = Vector2(0.75, 0.75)
 texture = ExtResource("p_shelf")
 offset = Vector2(0, -44)
@@ -189,7 +190,7 @@ position = Vector2(0, -14)
 shape = SubResource("shape_Shelf1")
 
 [node name="Arcade1" type="Sprite2D" parent="Decor"]
-position = Vector2(398, 196)
+position = Vector2(290, 250)
 scale = Vector2(0.75, 0.75)
 texture = ExtResource("p_arcade")
 offset = Vector2(0, -46)
@@ -202,7 +203,7 @@ position = Vector2(0, -14)
 shape = SubResource("shape_Arcade1")
 
 [node name="Plant1" type="Sprite2D" parent="Decor"]
-position = Vector2(400, 66)
+position = Vector2(404, 170)
 scale = Vector2(0.75, 0.75)
 texture = ExtResource("p_plant")
 offset = Vector2(0, -32)
@@ -227,21 +228,8 @@ collision_mask = 0
 position = Vector2(0, -14)
 shape = SubResource("shape_Plant2")
 
-[node name="Plant3" type="Sprite2D" parent="Decor"]
-position = Vector2(398, 274)
-scale = Vector2(0.75, 0.75)
-texture = ExtResource("p_plant")
-offset = Vector2(0, -32)
-
-[node name="Body" type="StaticBody2D" parent="Decor/Plant3"]
-collision_mask = 0
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Decor/Plant3/Body"]
-position = Vector2(0, -14)
-shape = SubResource("shape_Plant3")
-
 [node name="Computer" parent="." instance=ExtResource("5")]
-position = Vector2(300, 90)
+position = Vector2(232, 96)
 
 [node name="Morador" parent="." instance=ExtResource("6")]
 position = Vector2(110, 200)
@@ -253,6 +241,22 @@ text = "Morador"
 npc_name = "Morador"
 dialogue_lines = PackedStringArray("Meu computador começou a apresentar comportamentos estranhos depois que abri um e-mail.", "Você ainda possui o e-mail?", "Sim. Está salvo no computador.", "Dá uma olhada lá: use 'files' e depois 'read' no terminal.")
 mission_to_start = "m01"
+
+[node name="Bed" parent="Decor" instance=ExtResource("bed_scene")]
+position = Vector2(372, 122)
+
+[node name="Nightstand1" type="Sprite2D" parent="Decor"]
+position = Vector2(334, 64)
+scale = Vector2(0.75, 0.75)
+texture = ExtResource("p_nightstand")
+offset = Vector2(0, -20)
+
+[node name="Body" type="StaticBody2D" parent="Decor/Nightstand1"]
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Decor/Nightstand1/Body"]
+position = Vector2(0, -8)
+shape = SubResource("shape_Nightstand1")
 
 [node name="ExitDoor" type="Area2D" parent="."]
 collision_layer = 0

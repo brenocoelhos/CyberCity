@@ -12,11 +12,50 @@ func _ready() -> void:
 	_apply_config(SceneTransition.interior_config)
 	_apply_saved_spawn()
 	_setup_room_camera()
+	_build_room_shape()
 	var lighting := Node2D.new()
 	lighting.name = "Lighting"
 	lighting.set_script(preload("res://scripts/world/InteriorLighting.gd"))
 	add_child(lighting)
 	_start_ambient()
+
+
+## Formato de cada sala: blocos de parede que tiram pedaços do retângulo
+## (o chão vai de (32, 32) a (416, 288)). Cada bloco é a área no chão que
+## fica bloqueada; o desenho em 3/4 é feito por RoomBlock.gd.
+const ROOM_SHAPES := {
+	# Central de comando: cantos de baixo recortados (formato de "T").
+	"OfficeInterior": [
+		[Vector2(32, 224), Vector2(100, 224), Vector2(100, 288), Vector2(32, 288)],
+		[Vector2(352, 224), Vector2(416, 224), Vector2(416, 288), Vector2(352, 288)],
+	],
+	# Laboratório: cantos de baixo em diagonal (sala hexagonal).
+	"TechCenterInterior": [
+		[Vector2(32, 190), Vector2(130, 288), Vector2(32, 288)],
+		[Vector2(416, 190), Vector2(416, 288), Vector2(318, 288)],
+	],
+	# Café: os quatro cantos chanfrados (octógono).
+	"AppInterior": [
+		[Vector2(32, 32), Vector2(96, 32), Vector2(32, 96)],
+		[Vector2(352, 32), Vector2(416, 32), Vector2(416, 96)],
+		[Vector2(32, 240), Vector2(80, 288), Vector2(32, 288)],
+		[Vector2(416, 240), Vector2(416, 288), Vector2(368, 288)],
+	],
+	# Casa em "L": sala de estar + quarto no canto de cima (com divisória).
+	"HouseInterior": [
+		[Vector2(320, 196), Vector2(416, 196), Vector2(416, 288), Vector2(320, 288)],
+		[Vector2(300, 32), Vector2(312, 32), Vector2(312, 128), Vector2(300, 128)],
+	],
+}
+
+
+func _build_room_shape() -> void:
+	for points in ROOM_SHAPES.get(String(name), []):
+		var block := Node2D.new()
+		block.name = "RoomBlock"
+		block.set_script(preload("res://scripts/world/RoomBlock.gd"))
+		add_child(block)
+		block.setup(PackedVector2Array(points))
 
 
 ## Som ambiente de cada sala, em loop e baixinho (ver tools/gen_ambient_sounds.py).

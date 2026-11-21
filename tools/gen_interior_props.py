@@ -424,6 +424,34 @@ def holo_rug():
     return img
 
 
+def bed():
+    """Cama de solteiro vista de cima (cabeceira com neon em cima)."""
+    img, d = new(64, 96)
+    box(d, 2, 2, 61, 22, METAL, light=METAL_L, dark=METAL_D)  # cabeceira
+    glow(img, 8, 8, 55, 10, CYAN, radius=3, strength=110)
+    d = ImageDraw.Draw(img)
+    d.line([8, 9, 55, 9], fill=CYAN_H)
+    box(d, 4, 18, 59, 91, METAL_D, light=METAL)  # estrutura
+    box(d, 7, 21, 56, 46, (226, 232, 246, 255), light=(255, 255, 255, 255), dark=(170, 180, 205, 255))  # lençol
+    box(d, 12, 24, 51, 38, (240, 244, 255, 255), dark=(185, 195, 220, 255))  # travesseiro
+    box(d, 6, 44, 57, 88, PURPLE, light=PURPLE_L, dark=(90, 50, 170, 255))  # cobertor
+    d.line([6, 50, 57, 50], fill=PURPLE_L)
+    for y in range(58, 86, 8):
+        d.line([10, y, 53, y], fill=(120, 70, 220, 255))
+    d.line([5, 92, 58, 92], fill=MAGENTA)
+    return img
+
+
+def nightstand():
+    img, d = new(32, 40)
+    box(d, 2, 10, 29, 37, WOOD, light=(128, 92, 72, 255), dark=(60, 40, 32, 255))
+    d.line([6, 24, 25, 24], fill=OUTLINE)
+    d.rectangle([14, 17, 17, 19], fill=CYAN)
+    box(d, 10, 1, 21, 10, METAL, light=METAL_L)  # luminária
+    glow(img, 11, 2, 20, 6, CYAN, radius=3, strength=120)
+    return img
+
+
 def tv():
     return wall_screen("planet", 112, 60)
 
@@ -436,7 +464,7 @@ def main():
         "sofa": sofa(), "armchair": armchair(), "hologram": hologram(), "holo_globe": holo_globe(), "rack": rack(),
         "shelf": shelf(), "workstation": workstation(), "tube": tube(), "tube_big": tube(True), "lab_bench": lab_bench(),
         "crystals": crystals(), "counter": counter(), "cafe_table": cafe_table(), "pool_table": pool_table(),
-        "arcade": arcade(), "holo_rug": holo_rug(),
+        "arcade": arcade(), "holo_rug": holo_rug(), "bed": bed(), "nightstand": nightstand(),
     }
     for name, img in items.items():
         save(img, name)

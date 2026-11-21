@@ -204,10 +204,14 @@ func _on_mission_completed(mission_id: String) -> void:
 	var mission: Dictionary = MissionManager.get_mission(mission_id)
 	if mission.is_empty():
 		return
-	send_message(String(CONTACTS.get(mission_id, CENTRAL)), "Muito obrigado pela ajuda! Problema resolvido.\nConceito aprendido: %s (+%d XP)" % [
+	var text := "Muito obrigado pela ajuda! Problema resolvido.\nConceito aprendido: %s (+%d XP)" % [
 		String(mission["concept"]),
 		int(mission["xp"]),
-	])
+	]
+	var item_id: String = String(Inventory.MISSION_REWARDS.get(mission_id, ""))
+	if item_id != "":
+		text += "\nItem na mochila: %s" % Inventory.item_name(item_id)
+	send_message(String(CONTACTS.get(mission_id, CENTRAL)), text)
 
 
 ## Subir de nível pode liberar uma ferramenta: a Central avisa pelo celular.

@@ -1,0 +1,40 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/BedSave.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/environment/interior/props/bed.png" id="2"]
+
+[sub_resource type="RectangleShape2D" id="Trigger"]
+size = Vector2(84, 100)
+
+[sub_resource type="RectangleShape2D" id="Base"]
+size = Vector2(44, 60)
+
+[node name="Bed" type="Area2D"]
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("1")
+prompt_text = "[E] Dormir e salvar"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -30)
+shape = SubResource("Trigger")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(0.75, 0.75)
+texture = ExtResource("2")
+offset = Vector2(0, -48)
+
+[node name="Body" type="StaticBody2D" parent="."]
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Body"]
+position = Vector2(0, -32)
+shape = SubResource("Base")
+
+[node name="PromptLabel" type="Label" parent="."]
+offset_left = -60.0
+offset_top = 6.0
+offset_right = 60.0
+offset_bottom = 24.0
+text = "[E] Dormir e salvar"
+horizontal_alignment = 1
