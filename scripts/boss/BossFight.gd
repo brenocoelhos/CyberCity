@@ -224,6 +224,7 @@ func tick(delta: float) -> void:
 	if phase == "attack":
 		if not _mid_taunted and time_left <= attack_seconds(attack_index) * 0.5:
 			_mid_taunted = true
+			SoundManager.play("warning", -7.0)
 			said.emit("boss", _pick(TAUNT_MID))
 		if time_left <= 0.0:
 			_attack_failed()
@@ -235,6 +236,7 @@ func tick(delta: float) -> void:
 
 
 func _begin_attack() -> void:
+	SoundManager.play("alarm", -9.0, 1.60)
 	phase = "attack"
 	time_left = attack_seconds(attack_index)
 	_mid_taunted = false

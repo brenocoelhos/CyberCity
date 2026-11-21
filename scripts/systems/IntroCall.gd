@@ -32,9 +32,14 @@ func play() -> void:
 		return
 	HUD.set_overlay_active(true)
 	await get_tree().create_timer(0.9).timeout
-	for i in range(3):
-		SoundManager.play("blip")
-		await get_tree().create_timer(0.45).timeout
+	if SoundManager.has_sound("phone_ring"):
+		SoundManager.play("phone_ring", -5.0, 1.30)
+		await get_tree().create_timer(1.35).timeout
+	else:
+		# Mantem o toque antigo enquanto nao houver novo audio.
+		for i in range(3):
+			SoundManager.play("blip")
+			await get_tree().create_timer(0.45).timeout
 	HUD.set_overlay_active(false)
 	DialogueManager.start_dialogue("CENTRAL", PackedStringArray(CALL_LINES))
 	await DialogueManager.closed

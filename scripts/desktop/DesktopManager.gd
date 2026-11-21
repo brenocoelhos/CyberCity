@@ -167,6 +167,9 @@ func close() -> void:
 		TerminalManager.close()
 	_terminal_grip.visible = false
 	TerminalManager.detach_window()
+	# Ao sair do computador, a cena da cidade pode continuar sendo a mesma.
+	# Por isso, scene_changed nao dispara: restaura a trilha explicitamente.
+	MusicManager.end_investigation()
 
 
 func _process(_delta: float) -> void:

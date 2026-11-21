@@ -189,6 +189,7 @@ func start_session(challenge_id: String, host: String) -> void:
 
 ## Mostra a janela do terminal pela primeira vez (boot e mensagem inicial).
 func show_window() -> void:
+	MusicManager.start_investigation()
 	_active = true
 	visible = true
 	monitor.visible = true
@@ -211,6 +212,8 @@ func show_window() -> void:
 
 ## Desktop: traz de volta a janela minimizada, com a tela e a sessão como estavam.
 func restore_window() -> void:
+	if _boss == null:
+		MusicManager.start_investigation()
 	_active = true
 	visible = true
 	monitor.visible = true
@@ -222,6 +225,8 @@ func restore_window() -> void:
 
 ## Desktop: esconde a janela mas mantém a sessão (ssh, progresso, histórico).
 func minimize() -> void:
+	if _boss == null:
+		MusicManager.end_investigation()
 	_active = false
 	visible = false
 	monitor.visible = false
@@ -426,6 +431,7 @@ func close() -> void:
 	# Durante o duelo final não dá para fechar o terminal (a porta está trancada).
 	if _boss != null:
 		return
+	MusicManager.end_investigation()
 	_active = false
 	visible = false
 	_ssh_pending = {}
@@ -510,7 +516,7 @@ func _advance_typing(delta: float) -> void:
 
 
 func _on_command_submitted(text: String) -> void:
-	SoundManager.play("keypress")
+	SoundManager.play("keypress", -3.0, 0.26)
 	input_line.text = ""
 
 	# Depois de 'ssh', a próxima linha é a senha (não vai para o histórico

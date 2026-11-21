@@ -52,6 +52,7 @@ func begin_encounter() -> void:
 	await get_tree().create_timer(0.8).timeout
 	_exit_locked = true
 	SoundManager.play("error")
+	SoundManager.play("door", -5.0)
 	DialogueManager.start_dialogue("SISTEMA", PackedStringArray(DOOR_LINES))
 	await DialogueManager.closed
 	DialogueManager.start_dialogue("HACKER", PackedStringArray(HACKER_LINES))
@@ -61,6 +62,7 @@ func begin_encounter() -> void:
 
 
 func _start_fight() -> void:
+	MusicManager.start_boss()
 	_fight = BossFight.new()
 	TerminalManager.open_boss(_fight)
 
@@ -91,6 +93,7 @@ func _show_ending(won: bool) -> void:
 
 
 func _show_credits() -> void:
+	MusicManager.play_ending(true)
 	SoundManager.play("success")
 	# O tempo da partida fecha aqui e entra no placar.
 	var result: Dictionary = Leaderboard.finish_run()
@@ -101,6 +104,8 @@ func _show_credits() -> void:
 
 
 func _show_game_over() -> void:
+	MusicManager.play_ending(false)
+	SoundManager.play("game_over")
 	SoundManager.play("error")
 	_overlay = CanvasLayer.new()
 	_overlay.layer = 120

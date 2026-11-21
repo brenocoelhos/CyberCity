@@ -39,4 +39,5 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if _player_in_range and event.is_action_pressed("interact"):
 		SoundManager.play("interact")
+		SoundManager.play("door", -6.0)
 		SceneTransition.exit_to_city()

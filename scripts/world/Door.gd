@@ -139,4 +139,5 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event.is_action_pressed("interact"):
 		SoundManager.play("interact")
+		SoundManager.play("door", -6.0)
 		SceneTransition.enter_building(interior_scene_path, building_title, global_position + Vector2(0, 40), interior_config)
