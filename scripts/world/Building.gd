@@ -59,14 +59,20 @@ func _ready() -> void:
 func _update_building() -> void:
 	var texture: Texture2D = facade if facade != null else $Sprite2D.texture
 	$Sprite2D.texture = texture
-	var size := texture.get_size()
+	# Fachadas em alta resolução (tools/import_building_facades_hd.gd) têm 3
+	# pixels por unidade do mapa: desenha a 1/3 com filtro Linear, nítido em
+	# qualquer tamanho de tela. As outras (1 pixel por unidade) ficam como estão.
+	var density := 3.0 if texture.get_width() >= 250 else 1.0
+	var size := texture.get_size() / density
 	$Sprite2D.centered = false
+	$Sprite2D.scale = Vector2.ONE / density
+	$Sprite2D.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR if density > 1.0 else CanvasItem.TEXTURE_FILTER_PARENT_NODE
 	$Sprite2D.position = Vector2(-size.x / 2.0, -size.y)
 	var footprint := RectangleShape2D.new()
 	footprint.size = Vector2(size.x - 16.0, 28.0)
 	$CollisionShape2D.shape = footprint
 	$CollisionShape2D.position = Vector2(0, -15)
-	var visible_top: float = texture.get_image().get_used_rect().position.y
+	var visible_top: float = texture.get_image().get_used_rect().position.y / density
 	$NameLabel.position = Vector2(-48, -size.y + visible_top - 32)
 	$NameLabel.size = Vector2(96, 30)
 	$NameLabel.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

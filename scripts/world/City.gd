@@ -230,7 +230,7 @@ func _build_cyber_streetscape() -> void:
 		var sprite := Sprite2D.new()
 		sprite.texture = load("res://assets/environment/cyber/building_%d.png" % entry[1])
 		sprite.position = entry[0]
-		sprite.offset = Vector2(0,-112)
+		_fit_facade(sprite, 1.0)
 		frontage.add_child(sprite)
 		var wall := StaticBody2D.new()
 		wall.position = entry[0] + Vector2(0,-15)
@@ -292,18 +292,28 @@ func _join_frontages() -> void:
 			if sprite is Sprite2D and sprite.has_meta("wall") and row.has_point(sprite.position):
 				items.append(sprite)
 		items.sort_custom(func(a,b): return a.position.x < b.position.x)
+		# Medidas em unidades do mapa (as fachadas em alta resolução têm 3
+		# pixels por unidade).
 		var total := 0.0
 		for item in items:
 			var sprite: Sprite2D = item if item is Sprite2D else item.get_node("Sprite2D")
-			total += sprite.texture.get_image().get_used_rect().size.x - 8
+			total += _facade_used(sprite).size.x - 8
 		var cursor: float = row.position.x + (row.size.x-total)/2.0
 		for item in items:
 			var sprite: Sprite2D = item if item is Sprite2D else item.get_node("Sprite2D")
-			var bounds := sprite.texture.get_image().get_used_rect()
-			item.position.x = roundf(cursor - bounds.position.x + sprite.texture.get_width()/2.0)
+			var bounds := _facade_used(sprite)
+			var density := 3.0 if sprite.texture.get_width() >= 250 else 1.0
+			item.position.x = roundf(cursor - bounds.position.x + sprite.texture.get_width() / density / 2.0)
 			if item.has_meta("wall"):
 				item.get_meta("wall").position.x = item.position.x
 			cursor += bounds.size.x - 8
+
+## Parte visível da fachada (sem o fundo transparente), em unidades do mapa.
+func _facade_used(sprite: Sprite2D) -> Rect2:
+	var density := 3.0 if sprite.texture.get_width() >= 250 else 1.0
+	var used := Rect2(sprite.texture.get_image().get_used_rect())
+	return Rect2(used.position / density, used.size / density)
+
 
 ## Segunda fileira de construcoes: ocupa os fundos sem bloquear as entradas.
 func _fill_city_blocks() -> void:
@@ -323,12 +333,22 @@ func _fill_city_blocks() -> void:
 	for i in range(4):
 		get_node("Decor/ServerRack%d" % (i+1)).hide()
 
+## Fachada de prédio com a base no ponto do sprite. As fachadas em alta
+## resolução (3 pixels por unidade, ver tools/import_building_facades_hd.gd)
+## são reduzidas a 1/3 e suavizadas, para ficarem nítidas sem mudar de tamanho.
+func _fit_facade(sprite: Sprite2D, ratio: float) -> void:
+	var density := 3.0 if sprite.texture.get_width() >= 250 else 1.0
+	sprite.offset = Vector2(0, -sprite.texture.get_height() / 2.0)
+	sprite.scale = Vector2(ratio, ratio) / density
+	if density > 1.0:
+		sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+
+
 func _add_rear_building(parent_node: Node2D, base: Vector2, variant: int, ratio: float) -> void:
 	var sprite := Sprite2D.new()
 	sprite.texture = load("res://assets/environment/cyber/building_%d.png" % variant)
 	sprite.position = base
-	sprite.offset = Vector2(0,-112)
-	sprite.scale = Vector2(ratio,ratio)
+	_fit_facade(sprite, ratio)
 	parent_node.add_child(sprite)
 	var body := StaticBody2D.new()
 	body.position = base+Vector2(0,-10)
