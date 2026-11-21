@@ -15,7 +15,9 @@ func _run() -> void:
 	# Cruzamento de 4 vias, T, curva do anel, retas e faixas de pedestre.
 	assert(ground.get_cell_atlas_coords(Vector2i(21, 13)) == Vector2i(4, 2))
 	assert(ground.get_cell_atlas_coords(Vector2i(21, 2)) == Vector2i(6, 2))
-	assert(ground.get_cell_atlas_coords(Vector2i(2, 2)) == Vector2i(2, 4))
+	# Cantos do anel arredondados (CityShape.gd): a reta termina e vira curva desenhada.
+	assert(ground.get_cell_atlas_coords(Vector2i(2, 6)) == Vector2i(0, 2))
+	assert(city.get_node("CityShape") != null and city._in_round_corner(2, 2))
 	assert(ground.get_cell_atlas_coords(Vector2i(10, 13)) == Vector2i(1, 2))
 	assert(ground.get_cell_atlas_coords(Vector2i(21, 8)) == Vector2i(0, 2))
 	assert(ground.get_cell_atlas_coords(Vector2i(24, 13)) == Vector2i(7, 2))

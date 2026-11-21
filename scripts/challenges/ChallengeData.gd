@@ -17,6 +17,8 @@ extends Node
 ##                 do quiz ou app Pistas do celular). Ver ChallengeSession.
 ##   mission     - id da missão ligada a este desafio
 
+const HomePC := preload("res://scripts/desktop/HomePC.gd")
+
 const CHALLENGES := {
 	## Missões 02 a 05: desafios práticos do tipo "report" (eram quizzes).
 	## O jogador investiga arquivos no terminal (ou o e-mail no desktop) com
@@ -624,6 +626,10 @@ const CHALLENGES := {
 
 
 func get_challenge(challenge_id: String) -> Dictionary:
+	# O computador de casa não é um desafio: o conteúdo é montado na hora,
+	# a partir do progresso (ver HomePC.gd).
+	if challenge_id == HomePC.ID:
+		return HomePC.build()
 	return CHALLENGES.get(challenge_id, {})
 
 

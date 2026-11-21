@@ -172,7 +172,7 @@ func start_session(challenge_id: String, host: String) -> void:
 	_challenge_id = challenge_id
 	_challenge = ChallengeData.get_challenge(challenge_id)
 	# Abrir o computador de um desafio aceita a missão ligada a ele.
-	if not _challenge.is_empty():
+	if not _challenge.is_empty() and not bool(_challenge.get("home", false)):
 		ChallengeSession.begin(challenge_id)
 	_firewall_rules = {}
 	_router_logged_in = false
@@ -320,7 +320,7 @@ func _challenge_hint() -> String:
 			intro = "Campo de comentário simulado. Digite 'postar <mensagem>' para testar."
 		"router":
 			intro = "Roteador doméstico detectado. Digite 'files' e leia o manual com 'read manual.txt'."
-		"report", "hosts":
+		"report", "hosts", "home":
 			intro = String(_challenge.get("intro", ""))
 
 	if desktop_mode and _challenge.has("desktop_intro"):

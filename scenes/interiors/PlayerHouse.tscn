@@ -350,6 +350,10 @@ shape = SubResource("shape_DiningTable1")
 [node name="Computer" parent="." instance=ExtResource("5")]
 position = Vector2(172, 94)
 host_name = "minha-casa"
+challenge_id = "c_casa"
+
+[node name="NameLabel" parent="Computer"]
+text = "Meu PC"
 
 [node name="ExitDoor" type="Area2D" parent="."]
 collision_layer = 0

@@ -18,6 +18,11 @@ const MAP_HEIGHT := 27
 const ROADS_X := [2, 21, 40, 59]
 const ROADS_Y := [2, 13, 24]
 
+## Cantos do anel de ruas viram curvas (raio em tiles): em cima mais abertas,
+## embaixo mais fechadas (os prédios da frente chegam perto da esquina).
+## As curvas e a água em volta da cidade são desenhadas por CityShape.gd.
+const ROUND_CORNERS := {"tl": 4, "tr": 4, "br": 3, "bl": 3}
+
 ## Distância (em tiles) entre um cruzamento e sua faixa de pedestre.
 const CROSSWALK_DISTANCE := 3
 
@@ -54,6 +59,11 @@ const ROAD_PIECES := {
 	"1010": Vector2i(0, 4), # curva esquerda/cima
 	"1001": Vector2i(1, 4), # curva cima/direita
 	"0101": Vector2i(2, 4), # curva direita/baixo
+	# Pontas de rua que continuam numa curva desenhada (cantos arredondados).
+	"1000": Vector2i(0, 2),
+	"0100": Vector2i(0, 2),
+	"0010": Vector2i(1, 2),
+	"0001": Vector2i(1, 2),
 }
 
 const CityMap := preload("res://scripts/world/CityMap.gd")
@@ -71,6 +81,12 @@ var city_map: CanvasLayer
 
 func _ready() -> void:
 	_generate_ground()
+	var shape := Node2D.new()
+	shape.name = "CityShape"
+	shape.set_script(preload("res://scripts/world/CityShape.gd"))
+	add_child(shape)
+	move_child(shape, ground.get_index() + 1)
+	shape.setup(self)
 	_build_cyber_streetscape()
 	_build_plaza()
 	_join_frontages()
@@ -113,7 +129,7 @@ func _tile_for(x: int, y: int) -> Vector2i:
 	if _is_next_to_road(x, y):
 		return SIDEWALK
 	if x >= 23 and x <= 38 and y >= 4 and y <= 11:
-		return SIDEWALK if (x >= 29 and x <= 32) or (y >= 7 and y <= 8) else PAVED
+		return _plaza_tile(x, y)
 	for area in PAVED_AREAS:
 		if area.has_point(Vector2i(x, y)):
 			return PAVED
@@ -125,11 +141,49 @@ func _tile_for(x: int, y: int) -> Vector2i:
 		return GRASS_TILES[variation + 1]
 	return GRASS_TILES[0]
 
-## Rua = linha ou coluna de rua, dentro do anel externo.
+## Praça Central oval: largo no meio (monumento), canteiro de grama em volta,
+## uma calçada em anel e caminhos retos até as calçadas.
+func _plaza_tile(x: int, y: int) -> Vector2i:
+	var dx: float = x + 0.5 - 31.0
+	var dy: float = y + 0.5 - 8.0
+	# Elipse: a praça é mais larga que alta.
+	var e: float = sqrt(dx * dx * 0.25 + dy * dy)
+	var straight: bool = (x >= 30 and x <= 31) or (y >= 7 and y <= 8)
+	if e < 1.6:
+		return PAVED
+	if e < 2.7:
+		if straight:
+			return SIDEWALK
+		var variation := posmod(x * 73 + y * 37 + x * y, 31)
+		return GRASS_TILES[variation + 1] if variation < 5 else GRASS_TILES[0]
+	if e < 3.7:
+		return SIDEWALK
+	return SIDEWALK if straight else PAVED
+
+## Rua = linha ou coluna de rua, dentro do anel externo. Nos cantos do anel
+## o trecho reto some: ali passa a curva desenhada por CityShape.gd.
 func _is_road(x: int, y: int) -> bool:
 	var inside_x: bool = x >= ROADS_X[0] and x <= ROADS_X[-1]
 	var inside_y: bool = y >= ROADS_Y[0] and y <= ROADS_Y[-1]
-	return (ROADS_X.has(x) and inside_y) or (ROADS_Y.has(y) and inside_x)
+	if not ((ROADS_X.has(x) and inside_y) or (ROADS_Y.has(y) and inside_x)):
+		return false
+	return not _in_round_corner(x, y)
+
+
+func _in_round_corner(x: int, y: int) -> bool:
+	var left: int = ROADS_X[0]
+	var right: int = ROADS_X[-1]
+	var top: int = ROADS_Y[0]
+	var bottom: int = ROADS_Y[-1]
+	if x < left + ROUND_CORNERS["tl"] and y < top + ROUND_CORNERS["tl"]:
+		return true
+	if x > right - ROUND_CORNERS["tr"] and y < top + ROUND_CORNERS["tr"]:
+		return true
+	if x > right - ROUND_CORNERS["br"] and y > bottom - ROUND_CORNERS["br"]:
+		return true
+	if x < left + ROUND_CORNERS["bl"] and y > bottom - ROUND_CORNERS["bl"]:
+		return true
+	return false
 
 func _is_next_to_road(x: int, y: int) -> bool:
 	for dx in range(-1, 2):

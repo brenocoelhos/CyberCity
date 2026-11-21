@@ -46,6 +46,7 @@ func open_for(challenge: Dictionary) -> void:
 	_info.text = "Escolha um arquivo."
 	_viewer.text = ""
 	_bar.say("Abra os arquivos e aponte o que achar de importante aqui embaixo. Nos logs, filtre as linhas por um termo.")
+	_bar.visible = not bool(challenge.get("home", false))
 
 
 func file_names() -> PackedStringArray:

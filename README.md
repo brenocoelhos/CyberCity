@@ -1140,3 +1140,19 @@ Detalhes e como acrescentar prédios/ruas: `docs/TILESET_32.md`.
 - O quarto tem um computador livre (`minha-casa`) para treinar comandos.
 - Móveis novos (vaso, pia, chuveiro, geladeira, fogão, bancada, mesa e
   guarda-roupa) saem de `tools/gen_interior_props.py`.
+
+## Computador de casa e cidade com novo formato
+
+- **Meu PC** (quarto da Minha Casa): abre o mesmo desktop estilo Kali dos
+  desafios, sem missão (`ChallengeData.get_challenge("c_casa")` →
+  `scripts/desktop/HomePC.gd`, montado na hora a partir do progresso):
+  - E-mail: boas-vindas da Central, um relatório por missão concluída e um boletim;
+  - Arquivos: diário, tarefas, relatório das missões (com rank), mochila e dicas;
+  - Navegador: `wiki.casa` (CyberWiki com os conceitos aprendidos),
+    `central.casa` (placar do agente) e `roteador.casa`;
+  - Terminal: os mesmos arquivos e a rede de casa (`scan`, `curl`), além de
+    `sha256sum`, `caesar` e `passcheck`.
+- **Cidade menos retangular**: os cantos do anel de ruas viram curvas
+  (`City.ROUND_CORNERS`), a cidade fica cercada de água com margem ondulada e neon
+  (`scripts/world/CityShape.gd` + `assets/shaders/city_water.gdshader`; os cantos
+  de água bloqueiam o jogador) e a Praça Central ganhou um anel oval com jardim.

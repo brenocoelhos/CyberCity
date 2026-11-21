@@ -61,6 +61,10 @@ func open_for(challenge: Dictionary) -> void:
 	_flag_button.visible = _messages.size() > 1
 	_refresh_list()
 	_bar.say("Leia as mensagens. Aponte o que achar de suspeito aqui embaixo.")
+	# No computador de casa não há o que denunciar: é só a caixa de entrada.
+	if bool(challenge.get("home", false)):
+		_flag_button.visible = false
+		_bar.visible = false
 	if _messages.size() == 1:
 		_list.select(0)
 		_show_message(0)
