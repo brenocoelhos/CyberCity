@@ -27,6 +27,7 @@
 [ext_resource type="Texture2D" uid="uid://bqai05r63truv" path="res://assets/environment/extracted/rock.png" id="rock"]
 [ext_resource type="Texture2D" path="res://assets/environment/cyber/tree.png" id="tree_tall"]
 [ext_resource type="Texture2D" path="res://assets/environment/cyber/building_10.png" id="facade_9"]
+[ext_resource type="Texture2D" path="res://assets/environment/cyber/building_6.png" id="facade_home"]
 [ext_resource type="PackedScene" path="res://scenes/computers/PublicTerminal.tscn" id="public_terminal"]
 [ext_resource type="Script" path="res://scripts/ui/CyberFrame.gd" id="cyber_frame"]
 [ext_resource type="PackedScene" path="res://scenes/computers/SaveTerminal.tscn" id="save_terminal"]
@@ -130,6 +131,12 @@ configure_interior = true
 interior_npc_name = "Hacker"
 interior_npc_lines = PackedStringArray("(Falas provisórias: a equipe de História vai escrever esta casa.)")
 interior_boss_fight = true
+
+[node name="MinhaCasa" parent="Buildings" instance=ExtResource("3")]
+position = Vector2(176, 736)
+facade = ExtResource("facade_home")
+building_name = "Minha Casa"
+interior_path = "res://scenes/interiors/PlayerHouse.tscn"
 
 [node name="PredioTecnologia" parent="Buildings" unique_id=487454252 instance=ExtResource("3")]
 position = Vector2(992, 736)

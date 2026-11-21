@@ -41,6 +41,16 @@ const ROOM_SHAPES := {
 		[Vector2(32, 240), Vector2(80, 288), Vector2(32, 288)],
 		[Vector2(416, 240), Vector2(416, 288), Vector2(368, 288)],
 	],
+	# Casa do jogador: quarto, banheiro, sala e cozinha separados por paredes
+	# com vãos de porta (quarto<->banheiro, quarto<->sala, sala<->cozinha).
+	"PlayerHouse": [
+		[Vector2(32, 148), Vector2(108, 148), Vector2(108, 160), Vector2(32, 160)],
+		[Vector2(164, 148), Vector2(270, 148), Vector2(270, 160), Vector2(164, 160)],
+		[Vector2(280, 148), Vector2(416, 148), Vector2(416, 160), Vector2(280, 160)],
+		[Vector2(270, 32), Vector2(280, 32), Vector2(280, 70), Vector2(270, 70)],
+		[Vector2(270, 128), Vector2(280, 128), Vector2(280, 194), Vector2(270, 194)],
+		[Vector2(270, 252), Vector2(280, 252), Vector2(280, 288), Vector2(270, 288)],
+	],
 	# Casa em "L": sala de estar + quarto no canto de cima (com divisória).
 	"HouseInterior": [
 		[Vector2(320, 196), Vector2(416, 196), Vector2(416, 288), Vector2(320, 288)],
@@ -49,7 +59,27 @@ const ROOM_SHAPES := {
 }
 
 
+## Piso de cada cômodo: [área, tipo ("wood", "tile", "kitchen" ou "" para o
+## piso normal), nome pintado no chão, onde pintar o nome]. Desenhado por RoomFloors.gd.
+const ROOM_ZONES := {
+	"PlayerHouse": [
+		[Rect2(32, 32, 240, 120), "wood", "QUARTO", Vector2(112, 142)],
+		[Rect2(278, 32, 138, 120), "tile", "BANHEIRO", Vector2(292, 118)],
+		[Rect2(32, 160, 240, 128), "", "SALA", Vector2(184, 188)],
+		[Rect2(278, 160, 138, 128), "kitchen", "COZINHA", Vector2(334, 216)],
+	],
+}
+
+
 func _build_room_shape() -> void:
+	var zones: Array = ROOM_ZONES.get(String(name), [])
+	var floor_node := get_node_or_null("Floor")
+	if not zones.is_empty() and floor_node != null:
+		var floors := Node2D.new()
+		floors.name = "RoomFloors"
+		floors.set_script(preload("res://scripts/world/RoomFloors.gd"))
+		floors.zones = zones
+		floor_node.add_child(floors)
 	for points in ROOM_SHAPES.get(String(name), []):
 		var block := Node2D.new()
 		block.name = "RoomBlock"
@@ -64,6 +94,7 @@ const AMBIENT := {
 	"TechCenterInterior": "res://assets/audio/ambient_lab.wav",
 	"AppInterior": "res://assets/audio/ambient_cafe.wav",
 	"HouseInterior": "res://assets/audio/ambient_house.wav",
+	"PlayerHouse": "res://assets/audio/ambient_house.wav",
 }
 
 

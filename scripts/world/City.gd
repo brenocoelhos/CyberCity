@@ -223,7 +223,7 @@ func _build_cyber_streetscape() -> void:
 	frontage.y_sort_enabled = true
 	add_child(frontage)
 	var rows = [[Vector2(144,384),7],[Vector2(528,384),11],[Vector2(624,384),16],
-		[Vector2(176,736),14],[Vector2(560,736),6],[Vector2(624,736),2],
+		[Vector2(560,736),14],[Vector2(624,736),2],
 		[Vector2(1344,384),2],[Vector2(1440,384),9],[Vector2(1728,384),4],[Vector2(1824,384),12],
 		[Vector2(1392,736),10],[Vector2(1488,736),11],[Vector2(1680,736),17],[Vector2(1776,736),5],[Vector2(1856,736),18]]
 	for entry in rows:

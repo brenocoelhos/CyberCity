@@ -244,6 +244,7 @@ mission_to_start = "m01"
 
 [node name="Bed" parent="Decor" instance=ExtResource("bed_scene")]
 position = Vector2(372, 122)
+can_sleep = false
 
 [node name="Nightstand1" type="Sprite2D" parent="Decor"]
 position = Vector2(334, 64)

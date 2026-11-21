@@ -3,11 +3,22 @@ extends "res://scripts/systems/Interactable.gd"
 ## Cama das casas: ao apertar E o personagem "dorme" (a tela escurece um
 ## pouco) e o jogo é salvo, como no Terminal de Salvamento da praça.
 
+## Desmarcado nas casas dos vizinhos: a cama fica só de enfeite (não dá
+## para dormir na casa dos outros). Salvar é na cama da casa do jogador.
+@export var can_sleep: bool = true
+
 var _sleeping: bool = false
 
 
+func _ready() -> void:
+	if not can_sleep:
+		monitoring = false
+		$PromptLabel.visible = false
+	super._ready()
+
+
 func _on_interact() -> void:
-	if _sleeping:
+	if _sleeping or not can_sleep:
 		return
 	if not SaveManager.can_save():
 		SoundManager.play("error")

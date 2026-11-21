@@ -452,6 +452,125 @@ def nightstand():
     return img
 
 
+WHITE = (226, 232, 246, 255)
+WHITE_L = (250, 252, 255, 255)
+WHITE_D = (160, 172, 198, 255)
+WATER = (90, 190, 240, 255)
+
+
+def toilet():
+    """Vaso sanitário visto de cima (caixa encostada na parede)."""
+    img, d = new(32, 44)
+    box(d, 5, 1, 26, 14, WHITE, light=WHITE_L, dark=WHITE_D)  # caixa
+    d.rectangle([13, 4, 18, 6], fill=METAL_L)
+    d.ellipse([4, 12, 27, 41], fill=OUTLINE)
+    d.ellipse([5, 13, 26, 40], fill=WHITE)
+    d.ellipse([9, 18, 22, 35], fill=WHITE_D)
+    d.ellipse([11, 21, 20, 32], fill=WATER)
+    d.arc([5, 13, 26, 40], 200, 330, fill=WHITE_L)
+    return img
+
+
+def sink():
+    """Pia com espelho acima (encostada na parede)."""
+    img, d = new(36, 52)
+    box(d, 4, 0, 31, 20, METAL_D, light=METAL)  # espelho
+    d.rectangle([7, 3, 28, 17], fill=(120, 170, 210, 255))
+    d.line([9, 15, 18, 5], fill=WHITE_L)
+    glow(img, 6, 21, 29, 21, CYAN, 2, 70)
+    d = ImageDraw.Draw(img)
+    box(d, 2, 24, 33, 49, WHITE, light=WHITE_L, dark=WHITE_D)  # bancada
+    d.ellipse([8, 28, 27, 42], fill=OUTLINE)
+    d.ellipse([9, 29, 26, 41], fill=WHITE_D)
+    d.rectangle([16, 24, 19, 31], fill=METAL_H)  # torneira
+    d.line([3, 50, 32, 50], fill=CYAN)
+    return img
+
+
+def shower():
+    """Box de chuveiro: piso com ralo e vidro azulado."""
+    img, d = new(56, 72)
+    box(d, 1, 1, 54, 70, METAL_D, light=METAL)
+    for y in range(6, 66, 8):
+        for x in range(6, 50, 8):
+            d.rectangle([x, y, x + 6, y + 6], fill=(70, 110, 140, 255))
+    d.ellipse([24, 30, 31, 37], fill=OUTLINE)
+    d.ellipse([25, 31, 30, 36], fill=METAL_H)
+    box(d, 20, 3, 35, 10, METAL_L, light=METAL_H)  # chuveiro
+    for i in range(6):
+        d.point((22 + i * 2, 12 + (i % 2) * 2), fill=WATER)
+    glass = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    gd = ImageDraw.Draw(glass)
+    gd.rectangle([2, 40, 53, 69], fill=(140, 210, 255, 70))
+    gd.line([2, 40, 53, 40], fill=(200, 240, 255, 200))
+    gd.line([8, 46, 20, 60], fill=(230, 250, 255, 120))
+    img.alpha_composite(glass)
+    return img
+
+
+def fridge():
+    img, d = new(40, 84)
+    box(d, 2, 2, 37, 81, WHITE_D, light=WHITE, dark=(120, 130, 160, 255))
+    d.line([3, 30, 36, 30], fill=OUTLINE)
+    d.rectangle([31, 10, 33, 24], fill=METAL)
+    d.rectangle([31, 36, 33, 54], fill=METAL)
+    box(d, 8, 40, 24, 52, SCREEN_D)  # painel
+    d.line([10, 44, 20, 44], fill=CYAN)
+    d.line([10, 48, 16, 48], fill=GREEN)
+    glow(img, 8, 40, 24, 52, CYAN, 2, 50)
+    return img
+
+
+def stove():
+    img, d = new(44, 52)
+    box(d, 1, 1, 42, 50, METAL, light=METAL_H, dark=METAL_D)
+    box(d, 4, 4, 39, 30, (20, 22, 30, 255))
+    for cx, cy in [(13, 11), (30, 11), (13, 23), (30, 23)]:
+        d.ellipse([cx - 6, cy - 5, cx + 6, cy + 5], outline=(255, 110, 60, 255))
+        d.ellipse([cx - 3, cy - 2, cx + 3, cy + 2], outline=(255, 170, 90, 255))
+    box(d, 6, 34, 37, 47, METAL_D)  # forno
+    d.rectangle([9, 37, 34, 44], fill=(255, 120, 60, 90))
+    for x in range(8, 38, 7):
+        d.rectangle([x, 31, x + 2, 32], fill=CYAN)
+    return img
+
+
+def kitchen_counter():
+    img, d = new(64, 52)
+    box(d, 1, 14, 62, 50, WOOD, light=(128, 92, 72, 255), dark=(60, 40, 32, 255))
+    box(d, 1, 6, 62, 18, (190, 196, 214, 255), light=WHITE_L, dark=WHITE_D)  # tampo
+    d.line([32, 20, 32, 48], fill=OUTLINE)
+    d.rectangle([26, 30, 29, 34], fill=METAL_H)
+    d.rectangle([35, 30, 38, 34], fill=METAL_H)
+    d.ellipse([6, 1, 18, 11], fill=(200, 80, 60, 255), outline=OUTLINE)  # fruteira
+    d.ellipse([9, 2, 14, 7], fill=(250, 200, 60, 255))
+    box(d, 40, 0, 56, 10, METAL_L, light=METAL_H)  # cafeteira
+    d.rectangle([44, 3, 52, 6], fill=CYAN)
+    return img
+
+
+def dining_table():
+    img, d = new(64, 60)
+    for x0, y0 in [(4, 0), (44, 0), (4, 44), (44, 44)]:  # cadeiras
+        box(d, x0, y0, x0 + 15, y0 + 14, FABRIC, light=FABRIC_L, dark=FABRIC_D)
+    box(d, 2, 10, 61, 47, WOOD, light=(140, 100, 78, 255), dark=(60, 40, 32, 255))
+    d.ellipse([12, 20, 24, 32], fill=WHITE, outline=OUTLINE)
+    d.ellipse([39, 22, 51, 34], fill=WHITE, outline=OUTLINE)
+    d.rectangle([29, 18, 33, 30], fill=(120, 200, 255, 160))
+    return img
+
+
+def wardrobe():
+    img, d = new(56, 92)
+    box(d, 2, 2, 53, 89, WOOD, light=(128, 92, 72, 255), dark=(60, 40, 32, 255))
+    d.line([28, 4, 28, 86], fill=OUTLINE)
+    for x in (23, 32):
+        d.rectangle([x, 40, x + 1, 52], fill=METAL_H)
+    d.line([5, 80, 50, 80], fill=MAGENTA)
+    glow(img, 5, 80, 50, 80, MAGENTA, 2, 60)
+    return img
+
+
 def tv():
     return wall_screen("planet", 112, 60)
 
@@ -465,6 +584,8 @@ def main():
         "shelf": shelf(), "workstation": workstation(), "tube": tube(), "tube_big": tube(True), "lab_bench": lab_bench(),
         "crystals": crystals(), "counter": counter(), "cafe_table": cafe_table(), "pool_table": pool_table(),
         "arcade": arcade(), "holo_rug": holo_rug(), "bed": bed(), "nightstand": nightstand(),
+        "toilet": toilet(), "sink": sink(), "shower": shower(), "fridge": fridge(), "stove": stove(),
+        "kitchen_counter": kitchen_counter(), "dining_table": dining_table(), "wardrobe": wardrobe(),
     }
     for name, img in items.items():
         save(img, name)

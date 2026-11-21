@@ -21,6 +21,7 @@ const SHORT_NAMES := {
 	"DataSoft Sistemas": "DataSoft",
 	"Centro de Tecnologia": "Centro Tech",
 	"Loja Eletrônica": "Loja",
+	"Minha Casa": "Casa",
 }
 
 ## Nomes dos bairros: linha (de cima para baixo) × coluna (da esquerda para a direita).

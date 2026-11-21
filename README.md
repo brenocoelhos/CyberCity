@@ -1127,3 +1127,16 @@ Detalhes e como acrescentar prédios/ruas: `docs/TILESET_32.md`.
   faltam. Itens achados fora das missões (`Inventory.add_item`) vão para o save.
 - **Prédios nítidos**: as fachadas (`building_*.png`) são geradas em 3x por
   `tools/import_building_facades_hd.gd` e desenhadas em 1/3 com filtro linear.
+
+## Minha Casa (casa do jogador)
+
+- Na Vila Residencial, à esquerda da Casa 3, fica a **Minha Casa**
+  (`scenes/interiors/PlayerHouse.tscn`), com quarto, banheiro, sala e cozinha
+  separados por paredes com vãos de porta (`InteriorBase.ROOM_SHAPES`).
+- Cada cômodo tem um piso próprio e o nome pintado no chão
+  (`InteriorBase.ROOM_ZONES` + `scripts/world/RoomFloors.gd`).
+- **Salvar**: a cama do quarto (`[E] Dormir e salvar`). Nas casas dos vizinhos a
+  cama é só decoração (`can_sleep = false` no `Bed.tscn`).
+- O quarto tem um computador livre (`minha-casa`) para treinar comandos.
+- Móveis novos (vaso, pia, chuveiro, geladeira, fogão, bancada, mesa e
+  guarda-roupa) saem de `tools/gen_interior_props.py`.

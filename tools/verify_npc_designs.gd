@@ -10,6 +10,9 @@ func _run() -> void:
 	var textures: Array[String] = []
 	_check_npc(city.get_node("Vizinho"), textures)
 	for building in city.get_node("Buildings").get_children():
+		# A casa do jogador não tem NPC.
+		if building.interior_path.ends_with("PlayerHouse.tscn"):
+			continue
 		root.get_node("SceneTransition").interior_title = building.building_name
 		root.get_node("SceneTransition").interior_config = building._build_interior_config()
 		var interior: Node = load(building.interior_path).instantiate()
