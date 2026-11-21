@@ -12,6 +12,7 @@ const SOUNDS := {
 	"footstep": "res://assets/audio/footstep.wav",
 	"interact": "res://assets/audio/interact.wav",
 	"blip": "res://assets/audio/blip.wav",
+	"menu_hover": "res://assets/audio/menu_hover.wav",
 	"keypress": "res://assets/audio/keypress.wav",
 	"success": "res://assets/audio/success.wav",
 	"error": "res://assets/audio/error.wav",

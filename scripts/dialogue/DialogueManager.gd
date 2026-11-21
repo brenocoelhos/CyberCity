@@ -26,9 +26,50 @@ var _index: int = 0
 var _active: bool = false
 var _arrow_tween: Tween
 
+## Dublagem opcional: não interfere se as vozes ainda não foram geradas.
+const VOICE_INDEX_FILE: String = "res://assets/data/indice_godot.json"
+const VOICE_KEY_SEPARATOR: String = "␟"
+var _voice_player: AudioStreamPlayer
+var _voice_index: Dictionary = {}
+
 
 func _ready() -> void:
 	panel.visible = false
+	_voice_player = AudioStreamPlayer.new()
+	_voice_player.name = "VoicePlayer"
+	_voice_player.volume_db = -2.0
+	add_child(_voice_player)
+	_load_voice_index()
+
+
+func _load_voice_index() -> void:
+	if not FileAccess.file_exists(VOICE_INDEX_FILE):
+		return
+	var json_text: String = FileAccess.get_file_as_string(VOICE_INDEX_FILE)
+	var parsed: Variant = JSON.parse_string(json_text)
+	if parsed is Dictionary:
+		_voice_index = parsed
+
+
+func _play_current_voice() -> void:
+	if _voice_player == null:
+		return
+	_voice_player.stop()  # não deixar duas falas se sobreporem
+	var line: String = _lines[_index]
+	var speaker: String = speaker_label.text
+	var key: String = speaker + VOICE_KEY_SEPARATOR + line
+	var audio_path: String = String(_voice_index.get(key, ""))
+	# O nome do jogador muda por partida; o áudio da Central omite o nome.
+	if audio_path == "" and speaker == "CENTRAL" \
+			and line.begins_with("Entendido, agente ") \
+			and line.ends_with(". Seu nome entra no registro oficial."):
+		key = speaker + VOICE_KEY_SEPARATOR + "Entendido, agente %s. Seu nome entra no registro oficial."
+		audio_path = String(_voice_index.get(key, ""))
+	if audio_path != "" and ResourceLoader.exists(audio_path):
+		var audio: AudioStream = load(audio_path) as AudioStream
+		if audio != null:
+			_voice_player.stream = audio
+			_voice_player.play()
 
 
 ## Inicia um diálogo com um "falante" (nome mostrado no topo) e uma
@@ -54,6 +95,7 @@ func is_active() -> bool:
 
 func _show_current_line() -> void:
 	text_label.text = _lines[_index]
+	_play_current_voice()
 	if _index < _lines.size() - 1:
 		hint_label.text = "Continuar"
 		next_arrow.visible = true
@@ -101,10 +143,14 @@ func force_close() -> void:
 	_active = false
 	panel.visible = false
 	_stop_arrow_blink()
+	if _voice_player:
+		_voice_player.stop()
 
 
 func _close() -> void:
 	_active = false
 	panel.visible = false
 	_stop_arrow_blink()
+	if _voice_player:
+		_voice_player.stop()
 	closed.emit()

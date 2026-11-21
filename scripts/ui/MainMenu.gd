@@ -61,6 +61,7 @@ func _ready() -> void:
 	# mexer não pode roubar o foco que as setas acabaram de mudar.
 	for button in find_children("*", "BaseButton", true, false):
 		button.focus_mode = Control.FOCUS_ALL
+		button.mouse_entered.connect(_on_menu_hover.bind(button))
 		button.gui_input.connect(func(event: InputEvent) -> void:
 			if event is InputEventMouseMotion and event.relative.length() > 0.5 \
 					and button.is_visible_in_tree() and not button.disabled \
@@ -71,6 +72,13 @@ func _ready() -> void:
 
 	controls_panel.visible = false
 	_show_main_buttons()
+
+
+## Feedback sonoro ao passar o mouse sobre uma opção do menu.
+func _on_menu_hover(button: BaseButton) -> void:
+	if not button.is_visible_in_tree() or button.disabled:
+		return
+	SoundManager.play("menu_hover", -9.0, 0.15)
 
 
 func _process(delta: float) -> void:
