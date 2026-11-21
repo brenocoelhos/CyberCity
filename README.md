@@ -1102,3 +1102,28 @@ Detalhes e como acrescentar prédios/ruas: `docs/TILESET_32.md`.
   se ficar vazio, usa o nome do prédio (ex.: `techcorp-ltda`).
 - Tudo é simulado: nenhum comando real é executado.
 - Não usamos o logo oficial do Kali (marca registrada); só o estilo visual.
+
+## Tarefas práticas, salas novas, cama e mochila
+
+- **Missões 02 a 05 viraram tarefas práticas** (antes eram quiz). Todas usam o
+  tipo `"report"` do `ChallengeData.gd` e ferramentas novas do terminal:
+  - m02 — auditoria de senhas: `cat cadastro_exportado.txt`, `passcheck <senha>`
+    e `report <usuário>` (inclui uma senha que engana o verificador).
+  - m03 — integridade com hash: `sha256sum <arquivo>` (ou `md5sum`) e comparar
+    com `hashes_oficiais.txt`; um script foi adulterado.
+  - m04 — mensagem cifrada: `caesar interceptada.txt` testa as 25 chaves
+    (força bruta); `caesar <n> <texto>` usa uma chave só.
+  - m05 — phishing: desktop com o app E-mail, dois e-mails para comparar.
+  - Os textos e hashes saem de `tools/gen_practical_challenges.py` (rode de
+    novo se mudar algum arquivo do desafio de hash). O quiz (`ChallengeManager`)
+    continua no projeto para desafios futuros.
+- **Salas com formatos diferentes**: `InteriorBase.ROOM_SHAPES` define blocos de
+  parede (desenhados em 3/4 por `scripts/world/RoomBlock.gd`) — escritório em
+  "T", laboratório hexagonal, café octogonal e casa em "L" com quarto.
+- **Cama que salva**: no quarto da casa (`scenes/props/Bed.tscn`), `[E] Dormir e
+  salvar` escurece a tela e grava o jogo.
+- **Mochila** (`scripts/systems/Inventory.gd`, autoload `Inventory`): cada missão
+  concluída dá um item; o app **Mochila** do celular mostra os itens e os que
+  faltam. Itens achados fora das missões (`Inventory.add_item`) vão para o save.
+- **Prédios nítidos**: as fachadas (`building_*.png`) são geradas em 3x por
+  `tools/import_building_facades_hd.gd` e desenhadas em 1/3 com filtro linear.

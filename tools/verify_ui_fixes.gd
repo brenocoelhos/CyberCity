@@ -57,11 +57,11 @@ func _check_quiz() -> bool:
 	root.add_child(computer)
 	await process_frame
 	var data = root.get_node("ChallengeData")
-	ok = _check("quiz: c_senhas é um quiz", String(data.get_challenge("c_senhas").get("type", "")) == "quiz") and ok
+	ok = _check("prática: c_senhas virou tarefa prática (report)", String(data.get_challenge("c_senhas").get("type", "")) == "report") and ok
 	computer._on_interact()
-	ok = _check("quiz: o computador abre direto a tela do quiz", root.get_node("ChallengeManager").is_active()) and ok
-	ok = _check("quiz: o terminal não abre", not root.get_node("TerminalManager").is_active()) and ok
-	root.get_node("ChallengeManager").close()
+	ok = _check("prática: o computador abre o terminal", root.get_node("TerminalManager").is_active()) and ok
+	ok = _check("prática: a tela de quiz não abre", not root.get_node("ChallengeManager").is_active()) and ok
+	root.get_node("TerminalManager").close()
 	computer.queue_free()
 	await process_frame
 	return ok

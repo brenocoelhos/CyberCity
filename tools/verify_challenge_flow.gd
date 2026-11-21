@@ -27,6 +27,7 @@ func _initialize() -> void:
 	term._on_command_submitted("report 2")
 	ok = _check("erro nao conclui", not missions.is_completed("m08") and term.is_active()) and ok
 	var phone = root.get_node("PhoneManager")
+	var data = root.get_node("ChallengeData")
 	ok = _check("celular ja tem 1 pista (gratis)", phone.get_revealed_clues("m08").size() == 1) and ok
 	var signals := [0]
 	phone.clue_revealed.connect(func(_id): signals[0] += 1)
@@ -69,19 +70,42 @@ func _initialize() -> void:
 	ok = _check("xss certo conclui m10", missions.is_completed("m10")) and ok
 	ok = _check("xss comum nao contou erro", session.get_stats("c_xss")["errors"] == 0) and ok
 
-	# --- quiz ---
-	quiz.start("c_senhas")
-	ok = _check("quiz inicia m02", missions.is_active("m02")) and ok
-	quiz._on_option_pressed(0)
-	ok = _check("quiz errado nao conclui", not missions.is_completed("m02")) and ok
-	quiz._on_hint_pressed()
-	quiz._on_option_pressed(2)
-	ok = _check("quiz certo conclui m02", missions.is_completed("m02") and not quiz.is_active()) and ok
-	var q: Dictionary = session.get_stats("c_senhas")
-	ok = _check("stats quiz: 2 tentativas, 1 erro, 1 dica", q["attempts"] == 2 and q["errors"] == 1 and q["hints"] == 1) and ok
-	quiz.start("c_senhas")
-	ok = _check("quiz concluido avisa na tela", quiz.feedback_label.text.find("já concluiu") != -1) and ok
-	quiz.close()
+	# --- m02 a m05: tarefas praticas (eram quizzes) ---
+	term.open("c_senhas", "estacao-1")
+	ok = _check("senhas: abrir o computador inicia m02", missions.is_active("m02")) and ok
+	term._on_command_submitted("passcheck Diego@2024")
+	term._on_command_submitted("report bruno")
+	ok = _check("senhas: senha forte apontada conta erro", session.get_stats("c_senhas")["errors"] == 1) and ok
+	for cmd in ["report ana", "report carla", "report diego"]:
+		term._on_command_submitted(cmd)
+	ok = _check("senhas: 3 de 4 ainda nao conclui", not missions.is_completed("m02")) and ok
+	term._on_command_submitted("report senhas em texto puro")
+	ok = _check("senhas: auditoria completa conclui m02", missions.is_completed("m02")) and ok
+
+	term.open("c_hash", "estacao-2")
+	term._on_command_submitted("sha256sum atualizar.sh")
+	var official: String = String(data.get_challenge("c_hash")["files"]["hashes_oficiais.txt"])
+	var files: Dictionary = data.get_challenge("c_hash")["files"]
+	ok = _check("hash: schema.sql e usuarios.csv batem com o oficial", official.contains(String(files["schema.sql"]).sha256_text()) and official.contains(String(files["usuarios.csv"]).sha256_text())) and ok
+	ok = _check("hash: atualizar.sh NAO bate com o oficial", not official.contains(String(files["atualizar.sh"]).sha256_text())) and ok
+	term._on_command_submitted("report schema.sql")
+	term._on_command_submitted("report atualizar.sh")
+	term._on_command_submitted("report curl")
+	ok = _check("hash: arquivo adulterado + linha a mais conclui m03", missions.is_completed("m03")) and ok
+
+	term.open("c_cripto", "estacao-1")
+	term._on_command_submitted("caesar interceptada.txt")
+	ok = _check("cripto: forca bruta mostra o texto decifrado", term.output.get_parsed_text().contains("ENCONTRO NO PORTO")) and ok
+	for cmd in ["report porto", "report vinte horas", "report pendrive"]:
+		term._on_command_submitted(cmd)
+	ok = _check("cripto: local, horario e objeto concluem m04", missions.is_completed("m04")) and ok
+
+	term.open("c_phishing", "estacao-2")
+	term._on_command_submitted("report horario")
+	for cmd in ["report dominio empresaa", "report urgencia", "report pede a senha"]:
+		term._on_command_submitted(cmd)
+	ok = _check("phishing: tres sinais concluem m05", missions.is_completed("m05")) and ok
+	term.close()
 
 	# --- celular pede a proxima pista (mesma fonte) ---
 	missions.start_mission("m03")
@@ -132,7 +156,6 @@ func _initialize() -> void:
 	ok = _check("keyword longa vale dentro do texto: 'trocar a senha'", term._find_report_target("trocar a senha", kw_targets) == 1) and ok
 
 	# --- frases naturais devem achar o alvo certo (indice do alvo em "targets") ---
-	var data = root.get_node("ChallengeData")
 	var mail_targets: Array = data.CHALLENGES["c_email"]["targets"]
 	var mail_cases := {
 		"a autenticação falhou": 0, "o servidor reprovou o SPF": 0, "o reply-to é outro": 1, "manda a resposta para outro lugar": 1,

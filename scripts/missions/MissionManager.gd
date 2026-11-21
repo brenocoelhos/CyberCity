@@ -29,8 +29,8 @@ var missions: Dictionary = {
 	"m02": {
 		"id": "m02",
 		"title": "Missão 02 — A senha esquecida",
-		"description": "Um morador precisa trocar de senha e quer saber se a escolha dele é segura.",
-		"objective": "Na empresa, use a Estação 1 e responda o quiz.",
+		"description": "O sistema antigo da empresa exportou o cadastro de usuários. A equipe quer saber quais senhas estão fracas.",
+		"objective": "Na empresa, use a Estação 1: audite o cadastro (passcheck) e aponte os problemas com 'report'.",
 		"location": "Empresa (Estação 1)",
 		"state": State.AVAILABLE,
 		"xp": 100,
@@ -41,8 +41,8 @@ var missions: Dictionary = {
 	"m03": {
 		"id": "m03",
 		"title": "Missão 03 — O hash no banco de dados",
-		"description": "Um sistema guarda hashes em vez de senhas, e a equipe não entende a diferença.",
-		"objective": "Na empresa, use a Estação 2 e responda o quiz.",
+		"description": "Uma atualização do banco de dados chegou. Antes de instalar, é preciso conferir se nenhum arquivo foi alterado no caminho.",
+		"objective": "Na empresa, use a Estação 2: confira os arquivos com 'sha256sum' e aponte o adulterado.",
 		"location": "Empresa (Estação 2)",
 		"state": State.AVAILABLE,
 		"xp": 150,
@@ -53,8 +53,8 @@ var missions: Dictionary = {
 	"m04": {
 		"id": "m04",
 		"title": "Missão 04 — Mensagem cifrada",
-		"description": "Uma mensagem interceptada está cifrada e precisa ser lida.",
-		"objective": "No Centro de Tecnologia, use a Estação 1 e responda o quiz.",
+		"description": "Uma mensagem interceptada está cifrada e ninguém sabe a chave.",
+		"objective": "No Centro de Tecnologia, use a Estação 1: decifre a mensagem com 'caesar' e reporte o plano.",
 		"location": "Centro de Tecnologia (Estação 1)",
 		"state": State.AVAILABLE,
 		"xp": 150,
@@ -65,8 +65,8 @@ var missions: Dictionary = {
 	"m05": {
 		"id": "m05",
 		"title": "Missão 05 — Caça ao phishing",
-		"description": "A empresa recebeu mensagens suspeitas e quer treinar a equipe a identificá-las.",
-		"objective": "No Centro de Tecnologia, use a Estação 2 e responda o quiz.",
+		"description": "Dois e-mails do \"suporte\" chegaram juntos. Um deles é golpe.",
+		"objective": "No Centro de Tecnologia, use a Estação 2: compare os e-mails e aponte os sinais de phishing.",
 		"location": "Centro de Tecnologia (Estação 2)",
 		"state": State.AVAILABLE,
 		"xp": 200,

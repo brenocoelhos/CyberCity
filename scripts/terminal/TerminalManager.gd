@@ -579,6 +579,12 @@ func _run_command(command: String) -> void:
 			_cmd_read(args)
 		"grep":
 			_cmd_grep(args)
+		"sha256sum", "md5sum":
+			_cmd_hashsum(cmd, args)
+		"caesar", "cesar", "césar":
+			_cmd_caesar(args)
+		"passcheck":
+			_cmd_passcheck(rest)
 		"whoami":
 			_print_line(_sim.current_user)
 		"pwd":
@@ -642,6 +648,9 @@ func _cmd_help() -> void:
 	_print_line("  whoami, pwd, date   - informações do usuário e do sistema")
 	_print_line("  neofetch, ifconfig  - resumo do sistema e da rede")
 	_print_line("  history             - comandos digitados nesta sessão")
+	_print_line("  sha256sum <arq>     - calcula o hash SHA-256 de um arquivo (md5sum: MD5)")
+	_print_line("  caesar [n] <texto>  - decifra a Cifra de César (sem n: testa as 25 chaves)")
+	_print_line("  passcheck <senha>   - avalia a força de uma senha")
 	var challenge_type: String = String(_challenge.get("type", ""))
 	if _guidance() >= 3:
 		challenge_type = ""
@@ -1534,6 +1543,66 @@ func _cmd_grep(args: PackedStringArray) -> void:
 	for line in String(files[filename]).split("\n"):
 		if term != "" and line.to_lower().contains(term):
 			_print_line(line)
+
+
+## sha256sum / md5sum <arquivo...>: impressão digital de cada arquivo, no
+## formato do Linux ("<hash>  <arquivo>"). Serve para conferir se um arquivo
+## é idêntico ao original (qualquer mudança gera outro hash).
+func _cmd_hashsum(cmd: String, args: PackedStringArray) -> void:
+	if args.is_empty():
+		_print_line("Uso: %s <arquivo>" % cmd)
+		return
+	var files: Dictionary = _available_files()
+	for filename in args:
+		if not files.has(filename):
+			_print_error("%s: %s: arquivo não encontrado" % [cmd, filename])
+			continue
+		var content: String = String(files[filename])
+		var digest: String = StudyTools.sha256(content) if cmd == "sha256sum" else StudyTools.md5(content)
+		_print_line("%s  %s" % [digest, filename])
+
+
+## caesar <deslocamento> <texto>: volta cada letra <deslocamento> casas.
+## Sem deslocamento, mostra as 25 tentativas (ataque de força bruta) — e é
+## isso que mostra por que a Cifra de César é fraca.
+## O texto também pode ser o nome de um arquivo deste computador.
+func _cmd_caesar(args: PackedStringArray) -> void:
+	if args.is_empty():
+		_print_line("Uso: caesar <deslocamento> <texto>   ou   caesar <texto> (testa todas as chaves)")
+		return
+	var shift: int = 0
+	var words: PackedStringArray = args
+	if args[0].is_valid_int() or (args[0].begins_with("-") and args[0].substr(1).is_valid_int()):
+		shift = absi(int(args[0]))
+		words = args.slice(1)
+	var text: String = " ".join(words)
+	var files: Dictionary = _available_files()
+	if files.has(text):
+		text = String(files[text]).strip_edges()
+	if text == "":
+		_print_line("Faltou o texto. Ex.: caesar 3 VHJXUR")
+		return
+	if shift != 0:
+		_print_line("Chave %d: %s" % [shift, StudyTools.caesar(text, -shift)])
+		return
+	_print_rich("[color=%s]Força bruta: testando as 25 chaves possíveis...[/color]" % C_DIM)
+	for key in range(1, 26):
+		_print_line("%2d: %s" % [key, StudyTools.caesar(text, -key)])
+
+
+## passcheck <senha>: o mesmo verificador do app Ferramentas do celular.
+func _cmd_passcheck(password: String) -> void:
+	if password == "":
+		_print_line("Uso: passcheck <senha>")
+		return
+	var problems: PackedStringArray = StudyTools.password_problems(password)
+	var strength: String = StudyTools.password_strength(password)
+	if problems.is_empty():
+		_print_success("Força: %s" % strength)
+		return
+	_print_error("Força: %s" % strength)
+	for problem in problems:
+		_print_line("  - " + problem)
 
 
 ## Conclui o desafio deste computador. Centraliza o que antes se repetia em
