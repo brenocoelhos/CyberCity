@@ -27,6 +27,21 @@ const TOOL_TEXTS := {
 	"saved_history": ["Histórico salvo", "o terminal guarda os comandos entre computadores e entre partidas."],
 }
 
+## Título do agente em cada nível (índice 0 = nível 1). Acima do último nível
+## da lista, fica o último título. Só visual: aparece no Perfil do celular, na
+## pausa e no aviso ao subir de nível.
+const LEVEL_TITLES := [
+	"Estagiário",
+	"Assistente de TI",
+	"Analista Júnior",
+	"Analista de Segurança",
+	"Analista Sênior",
+	"Especialista em Segurança",
+	"Caçador de Ameaças",
+	"Pentester",
+	"Hacker Ético",
+]
+
 var level: int = 1
 var xp: int = 0
 
@@ -111,6 +126,12 @@ func add_xp(amount: int) -> void:
 				tool_unlocked.emit(String(tool_id))
 
 	xp_changed.emit(xp, xp_to_next_level(), level)
+
+
+## Título do nível (por padrão, o do nível atual).
+func level_title(for_level: int = -1) -> String:
+	var lvl: int = level if for_level < 1 else for_level
+	return String(LEVEL_TITLES[clampi(lvl, 1, LEVEL_TITLES.size()) - 1])
 
 
 ## true se o nível atual já liberou a ferramenta (ver TOOL_UNLOCK_LEVELS).

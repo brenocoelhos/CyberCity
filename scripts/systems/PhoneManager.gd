@@ -66,6 +66,7 @@ func _ready() -> void:
 	MissionManager.mission_started.connect(_on_mission_started)
 	MissionManager.mission_completed.connect(_on_mission_completed)
 	ChallengeSession.hint_revealed.connect(_on_hint_revealed)
+	GameManager.leveled_up.connect(_on_leveled_up)
 	GameManager.tool_unlocked.connect(_on_tool_unlocked)
 
 
@@ -214,10 +215,15 @@ func _on_mission_completed(mission_id: String) -> void:
 	send_message(String(CONTACTS.get(mission_id, CENTRAL)), text)
 
 
+## Cada nível novo dá um título (GameManager.LEVEL_TITLES).
+func _on_leveled_up(new_level: int) -> void:
+	send_message(CENTRAL, "Nível %d alcançado. Seu novo título: %s." % [new_level, GameManager.level_title(new_level)])
+
+
 ## Subir de nível pode liberar uma ferramenta: a Central avisa pelo celular.
 func _on_tool_unlocked(tool_id: String) -> void:
 	var texts: Array = GameManager.TOOL_TEXTS.get(tool_id, [tool_id, ""])
-	send_message(CENTRAL, "Nível %d alcançado. Ferramenta liberada: %s — %s" % [GameManager.level, String(texts[0]), String(texts[1])])
+	send_message(CENTRAL, "Ferramenta liberada no nível %d: %s — %s" % [GameManager.level, String(texts[0]), String(texts[1])])
 
 
 func _on_game_completed() -> void:

@@ -686,6 +686,8 @@ func _render_profile() -> void:
 	var name_label: Label = list.get_child(list.get_child_count() - 1)
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_label.add_theme_font_override("font", _bold_font)
+	_add_label(GameManager.level_title(), Color("#ff9f0a"), 14)
+	(list.get_child(list.get_child_count() - 1) as Label).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_add_label("Tempo de jogo: %s" % Leaderboard.format_clock(Leaderboard.elapsed_msec()), COLOR_DIM, 13)
 	(list.get_child(list.get_child_count() - 1) as Label).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	if CampaignManager.is_game_completed:

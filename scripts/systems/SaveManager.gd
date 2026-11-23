@@ -155,7 +155,9 @@ func _announce(success: bool, reason: String) -> void:
 	# Ao fechar o jogo também: a janela some logo em seguida.
 	if success and (reason == "notes" or reason == "pause" or reason == "quit"):
 		return
-	if success:
+	if success and reason == "level":
+		HUD.show_notice("Jogo salvo", "Nível %d: agora você é %s." % [GameManager.level, GameManager.level_title()])
+	elif success:
 		HUD.show_notice("Jogo salvo", String(REASON_TEXTS.get(reason, "Progresso gravado.")))
 	else:
 		HUD.show_notice("Não foi possível salvar", "Verifique o espaço em disco e tente de novo.")

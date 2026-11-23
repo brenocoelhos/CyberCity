@@ -43,11 +43,14 @@ func _check_unlocks() -> bool:
 	game.add_xp(200)
 	ok = _check("nivel 3: o evento do app Ferramentas so existe se ele nao comeca liberado", game.level == 3 and unlocked.has("phone_tools") == (int(game.TOOL_UNLOCK_LEVELS["phone_tools"]) > 1) and _unlocked_match_levels(game)) and ok
 	ok = _check("nivel 3: o mapa e o historico continuam travados", not game.is_tool_unlocked("network_map") and not game.is_tool_unlocked("saved_history")) and ok
-	var expected_messages := 0
+	# Uma mensagem por nivel novo (com o titulo) e uma por ferramenta liberada.
+	var expected_messages: int = game.level - 1
 	for tool_id in levels.keys():
 		if int(levels[tool_id]) > 1 and int(levels[tool_id]) <= 3:
 			expected_messages += 1
-	ok = _check("a Central manda uma mensagem por ferramenta liberada ao subir de nivel (ate o 3)", phone.messages.size() == expected_messages) and ok
+	ok = _check("a Central manda uma mensagem por nivel e uma por ferramenta liberada (ate o 3)", phone.messages.size() == expected_messages) and ok
+	ok = _check("a mensagem do nivel traz o titulo novo", String(phone.messages[0]["text"]).contains(game.level_title(2))) and ok
+	ok = _check("titulos: nivel 1 e Estagiario e niveis altos ficam no ultimo titulo", game.level_title(1) == "Estagiário" and game.level_title(99) == game.LEVEL_TITLES[-1]) and ok
 
 	game.add_xp(300 + 400)  # sobe do 3 para o 4 (300) e do 4 para o 5 (400): dois niveis de uma vez
 	ok = _check("subir dois niveis de uma vez libera as duas ferramentas", game.level == 5 and unlocked.has("network_map") and unlocked.has("saved_history")) and ok

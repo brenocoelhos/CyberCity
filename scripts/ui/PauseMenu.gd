@@ -84,7 +84,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _refresh_info() -> void:
 	var who: String = Leaderboard.player_name if Leaderboard.player_name != "" else "Agente"
-	_info.text = "%s   ·   Tempo %s   ·   Nível %d" % [who, Leaderboard.format_clock(Leaderboard.elapsed_msec()), GameManager.level]
+	_info.text = "%s   ·   Tempo %s   ·   Nível %d (%s)" % [who, Leaderboard.format_clock(Leaderboard.elapsed_msec()), GameManager.level, GameManager.level_title()]
 
 
 func _on_save() -> void:
