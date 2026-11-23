@@ -46,7 +46,7 @@ const APP_STYLE := {
 	"SettingsButton": [Color(0.5, 0.5, 0.53), "Ajustes", CyberIcon.Kind.GEAR],
 	"NotesButton": [Color(1.0, 0.78, 0.0), "Notas", CyberIcon.Kind.NOTE],
 	"ToolsButton": [Color(0.19, 0.69, 0.78), "Ferramentas", CyberIcon.Kind.WRENCH],
-	"InventoryButton": [Color(0.75, 0.45, 0.15), "Mochila", CyberIcon.Kind.FOLDER],
+	"InventoryButton": [Color(0.64, 0.52, 0.37), "Mochila", CyberIcon.Kind.BACKPACK],
 	"CloseButton": [Color(0.2, 0.2, 0.22), "Fechar", CyberIcon.Kind.POWER],
 }
 
@@ -74,6 +74,7 @@ var _current_app: String = ""
 ## Botão do app "Ferramentas": criado por código (copiando o estilo dos outros
 ## botões) e só aparece depois que o nível libera a ferramenta.
 var tools_button: Button
+var inventory_button: Button
 
 ## Botão do app "Notas" (bloco de notas do jogador), também criado por código.
 ## Está sempre disponível. "_notes_dirty" avisa que o texto mudou desde o
@@ -190,12 +191,12 @@ func _setup_notes_button() -> void:
 
 
 func _setup_inventory_button() -> void:
-	var button := profile_button.duplicate(0) as Button
-	button.name = "InventoryButton"
-	button.text = "Mochila"
-	button.pressed.connect(_open_app.bind("inventory"))
-	apps_grid.add_child(button)
-	apps_grid.move_child(button, close_button.get_index())
+	inventory_button = profile_button.duplicate(0) as Button
+	inventory_button.name = "InventoryButton"
+	inventory_button.text = "Mochila"
+	inventory_button.pressed.connect(_open_app.bind("inventory"))
+	apps_grid.add_child(inventory_button)
+	apps_grid.move_child(inventory_button, close_button.get_index())
 
 
 ## Grava o jogo (sem aviso na tela) quando o jogador sai do app Notas depois
@@ -1378,7 +1379,7 @@ func _apply_iphone_look() -> void:
 	for button in [messages_button, missions_button, notes_button, settings_button]:
 		button.reparent(dock, false)
 
-	for button in [messages_button, clues_button, missions_button, profile_button, settings_button, notes_button, tools_button, close_button]:
+	for button in [messages_button, clues_button, missions_button, profile_button, settings_button, notes_button, tools_button, inventory_button, close_button]:
 		_make_app_icon(button, bold)
 
 	# Barrinha de "home" e a dica do teclado (ao lado do aparelho).

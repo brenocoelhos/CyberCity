@@ -4,7 +4,7 @@ extends Control
 ## Ícones simples de linha neon desenhados por código (sem imagens), no
 ## mesmo estilo das molduras do HUD. Escolha o desenho em "Kind" no Inspetor.
 
-enum Kind { MONITOR, SERVER, PHONE, SIGNAL, MISSION, BUILDING, CHAT, CITY, MAGNIFIER, PERSON, GEAR, NOTE, WRENCH, POWER, WIFI, BATTERY, TERMINAL, FOLDER, GLOBE, MAIL, LOCK, BELL, VOLUME, EMBLEM, GRID, HOUSE, DATABASE, SHIELD, DIAMOND, SUN, DOCUMENT }
+enum Kind { MONITOR, SERVER, PHONE, SIGNAL, MISSION, BUILDING, CHAT, CITY, MAGNIFIER, PERSON, GEAR, NOTE, WRENCH, POWER, WIFI, BATTERY, TERMINAL, FOLDER, GLOBE, MAIL, LOCK, BELL, VOLUME, EMBLEM, GRID, HOUSE, DATABASE, SHIELD, DIAMOND, SUN, DOCUMENT, BACKPACK }
 
 @export var kind: Kind = Kind.MONITOR:
 	set(v):
@@ -144,6 +144,17 @@ func _draw() -> void:
 			_fill(0.06, 0.14, 0.94, 0.26, faint)
 			draw_polyline(PackedVector2Array([_p(0.2, 0.4), _p(0.36, 0.53), _p(0.2, 0.66)]), color, line_width, true)
 			draw_line(_p(0.44, 0.68), _p(0.68, 0.68), color, line_width)
+		Kind.BACKPACK:
+			# Mochila cheia (como os ícones sólidos do iOS): alça em cima, corpo
+			# com os cantos de cima chanfrados e bolso da frente recortado.
+			var rb := minf(size.x, size.y)
+			draw_arc(_p(0.5, 0.25), rb * 0.12, PI, TAU, 16, color, line_width * 1.3, true)
+			draw_colored_polygon(PackedVector2Array([
+				_p(0.3, 0.24), _p(0.7, 0.24), _p(0.8, 0.36), _p(0.8, 0.86),
+				_p(0.76, 0.9), _p(0.24, 0.9), _p(0.2, 0.86), _p(0.2, 0.36)]), color)
+			_fill(0.3, 0.56, 0.7, 0.8, Color(0, 0, 0, 0.3))
+			draw_line(_p(0.3, 0.63), _p(0.7, 0.63), Color(0, 0, 0, 0.3), line_width * 0.8)
+			_fill(0.45, 0.59, 0.55, 0.69, color)
 		Kind.FOLDER:
 			var tab := PackedVector2Array([_p(0.06, 0.2), _p(0.38, 0.2), _p(0.46, 0.3), _p(0.94, 0.3), _p(0.94, 0.84), _p(0.06, 0.84)])
 			draw_colored_polygon(tab, Color(color, color.a * 0.85))
