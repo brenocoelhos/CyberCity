@@ -30,6 +30,7 @@ func _initialize() -> void:
 	ok = await _check_boss_door() and ok
 	ok = await _check_npc_not_ready() and ok
 	ok = await _check_double_door() and ok
+	ok = _check_save_on_quit() and ok
 	print("RESULTADO: ", "TUDO OK" if ok else "FALHOU")
 	quit(0 if ok else 1)
 
@@ -220,6 +221,38 @@ func _check_double_door() -> bool:
 	ok = _check("porta: a troca termina e libera a proxima", not transition.is_changing() and current_scene != null and current_scene.scene_file_path == HOUSE) and ok
 	transition.interior_title = ""
 	transition.has_pending_spawn = false
+	return ok
+
+
+## Fechar a janela salva o jogo (num arquivo temporario, nunca no do jogador).
+func _check_save_on_quit() -> bool:
+	var ok := true
+	var save = root.get_node("SaveManager")
+	var game = root.get_node("GameManager")
+	var temp_path := "user://teste_fechar_janela.json"
+	save.save_path = temp_path
+	DirAccess.remove_absolute(temp_path)
+
+	var fake_scene := Node2D.new()
+	root.add_child(fake_scene)
+	var fake_player := Node2D.new()
+	fake_player.add_to_group("player")
+	fake_scene.add_child(fake_player)
+	var previous_scene = current_scene
+	current_scene = fake_scene
+
+	game.game_started = false
+	save._notification(Node.NOTIFICATION_WM_CLOSE_REQUEST)
+	ok = _check("fechar a janela sem jogo em andamento nao salva", not FileAccess.file_exists(temp_path)) and ok
+	game.game_started = true
+	save._notification(Node.NOTIFICATION_WM_CLOSE_REQUEST)
+	ok = _check("fechar a janela com jogo em andamento salva", FileAccess.file_exists(temp_path)) and ok
+
+	game.game_started = false
+	current_scene = previous_scene
+	fake_scene.queue_free()
+	DirAccess.remove_absolute(temp_path)
+	save.save_path = save.SAVE_PATH
 	return ok
 
 

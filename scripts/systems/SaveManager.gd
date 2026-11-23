@@ -7,7 +7,8 @@ extends Node
 ##   - automaticamente a cada 5 minutos de jogo (AUTOSAVE_SECONDS);
 ##   - ao concluir uma missão;
 ##   - ao subir de nível;
-##   - ao usar o Terminal de Salvamento na Praça Central (SaveTerminal.gd).
+##   - ao usar o Terminal de Salvamento na Praça Central (SaveTerminal.gd);
+##   - ao fechar o jogo (botão X da janela ou "Sair do jogo" no celular).
 ##
 ## O que é salvo: nível/XP/conhecimentos (GameManager), estado das missões
 ## (MissionManager), capítulos (CampaignManager), mensagens e pistas
@@ -46,6 +47,21 @@ var _save_queued: bool = false
 func _ready() -> void:
 	MissionManager.mission_completed.connect(_on_mission_completed)
 	GameManager.leveled_up.connect(_on_leveled_up)
+
+
+## Fechar a janela (X, Alt+F4) salva antes de sair, para não perder até 5
+## minutos desde o último salvamento automático.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST:
+		save_on_quit()
+
+
+## Salva sem aviso na tela, se houver jogo em andamento (no menu principal e
+## no duelo final não salva, ver can_save). Chamado ao fechar a janela e pelo
+## "Sair do jogo" do celular, que fecha o jogo sem passar pela janela.
+func save_on_quit() -> void:
+	if can_save():
+		save_game("quit")
 
 
 func _process(delta: float) -> void:
@@ -136,7 +152,8 @@ func save_game(reason: String = "auto") -> bool:
 
 func _announce(success: bool, reason: String) -> void:
 	# Salvar as notas ao fechar o app e salvar pelo menu de pausa são silenciosos (o menu mostra o próprio aviso).
-	if success and (reason == "notes" or reason == "pause"):
+	# Ao fechar o jogo também: a janela some logo em seguida.
+	if success and (reason == "notes" or reason == "pause" or reason == "quit"):
 		return
 	if success:
 		HUD.show_notice("Jogo salvo", String(REASON_TEXTS.get(reason, "Progresso gravado.")))
