@@ -76,7 +76,10 @@ func _check_order() -> bool:
 	missions.start_mission("m15")
 	ok = _check("missao de capitulo futuro nao pode ser aceita", missions.get_state("m15") == missions.State.LOCKED) and ok
 
+	var game = root.get_node("GameManager")
+	var xp_before: int = game.total_xp_earned
 	_do_mission("m01")
+	ok = _check("fim do capitulo 1 da o bonus de XP do capitulo", game.total_xp_earned - xp_before == 100 + campaign.CHAPTER_BONUS_XP) and ok
 	ok = _check("fim do capitulo 1: o capitulo 2 comeca e libera m02 e m03", campaign.is_chapter_finished("ch1") and campaign.is_chapter_started("ch2") and missions.get_state("m02") == missions.State.AVAILABLE and missions.get_state("m03") == missions.State.AVAILABLE) and ok
 	ok = _check("o capitulo 3 continua fechado", not campaign.is_chapter_started("ch3") and missions.get_state("m04") == missions.State.LOCKED) and ok
 	_close_dialogue()
@@ -246,6 +249,9 @@ func _check_phone_chapter_card() -> bool:
 	menu._open_app("missions")
 	text = _labels_text(menu.list)
 	ok = _check("celular: no capitulo final o cartao mostra o objetivo do duelo", text.contains(campaign.FINAL_OBJECTIVE)) and ok
+	menu._open_app("profile")
+	text = _labels_text(menu.list)
+	ok = _check("perfil: mostra o titulo do nivel e os selos (1 de 7)", text.contains(root.get_node("GameManager").level_title()) and text.contains("SELOS DOS CAPÍTULOS (1/7)")) and ok
 	menu.close()
 	_new_game()
 	return ok

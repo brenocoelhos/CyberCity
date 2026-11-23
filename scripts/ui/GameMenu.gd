@@ -679,6 +679,45 @@ func _render_missions() -> void:
 		_spacer(8)
 
 
+## Selos do Perfil: um por capítulo com missões. Colorido com ✓ quando o
+## capítulo foi concluído; apagado enquanto não.
+func _render_chapter_badges() -> void:
+	var earned := 0
+	var total := 0
+	var card := PanelContainer.new()
+	card.add_theme_stylebox_override("panel", _box(IOS_CELL, 12, 12, 10))
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 6)
+	card.add_child(column)
+	for chapter_id in CampaignManager.chapters.keys():
+		var chapter: Dictionary = CampaignManager.chapters[chapter_id]
+		if Array(chapter["missions"]).is_empty():
+			continue
+		total += 1
+		var done: bool = CampaignManager.is_chapter_finished(chapter_id)
+		if done:
+			earned += 1
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 10)
+		var seal := Label.new()
+		seal.text = "✓" if done else str(CampaignManager.chapter_number(chapter_id))
+		seal.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		seal.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		seal.custom_minimum_size = Vector2(24, 24)
+		var ring := _box(Color("#ffd60a") if done else Color(0, 0, 0, 0), 12)
+		ring.border_color = Color("#ffd60a") if done else Color("#48484a")
+		ring.set_border_width_all(2)
+		seal.add_theme_stylebox_override("normal", ring)
+		seal.add_theme_color_override("font_color", Color.BLACK if done else COLOR_DIM)
+		row.add_child(seal)
+		var title := _text(row, String(chapter["title"]), Color.WHITE if done else COLOR_DIM, 12, done)
+		title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		column.add_child(row)
+	_add_label("SELOS DOS CAPÍTULOS (%d/%d)" % [earned, total], COLOR_DIM, 12)
+	list.add_child(card)
+
+
 ## Cartão do capítulo atual no topo do app: nome, quantas missões faltam e uma
 ## barra de progresso. No capítulo final, mostra o objetivo do duelo.
 func _render_chapter_card() -> void:
@@ -753,6 +792,9 @@ func _render_profile() -> void:
 	bar.custom_minimum_size = Vector2(0, 10)
 	list.add_child(bar)
 	_add_label("XP: %d/%d para o próximo nível" % [GameManager.xp, GameManager.xp_to_next_level()], COLOR_DIM, 12)
+
+	_spacer(6)
+	_render_chapter_badges()
 
 	_spacer(6)
 	_add_label("CONHECIMENTOS", COLOR_DIM, 12)

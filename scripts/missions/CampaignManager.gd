@@ -22,6 +22,10 @@ signal game_completed
 ## Id do capítulo final (o duelo). Fica sempre por último em "chapters".
 const FINAL_CHAPTER := "final"
 
+## XP de bônus ao concluir um capítulo com missões (o selo do capítulo
+## aparece no Perfil do celular).
+const CHAPTER_BONUS_XP := 50
+
 ## Objetivo mostrado no HUD durante o capítulo final.
 const FINAL_OBJECTIVE := "Vá até a Casa 5 e enfrente o hacker."
 
@@ -312,11 +316,15 @@ func _finish_chapter(chapter_id: String) -> void:
 
 	var chapter: Dictionary = chapters[chapter_id]
 	var next_id: String = _next_chapter_id(chapter_id)
-	if PackedStringArray(chapter["outro"]).is_empty():
+	var outro := PackedStringArray(chapter["outro"])
+	if not Array(chapter["missions"]).is_empty():
+		GameManager.add_xp(CHAPTER_BONUS_XP)
+		outro.append("Capítulo concluído: +%d XP de bônus e um selo novo no seu Perfil." % CHAPTER_BONUS_XP)
+	if outro.is_empty():
 		if next_id != "":
 			_start_chapter(next_id)
 		return
-	DialogueManager.start_dialogue(String(chapter["title"]), chapter["outro"])
+	DialogueManager.start_dialogue(String(chapter["title"]), outro)
 	if next_id == "":
 		return
 	_queued_action = func(): _start_chapter(next_id)
