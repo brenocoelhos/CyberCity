@@ -198,6 +198,37 @@ func is_final_chapter_active() -> bool:
 	return is_chapter_started(FINAL_CHAPTER) and not is_chapter_finished(FINAL_CHAPTER)
 
 
+## Capítulo em andamento (o primeiro começado e não terminado), ou "".
+func current_chapter_id() -> String:
+	for chapter_id in chapters.keys():
+		if is_chapter_started(chapter_id) and not is_chapter_finished(chapter_id):
+			return String(chapter_id)
+	return ""
+
+
+## Número do capítulo na ordem da campanha (1, 2, ...), ou 0 se não existe.
+func chapter_number(chapter_id: String) -> int:
+	return chapters.keys().find(chapter_id) + 1
+
+
+## Capítulo a que a missão pertence, ou "".
+func chapter_of(mission_id: String) -> String:
+	for chapter_id in chapters.keys():
+		if Array(chapters[chapter_id]["missions"]).has(mission_id):
+			return String(chapter_id)
+	return ""
+
+
+## [concluídas, total] das missões do capítulo.
+func chapter_progress(chapter_id: String) -> Array:
+	var missions: Array = chapters.get(chapter_id, {}).get("missions", [])
+	var done := 0
+	for mission_id in missions:
+		if MissionManager.is_completed(String(mission_id)):
+			done += 1
+	return [done, missions.size()]
+
+
 ## true se a missão faz parte de um capítulo já começado e ainda não
 ## terminado. Usado pelos marcadores "!" dos prédios na cidade.
 func is_mission_in_current_chapter(mission_id: String) -> bool:

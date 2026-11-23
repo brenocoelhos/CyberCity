@@ -621,6 +621,7 @@ func _on_reveal_clue(mission_id: String) -> void:
 # --- Missões (estilo Lembretes) -----------------------------------------------
 
 func _render_missions() -> void:
+	_render_chapter_card()
 	var groups := [
 		[MissionManager.State.ACTIVE, "Em andamento", IOS_BLUE],
 		[MissionManager.State.AVAILABLE, "Disponíveis", Color("#ff9f0a")],
@@ -668,10 +669,43 @@ func _render_missions() -> void:
 			var description := _text(texts, String(mission["description"]), Color("#c7c7cc"), 12)
 			description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			_text(texts, "%s · %s · %d XP" % [String(mission["location"]), String(mission["difficulty"]), int(mission["xp"])], COLOR_DIM, 11).autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			if int(group[0]) == MissionManager.State.LOCKED:
+				var chapter_id: String = CampaignManager.chapter_of(String(mission["id"]))
+				if chapter_id != "":
+					_text(texts, "Libera no capítulo %d" % CampaignManager.chapter_number(chapter_id), Color("#8e8e93"), 11)
 			row.add_child(texts)
 			column.add_child(row)
 		list.add_child(card)
 		_spacer(8)
+
+
+## Cartão do capítulo atual no topo do app: nome, quantas missões faltam e uma
+## barra de progresso. No capítulo final, mostra o objetivo do duelo.
+func _render_chapter_card() -> void:
+	var chapter_id: String = CampaignManager.current_chapter_id()
+	if chapter_id == "":
+		return
+	var chapter: Dictionary = CampaignManager.chapters[chapter_id]
+	var card := PanelContainer.new()
+	card.add_theme_stylebox_override("panel", _box(IOS_CELL, 12, 12, 10))
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 6)
+	card.add_child(column)
+	_text(column, "CAPÍTULO ATUAL", COLOR_DIM, 11, true)
+	_text(column, String(chapter["title"]), Color.WHITE, 14, true).autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var progress: Array = CampaignManager.chapter_progress(chapter_id)
+	if int(progress[1]) == 0:
+		_text(column, CampaignManager.FINAL_OBJECTIVE, Color("#ff9f0a"), 12).autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	else:
+		var bar := ProgressBar.new()
+		bar.max_value = int(progress[1])
+		bar.value = int(progress[0])
+		bar.show_percentage = false
+		bar.custom_minimum_size = Vector2(0, 8)
+		column.add_child(bar)
+		_text(column, "%d de %d missões concluídas" % [int(progress[0]), int(progress[1])], COLOR_DIM, 12)
+	list.add_child(card)
+	_spacer(8)
 
 
 # --- Perfil -------------------------------------------------------------------

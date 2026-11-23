@@ -30,6 +30,7 @@ func _initialize() -> void:
 	ok = await _check_boss_door() and ok
 	ok = await _check_npc_not_ready() and ok
 	ok = await _check_double_door() and ok
+	ok = _check_phone_chapter_card() and ok
 	ok = _check_save_on_quit() and ok
 	print("RESULTADO: ", "TUDO OK" if ok else "FALHOU")
 	quit(0 if ok else 1)
@@ -224,6 +225,32 @@ func _check_double_door() -> bool:
 	return ok
 
 
+## App Missoes do celular: cartao do capitulo atual e "Libera no capitulo N".
+func _check_phone_chapter_card() -> bool:
+	var ok := true
+	var menu = root.get_node("GameMenu")
+	_new_game()
+	campaign.play_opening()
+	_close_dialogue()
+	menu.open()
+	menu._open_app("missions")
+	var text := _labels_text(menu.list)
+	ok = _check("celular: cartao mostra o capitulo atual e o progresso", text.contains("CAPÍTULO ATUAL") and text.contains("CAPÍTULO 1") and text.contains("0 de 1 missões concluídas")) and ok
+	ok = _check("celular: missao bloqueada diz em que capitulo libera", text.contains("Libera no capítulo 7")) and ok
+	menu.close()
+
+	campaign._start_chapter(campaign.FINAL_CHAPTER)
+	_close_dialogue()
+	campaign._chapter_finished["ch1"] = true
+	menu.open()
+	menu._open_app("missions")
+	text = _labels_text(menu.list)
+	ok = _check("celular: no capitulo final o cartao mostra o objetivo do duelo", text.contains(campaign.FINAL_OBJECTIVE)) and ok
+	menu.close()
+	_new_game()
+	return ok
+
+
 ## Fechar a janela salva o jogo (num arquivo temporario, nunca no do jogador).
 func _check_save_on_quit() -> bool:
 	var ok := true
@@ -254,6 +281,13 @@ func _check_save_on_quit() -> bool:
 	DirAccess.remove_absolute(temp_path)
 	save.save_path = save.SAVE_PATH
 	return ok
+
+
+func _labels_text(node: Node) -> String:
+	var parts: PackedStringArray = []
+	for label in node.find_children("*", "Label", true, false):
+		parts.append(String(label.text))
+	return "\n".join(parts)
 
 
 func _check(label: String, cond: bool) -> bool:
