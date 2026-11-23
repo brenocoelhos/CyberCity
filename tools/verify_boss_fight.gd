@@ -4,11 +4,14 @@ extends SceneTree
 ## Rodar: Godot --headless --path . --script res://tools/verify_boss_fight.gd
 ## Sai com código 0 se tudo passar e 1 se algo falhar.
 
-var BossFight: GDScript = load("res://scripts/boss/BossFight.gd")
+# Carregado so depois dos autoloads: o BossFight.gd usa o SoundManager, e
+# carregar antes (aqui em cima) dava "Identifier not found: SoundManager".
+var BossFight: GDScript
 
 
 func _initialize() -> void:
 	await process_frame
+	BossFight = load("res://scripts/boss/BossFight.gd")
 	var ok := true
 
 	# --- tempos decrescentes, primeiro ataque com 45 s ---
