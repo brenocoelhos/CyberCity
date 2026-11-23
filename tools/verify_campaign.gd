@@ -8,6 +8,7 @@ extends SceneTree
 ## Sai com código 0 se tudo passar e 1 se algo falhar.
 
 const BUILDING := "res://scenes/world/Building.tscn"
+const HOUSE := "res://scenes/interiors/HouseInterior.tscn"
 
 var missions
 var campaign
@@ -26,6 +27,7 @@ func _initialize() -> void:
 	ok = _check_stalled_save() and ok
 	ok = _check_old_save() and ok
 	ok = await _check_boss_door() and ok
+	ok = await _check_double_door() and ok
 	print("RESULTADO: ", "TUDO OK" if ok else "FALHOU")
 	quit(0 if ok else 1)
 
@@ -162,6 +164,24 @@ func _check_boss_door() -> bool:
 	building.queue_free()
 	await process_frame
 	_new_game()
+	return ok
+
+
+## Apertar E duas vezes rapido numa porta: so uma troca de cena acontece.
+func _check_double_door() -> bool:
+	var ok := true
+	var transition = root.get_node("SceneTransition")
+	transition.enter_building(HOUSE, "Casa A", Vector2(100, 100))
+	ok = _check("porta: a troca de cena comecou", transition.is_changing()) and ok
+	transition.enter_building(HOUSE, "Casa B", Vector2(900, 900))
+	ok = _check("porta: o segundo E durante a troca e ignorado", transition.interior_title == "Casa A" and transition.return_spawn_position == Vector2(100, 100)) and ok
+	var guard := 0
+	while transition.is_changing() and guard < 300:
+		await process_frame
+		guard += 1
+	ok = _check("porta: a troca termina e libera a proxima", not transition.is_changing() and current_scene != null and current_scene.scene_file_path == HOUSE) and ok
+	transition.interior_title = ""
+	transition.has_pending_spawn = false
 	return ok
 
 

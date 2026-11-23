@@ -61,6 +61,9 @@ func _can_open() -> bool:
 	var scene: Node = get_tree().current_scene
 	if scene == null or scene.scene_file_path == SaveManager.MAIN_MENU_SCENE:
 		return false
+	# No meio de uma troca de cena (tela escurecendo) a pausa não abre.
+	if SceneTransition.is_changing():
+		return false
 	return not (DialogueManager.is_active() or TerminalManager.is_active()
 		or ChallengeManager.is_active() or GameMenu.is_active() or HUD.is_popup_active()
 		or BossManager.is_busy())

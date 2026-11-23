@@ -28,33 +28,50 @@ var interior_title: String = ""
 var interior_config: Dictionary = {}
 
 
+## true durante uma troca de cena (do escurecer até clarear de novo). Uma
+## segunda troca pedida nesse meio tempo é ignorada: sem isso, apertar E duas
+## vezes rápido numa porta carregava a cena duas vezes, e na segunda o jogador
+## reaparecia no ponto inicial da cidade em vez de na porta.
+var _changing: bool = false
+
+
+func is_changing() -> bool:
+	return _changing
+
+
 ## Chamado pela porta de um prédio na cidade.
 func enter_building(interior_scene_path: String, title: String, city_return_position: Vector2, config: Dictionary = {}) -> void:
+	if _changing:
+		return
 	interior_title = title
 	interior_config = config
 	return_spawn_position = city_return_position
 	has_pending_spawn = true
-	await Fade.fade_out()
-	get_tree().change_scene_to_file(interior_scene_path)
-	await get_tree().process_frame
-	await Fade.fade_in()
+	await _change_to(interior_scene_path)
 
 
 ## Troca para qualquer cena com fade (usado pelos menus). Roda aqui no
 ## autoload porque a cena que chamou (ex.: o menu principal) é apagada
 ## no meio da troca. "before_change" roda com a tela já preta.
 func change_scene(scene_path: String, before_change: Callable = Callable()) -> void:
+	if _changing:
+		return
+	await _change_to(scene_path, before_change)
+
+
+## Chamado pela porta de saída dentro de um interior.
+func exit_to_city() -> void:
+	if _changing:
+		return
+	await _change_to(return_scene_path)
+
+
+func _change_to(scene_path: String, before_change: Callable = Callable()) -> void:
+	_changing = true
 	await Fade.fade_out()
 	if before_change.is_valid():
 		before_change.call()
 	get_tree().change_scene_to_file(scene_path)
 	await get_tree().process_frame
 	await Fade.fade_in()
-
-
-## Chamado pela porta de saída dentro de um interior.
-func exit_to_city() -> void:
-	await Fade.fade_out()
-	get_tree().change_scene_to_file(return_scene_path)
-	await get_tree().process_frame
-	await Fade.fade_in()
+	_changing = false
