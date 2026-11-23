@@ -12,10 +12,13 @@ const CITY := "res://scenes/world/City.tscn"
 const TEMP_SAVE := "user://teste_boss_save.json"
 const TEMP_BOARD := "user://teste_boss_placar.cfg"
 
+## Quem acerta tudo vence ao conter o 5º ataque (ver BossFight.gd).
 const WIN_COMMANDS := [
 	"block citycred-seguro.net", "unmask 10.13.37.5",
 	"block 203.0.113.77", "unmask n0va_",
-	"firewall block 23",
+	"firewall block 23", "unmask cassio vega",
+	"patch /login", "unmask 10.13.37.5",
+	"apagar 88",
 ]
 
 

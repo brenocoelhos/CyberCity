@@ -8,10 +8,13 @@ extends RefCounted
 ##     (começa em 50). 100 = vitória; 0 = derrota.
 ##   - O hacker ataca em sequência, repetindo etapas que o jogador já fez nas
 ##     missões. Cada ataque tem um tempo (45 s no primeiro, menos nos
-##     seguintes). Conter o ataque a tempo: +10. Deixar o tempo acabar: -10.
+##     seguintes). Conter o ataque a tempo: +6. Deixar o tempo acabar: -10.
 ##   - Conter um ataque "atordoa" o hacker (fase stun): surge uma tarefa para
-##     desmascará-lo ('unmask <valor>'). Acertar: +10 extra. Se o jogador não
+##     desmascará-lo ('unmask <valor>'). Acertar: +5 extra. Se o jogador não
 ##     fizer nada, o hacker só provoca e o próximo ataque começa.
+##   - Os valores fazem quem acerta tudo vencer exatamente ao conter o 5º
+##     ataque (50 + 5×6 + 4×5 = 100): o duelo cobra todos os temas da lista
+##     (phishing, força bruta, firewall, SQL Injection e XSS).
 ##
 ## TODO(História): as falas, os nomes e as pistas abaixo são PROVISÓRIOS; a
 ## equipe de História decide quem é o hacker e o que ele diz.
@@ -21,8 +24,12 @@ signal changed
 signal finished(won: bool)
 
 const BAR_START := 50
-const BAR_STEP := 10
-const BAR_UNMASK_BONUS := 10
+## Conter um ataque.
+const BAR_STEP := 6
+## Desmascarar o hacker na fase de atordoamento.
+const BAR_UNMASK_BONUS := 5
+## Deixar o tempo de um ataque acabar.
+const BAR_FAIL_STEP := 10
 const STUN_SECONDS := 30.0
 const WRONG_ANSWER_PENALTY := 3.0
 ## Depois do último ataque da lista, o duelo repete o último (com este tempo).
@@ -251,7 +258,7 @@ func _begin_attack() -> void:
 func _attack_failed() -> void:
 	said.emit("bad", "Tempo esgotado! O ataque passou.")
 	said.emit("boss", _pick(TAUNT_FAIL))
-	_move_bar(-BAR_STEP)
+	_move_bar(-BAR_FAIL_STEP)
 	if is_running():
 		_next_attack()
 

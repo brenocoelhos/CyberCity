@@ -32,12 +32,16 @@ func _initialize() -> void:
 	ok = _check("comeca em 50/50", fight.bar == 50 and fight.phase == "attack") and ok
 	ok = _check("resposta errada nao conta", fight.handle_command("block 1.2.3.4") and fight.phase == "attack") and ok
 	ok = _check("resposta errada tira tempo", fight.time_left < 45.0) and ok
-	ok = _check("ataque 1 contido", fight.handle_command("block citycred-seguro.net") and fight.phase == "stun" and fight.bar == 60) and ok
-	ok = _check("unmask errado nao avanca", fight.handle_command("unmask 9.9.9.9") and fight.phase == "stun" and fight.bar == 60) and ok
-	ok = _check("unmask certo da bonus e passa ao ataque 2", fight.handle_command("unmask 10.13.37.5") and fight.phase == "attack" and fight.bar == 70 and fight.attack_index == 1) and ok
-	ok = _check("ataque 2 contido", fight.handle_command("block 203.0.113.77") and fight.bar == 80) and ok
-	ok = _check("segundo unmask (apelido, aceita acento/caixa)", fight.handle_command("UNMASK N0va_") and fight.bar == 90) and ok
-	ok = _check("ataque 3 contido leva a 100 e vence", fight.handle_command("firewall block 23") and fight.phase == "won" and result["won"] == true) and ok
+	ok = _check("ataque 1 contido (+6)", fight.handle_command("block citycred-seguro.net") and fight.phase == "stun" and fight.bar == 56) and ok
+	ok = _check("unmask errado nao avanca", fight.handle_command("unmask 9.9.9.9") and fight.phase == "stun" and fight.bar == 56) and ok
+	ok = _check("unmask certo da bonus (+5) e passa ao ataque 2", fight.handle_command("unmask 10.13.37.5") and fight.phase == "attack" and fight.bar == 61 and fight.attack_index == 1) and ok
+	ok = _check("ataque 2 contido", fight.handle_command("block 203.0.113.77") and fight.bar == 67) and ok
+	ok = _check("segundo unmask (apelido, aceita acento/caixa)", fight.handle_command("UNMASK N0va_") and fight.bar == 72) and ok
+	ok = _check("ataque 3 contido ainda nao vence", fight.handle_command("firewall block 23") and fight.phase == "stun" and fight.bar == 78) and ok
+	ok = _check("terceiro unmask (whois)", fight.handle_command("unmask cassio vega") and fight.phase == "attack" and fight.bar == 83 and fight.attack_index == 3) and ok
+	ok = _check("ataque 4 (SQL Injection) contido", fight.handle_command("patch /login") and fight.bar == 89) and ok
+	ok = _check("quarto unmask", fight.handle_command("unmask 10.13.37.5") and fight.phase == "attack" and fight.bar == 94 and fight.attack_index == 4) and ok
+	ok = _check("quem acerta tudo vence ao conter o 5o ataque (XSS)", fight.handle_command("apagar 88") and fight.phase == "won" and result["won"] == true) and ok
 	ok = _check("depois de vencer nao consome mais comandos", not fight.handle_command("ls")) and ok
 
 	# --- todas as respostas dos ataques estao na lista aceita ---
@@ -65,7 +69,7 @@ func _initialize() -> void:
 	for i in 31:
 		fight.tick(1.0)
 	ok = _check("stun sem acao passa ao proximo ataque", fight.phase == "attack" and fight.attack_index == 1) and ok
-	ok = _check("barra ficou em 60 (sem bonus)", fight.bar == 60) and ok
+	ok = _check("barra ficou em 56 (sem bonus)", fight.bar == 56) and ok
 	ok = _check("hacker provocou na fase de stun", lines.any(func(l: String) -> bool: return l.begins_with("boss:") and (l.contains("decepção") or l.contains("iniciante")))) and ok
 
 	# --- desistir ---
