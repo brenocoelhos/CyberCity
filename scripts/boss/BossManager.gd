@@ -180,9 +180,11 @@ func _load_last_save() -> void:
 	if scene_path == "":
 		_retry()
 		return
-	_reset_state()
 	GameManager.game_started = true
+	# A tela de final só sai com a tela já preta (dentro da troca de cena).
+	# Antes ela sumia na hora e a sala do duelo piscava antes do escurecer.
 	SceneTransition.change_scene(scene_path, func() -> void:
+		_reset_state()
 		HUD.refresh()
 		HUD.visible = true)
 
@@ -190,9 +192,9 @@ func _load_last_save() -> void:
 ## Depois dos créditos: volta ao menu principal. "Continuar" passa a carregar o
 ## último save do disco (o jogo em memória acabou).
 func _leave_to_menu() -> void:
-	_reset_state()
 	GameManager.game_started = false
-	SceneTransition.change_scene(SaveManager.MAIN_MENU_SCENE)
+	# Os créditos só saem com a tela já preta (ver _load_last_save).
+	SceneTransition.change_scene(SaveManager.MAIN_MENU_SCENE, _reset_state)
 
 
 func _reset_state() -> void:
