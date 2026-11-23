@@ -22,7 +22,7 @@ func _on_interact() -> void:
 	var mission_id: String = String(ChallengeData.get_challenge(challenge_id).get("mission", ""))
 	if mission_id != "" and not MissionManager.is_unlocked(mission_id):
 		SoundManager.play("error")
-		HUD.show_notice("Ainda não", "Este computador faz parte de um capítulo que ainda não começou. Siga as missões do celular.")
+		HUD.show_notice("Ainda não", "Você ainda não está pronto para esta missão. Termine as missões do capítulo atual (veja o celular).")
 		return
 	# Desafio de quiz (perguntas de múltipla escolha) abre direto o quiz,
 	# sem passar pelo terminal e pelo comando 'desafio'.

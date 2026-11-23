@@ -5,7 +5,15 @@ extends "res://scripts/systems/Interactable.gd"
 ## falas.
 ##
 ## Se "mission_to_start" estiver preenchido, conversar com este NPC
-## aceita/inicia essa missão (se ela estiver disponível).
+## aceita/inicia essa missão (se ela estiver disponível). Se a missão ainda é
+## de um capítulo que não começou, o NPC avisa que o jogador ainda não está
+## pronto e o "!" continua sobre ele.
+
+## Fala do NPC quando a missão dele ainda está bloqueada.
+const NOT_READY_LINES := [
+	"Você ainda não está pronto para esta missão.",
+	"Termine as missões do capítulo atual e volte a falar comigo depois.",
+]
 
 @export var npc_name: String = "Morador"
 @export var dialogue_lines: PackedStringArray = PackedStringArray()
@@ -31,14 +39,13 @@ func _ready() -> void:
 
 
 ## O "!" some depois da primeira conversa com o NPC. NPC que entrega missão
-## volta a mostrar o "!" se a missão dele ficar disponível depois (capítulo
-## novo) e o jogador ainda não a aceitou.
+## mantém o "!" enquanto o jogador não aceitar a missão (bloqueada ou
+## disponível).
 func _update_marker() -> void:
 	var marker: Label = get_node_or_null("../Marker")
 	if marker == null:
 		return
-	if mission_to_start != "" \
-			and MissionManager.get_state(mission_to_start) == MissionManager.State.AVAILABLE:
+	if mission_to_start != "" and _mission_waiting():
 		marker.visible = true
 		return
 	marker.visible = not GameManager.talked_npcs.has(npc_key())
@@ -53,7 +60,18 @@ func npc_key() -> String:
 	return "%s|%s|%s" % [scene_path, building, npc_name]
 
 
+## true se a missão do NPC ainda não foi aceita (bloqueada ou disponível).
+func _mission_waiting() -> bool:
+	var state: int = MissionManager.get_state(mission_to_start)
+	return state == MissionManager.State.LOCKED or state == MissionManager.State.AVAILABLE
+
+
 func _on_interact() -> void:
+	# Missão de um capítulo que ainda não começou: o NPC não a entrega, e a
+	# conversa não conta (o "!" fica até o jogador poder aceitar).
+	if mission_to_start != "" and not MissionManager.is_unlocked(mission_to_start):
+		DialogueManager.start_dialogue(npc_name, PackedStringArray(NOT_READY_LINES), _portrait())
+		return
 	DialogueManager.start_dialogue(npc_name, dialogue_lines, _portrait())
 
 	if mission_to_start != "":

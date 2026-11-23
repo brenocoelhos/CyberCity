@@ -8,6 +8,7 @@ extends SceneTree
 ## Sai com código 0 se tudo passar e 1 se algo falhar.
 
 const BUILDING := "res://scenes/world/Building.tscn"
+const NPC_SCENE := "res://scenes/npc/NPC.tscn"
 const HOUSE := "res://scenes/interiors/HouseInterior.tscn"
 
 var missions
@@ -27,6 +28,7 @@ func _initialize() -> void:
 	ok = _check_stalled_save() and ok
 	ok = _check_old_save() and ok
 	ok = await _check_boss_door() and ok
+	ok = await _check_npc_not_ready() and ok
 	ok = await _check_double_door() and ok
 	print("RESULTADO: ", "TUDO OK" if ok else "FALHOU")
 	quit(0 if ok else 1)
@@ -162,6 +164,42 @@ func _check_boss_door() -> bool:
 	door._update_lock_state()
 	ok = _check("Casa 5: abre e ganha o ! no capitulo final", not door.locked and building.get_node("MissionMarker").visible) and ok
 	building.queue_free()
+	await process_frame
+	_new_game()
+	return ok
+
+
+## Morador cuja missao ainda esta bloqueada: nao entrega, avisa que o jogador
+## nao esta pronto e o "!" continua.
+func _check_npc_not_ready() -> bool:
+	var ok := true
+	_new_game()
+	var game = root.get_node("GameManager")
+	var npc: Node2D = (load(NPC_SCENE) as PackedScene).instantiate()
+	root.add_child(npc)
+	await process_frame
+	await process_frame
+	var interaction = npc.get_node("Interaction")
+	var marker: Label = npc.get_node("Marker")
+	interaction.npc_name = "Moradora"
+	interaction.dialogue_lines = PackedStringArray(["Meu wi-fi esta estranho."])
+	interaction.mission_to_start = "m11"
+	interaction._update_marker()
+	ok = _check("npc com missao bloqueada mostra o '!'", marker.visible) and ok
+
+	interaction._on_interact()
+	ok = _check("npc com missao bloqueada diz que o jogador nao esta pronto", dialogue.is_active() and String(dialogue.text_label.text).contains("não está pronto")) and ok
+	ok = _check("a missao continua bloqueada (nao foi aceita)", missions.get_state("m11") == missions.State.LOCKED) and ok
+	_close_dialogue()
+	ok = _check("o '!' continua depois dessa conversa", marker.visible and not game.talked_npcs.has(interaction.npc_key())) and ok
+
+	missions.unlock_mission("m11")
+	interaction._update_marker()
+	ok = _check("missao liberada: o '!' continua ate aceitar", marker.visible) and ok
+	interaction._on_interact()
+	ok = _check("missao liberada: o npc entrega a missao e o '!' some", missions.is_active("m11") and not marker.visible and String(dialogue.text_label.text).contains("wi-fi")) and ok
+	_close_dialogue()
+	npc.queue_free()
 	await process_frame
 	_new_game()
 	return ok
