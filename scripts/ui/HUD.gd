@@ -431,6 +431,9 @@ func _update_objective() -> void:
 	elif total > done:
 		mission_header.text = "PRÓXIMA MISSÃO"
 		objective_label.text = "Converse com quem tem o ! para receber a missão."
+	elif CampaignManager.is_final_chapter_active():
+		mission_header.text = "CAPÍTULO FINAL"
+		objective_label.text = CampaignManager.FINAL_OBJECTIVE
 	else:
 		mission_header.text = "MISSÃO ATUAL"
 		objective_label.text = "Nenhuma missão no momento."

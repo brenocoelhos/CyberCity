@@ -21,6 +21,9 @@ const WIN_COMMANDS := [
 
 func _initialize() -> void:
 	await process_frame
+	# As missoes comecam bloqueadas (o capitulo libera); estes testes verificam
+	# os desafios em si, entao liberam todas.
+	root.get_node("MissionManager").unlock_all()
 	var boss = root.get_node("BossManager")
 	var terminal = root.get_node("TerminalManager")
 	var dialogue = root.get_node("DialogueManager")
@@ -37,11 +40,11 @@ func _initialize() -> void:
 	board.clear_scores()
 	_remove(TEMP_SAVE)
 
-	# --- a Casa 5 da cidade pede o duelo e esta liberada para teste ---
+	# --- a Casa 5 da cidade pede o duelo e abre so no capitulo final ---
 	var city: Node = (load(CITY) as PackedScene).instantiate()
 	var casa5: Node = city.get_node("Buildings/Casa5")
 	ok = _check("Casa 5 pede o duelo", casa5.interior_boss_fight) and ok
-	ok = _check("Casa 5 liberada para teste", not casa5.starts_locked) and ok
+	ok = _check("Casa 5 trancada ate o capitulo final", casa5.starts_locked and casa5.unlock_chapter == "final") and ok
 	ok = _check("config do interior leva 'boss'", bool(casa5._build_interior_config().get("boss", false))) and ok
 	city.free()
 

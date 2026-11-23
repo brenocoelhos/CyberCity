@@ -10,6 +10,9 @@ var HtmlLite: GDScript = load("res://scripts/desktop/HtmlLite.gd")
 
 func _initialize() -> void:
 	await process_frame
+	# As missoes comecam bloqueadas (o capitulo libera); estes testes verificam
+	# os desafios em si, entao liberam todas.
+	root.get_node("MissionManager").unlock_all()
 	var desktop = root.get_node("DesktopManager")
 	var terminal = root.get_node("TerminalManager")
 	var data = root.get_node("ChallengeData")

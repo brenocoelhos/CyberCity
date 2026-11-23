@@ -1,10 +1,15 @@
 extends Node
 ## CampaignManager.gd — Autoload
-## Camada narrativa fina por cima do que já existe: agrupa as 17 missões em
-## 7 capítulos + um capítulo final, mostrando uma pequena introdução quando o
-## capítulo começa e uma mensagem de fechamento quando termina. Não cria
-## nenhum sistema novo: só encadeia diálogos (DialogueManager) reagindo a
-## missões concluídas (MissionManager).
+## Camada narrativa por cima do que já existe: agrupa as 17 missões em
+## 7 capítulos + o capítulo final (o duelo contra o hacker na Casa 5),
+## mostrando uma pequena introdução quando o capítulo começa e uma mensagem
+## de fechamento quando termina.
+##
+## Os capítulos são em sequência: as missões de um capítulo só ficam
+## disponíveis quando ele começa (MissionManager.unlock_mission), e ele só
+## começa quando o anterior termina. O capítulo final não tem missões: ele
+## destranca a Casa 5 (Building > Unlock Chapter) e só termina quando o jogador
+## vence o duelo (BossManager chama complete_game).
 ##
 ## A ORDEM dos capítulos segue a curva de dificuldade/realismo do jogo: os
 ## quizzes de conceitos primeiro, depois fraude e rede, depois exploração e
@@ -13,6 +18,12 @@ extends Node
 
 signal chapter_unlocked(chapter_id: String)
 signal game_completed
+
+## Id do capítulo final (o duelo). Fica sempre por último em "chapters".
+const FINAL_CHAPTER := "final"
+
+## Objetivo mostrado no HUD durante o capítulo final.
+const FINAL_OBJECTIVE := "Vá até a Casa 5 e enfrente o hacker."
 
 var chapters: Dictionary = {
 	"ch1": {
@@ -97,6 +108,18 @@ var chapters: Dictionary = {
 			"Teste concluído e documentado. A Orion agora sabe onde estava vulnerável.",
 		]),
 	},
+	# Capítulo final: sem missões. Termina ao vencer o duelo (complete_game).
+	# TODO(História): falas provisórias.
+	FINAL_CHAPTER: {
+		"title": "CAPÍTULO FINAL — O HACKER",
+		"missions": [],
+		"intro": PackedStringArray([
+			"A Central rastreou a origem dos ataques: tudo sai de um computador na Casa 5.",
+			"Você já usou tudo o que é preciso para enfrentar quem está por trás deles.",
+			"Vá até a Casa 5. A porta agora está aberta.",
+		]),
+		"outro": PackedStringArray(),
+	},
 }
 
 var is_game_completed: bool = false
@@ -142,6 +165,37 @@ func load_save_data(data: Dictionary) -> void:
 	var finished: Dictionary = data.get("chapter_finished", {})
 	for chapter_id in finished.keys():
 		_chapter_finished[String(chapter_id)] = bool(finished[chapter_id])
+	# Saves antigos marcavam o jogo como encerrado ao terminar o capítulo 7, mesmo
+	# com missões faltando. Agora só vale com o capítulo final (o duelo) vencido.
+	is_game_completed = is_game_completed and is_chapter_finished(FINAL_CHAPTER)
+	_sync_mission_locks()
+
+
+## Acerta as missões com os capítulos (o MissionManager já foi carregado
+## antes, ver SaveManager.load_game): as de capítulos começados ficam
+## liberadas, e as de capítulos que ainda não começaram voltam a ficar
+## bloqueadas, se não foram aceitas. Serve para saves antigos, de quando todas
+## as missões começavam liberadas.
+func _sync_mission_locks() -> void:
+	for chapter_id in chapters.keys():
+		for mission_id in chapters[chapter_id]["missions"]:
+			if is_chapter_started(chapter_id):
+				MissionManager.unlock_mission(String(mission_id))
+			else:
+				MissionManager.lock_mission(String(mission_id))
+
+
+func is_chapter_started(chapter_id: String) -> bool:
+	return bool(_chapter_started.get(chapter_id, false))
+
+
+func is_chapter_finished(chapter_id: String) -> bool:
+	return bool(_chapter_finished.get(chapter_id, false))
+
+
+## true durante o capítulo final: a Casa 5 está aberta e o duelo é o objetivo.
+func is_final_chapter_active() -> bool:
+	return is_chapter_started(FINAL_CHAPTER) and not is_chapter_finished(FINAL_CHAPTER)
 
 
 ## true se a missão faz parte de um capítulo já começado e ainda não
@@ -154,13 +208,37 @@ func is_mission_in_current_chapter(mission_id: String) -> bool:
 	return false
 
 
-## Chamado pela cidade (City.gd) toda vez que a cena carrega. Só faz
-## alguma coisa da primeira vez — é seguro chamar sempre.
+## Chamado pela cidade (City.gd) toda vez que a cena carrega. Da primeira vez
+## começa o capítulo 1; depois só retoma a campanha se ela ficou parada (ver
+## _resume) — é seguro chamar sempre.
 func play_opening() -> void:
-	if _intro_played:
+	if not _intro_played:
+		_intro_played = true
+		_start_chapter("ch1")
 		return
-	_intro_played = true
-	_start_chapter("ch1")
+	_resume()
+
+
+## Retoma a campanha se ela ficou parada entre dois capítulos. Acontece quando
+## o jogo foi salvo logo depois de concluir a última missão de um capítulo (o
+## save da missão sai antes de o jogador fechar o texto de fechamento, que é
+## quando o próximo capítulo começa) e o jogador saiu antes do próximo save.
+## Também fecha um capítulo cujas missões já estão todas concluídas (saves
+## antigos, de quando dava para fazer missões fora de ordem).
+func _resume() -> void:
+	if DialogueManager.is_active():
+		return
+	# Em ordem: o primeiro capítulo não terminado é o atual. Se ele nem
+	# começou, todos os anteriores já terminaram: começa agora.
+	for chapter_id in chapters.keys():
+		if not is_chapter_started(chapter_id):
+			_start_chapter(chapter_id)
+			return
+		if not is_chapter_finished(chapter_id):
+			var missions: Array = chapters[chapter_id]["missions"]
+			if not missions.is_empty() and _all_missions_done(missions):
+				_finish_chapter(chapter_id)
+			return
 
 
 func _on_mission_completed(mission_id: String) -> void:
@@ -169,7 +247,9 @@ func _on_mission_completed(mission_id: String) -> void:
 		var missions: Array = chapter["missions"]
 		if not missions.has(mission_id):
 			continue
-		if _all_missions_done(missions):
+		# Só fecha um capítulo que já começou (o texto de fechamento nunca vem
+		# antes da introdução).
+		if is_chapter_started(chapter_id) and _all_missions_done(missions):
 			_finish_chapter(chapter_id)
 		return
 
@@ -187,6 +267,9 @@ func _start_chapter(chapter_id: String) -> void:
 	_chapter_started[chapter_id] = true
 
 	var chapter: Dictionary = chapters[chapter_id]
+	# Libera as missões antes de avisar (os "!" leem o estado ao receber o sinal).
+	for mission_id in chapter["missions"]:
+		MissionManager.unlock_mission(String(mission_id))
 	DialogueManager.start_dialogue(String(chapter["title"]), chapter["intro"])
 	chapter_unlocked.emit(chapter_id)
 
@@ -197,13 +280,15 @@ func _finish_chapter(chapter_id: String) -> void:
 	_chapter_finished[chapter_id] = true
 
 	var chapter: Dictionary = chapters[chapter_id]
-	DialogueManager.start_dialogue(String(chapter["title"]), chapter["outro"])
-
 	var next_id: String = _next_chapter_id(chapter_id)
-	if next_id != "":
-		_queued_action = func(): _start_chapter(next_id)
-	else:
-		_queued_action = func(): _finish_game()
+	if PackedStringArray(chapter["outro"]).is_empty():
+		if next_id != "":
+			_start_chapter(next_id)
+		return
+	DialogueManager.start_dialogue(String(chapter["title"]), chapter["outro"])
+	if next_id == "":
+		return
+	_queued_action = func(): _start_chapter(next_id)
 
 	# Espera a caixa de diálogo do "outro" fechar antes de mostrar a
 	# próxima (senão uma sobrescreveria a outra na mesma tela).
@@ -225,13 +310,12 @@ func _next_chapter_id(chapter_id: String) -> String:
 	return String(ids[index + 1])
 
 
-func _finish_game() -> void:
+## Chamado pelo BossManager quando o jogador vence o duelo: fecha o capítulo
+## final e o jogo. Sem diálogo aqui: os créditos (Credits.gd) já estão na tela.
+func complete_game() -> void:
+	if is_game_completed:
+		return
+	_chapter_started[FINAL_CHAPTER] = true
+	_chapter_finished[FINAL_CHAPTER] = true
 	is_game_completed = true
-	DialogueManager.start_dialogue("CAPÍTULO FINAL — O INCIDENTE", PackedStringArray([
-		"Um incidente atinge vários sistemas da cidade ao mesmo tempo.",
-		"Usando tudo que você aprendeu — senhas, hash, criptografia, phishing, redes, firewall, logs, SQL Injection e XSS — a equipe consegue conter o incidente.",
-		"CASO ENCERRADO.",
-		"Nível final: %d   |   XP total conquistado: %d" % [GameManager.level, GameManager.total_xp_earned],
-		"Obrigado por jogar Cyber City!",
-	]))
 	game_completed.emit()

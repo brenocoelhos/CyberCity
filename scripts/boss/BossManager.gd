@@ -95,6 +95,8 @@ func _show_ending(won: bool) -> void:
 func _show_credits() -> void:
 	MusicManager.play_ending(true)
 	SoundManager.play("success")
+	# Vencer o duelo fecha o capítulo final e o jogo ("CASO ENCERRADO").
+	CampaignManager.complete_game()
 	# O tempo da partida fecha aqui e entra no placar.
 	var result: Dictionary = Leaderboard.finish_run()
 	_overlay = Credits.new()

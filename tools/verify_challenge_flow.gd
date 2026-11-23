@@ -12,6 +12,9 @@ extends SceneTree
 
 func _initialize() -> void:
 	await process_frame
+	# As missoes comecam bloqueadas (o capitulo libera); estes testes verificam
+	# os desafios em si, entao liberam todas.
+	root.get_node("MissionManager").unlock_all()
 	var term = root.get_node("TerminalManager")
 	# O historico salvo (nivel 5) nao deve gravar no arquivo do jogador durante o teste.
 	term.history_path = "user://teste_fluxo_historico.cfg"
@@ -442,6 +445,7 @@ func _initialize() -> void:
 	ok = _check("casa: 3 pistas e depois so avisa", phone.get_revealed_clues("m01").size() == 3) and ok
 	term.close()
 	missions.reset()
+	missions.unlock_all()
 	phone.reset()
 	term.open("", "casa-1")
 	term._on_command_submitted("dica")

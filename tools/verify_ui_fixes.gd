@@ -14,6 +14,9 @@ const NPC_SCENE := "res://scenes/npc/NPC.tscn"
 
 func _initialize() -> void:
 	await process_frame
+	# As missoes comecam bloqueadas (o capitulo libera); estes testes verificam
+	# os desafios em si, entao liberam todas.
+	root.get_node("MissionManager").unlock_all()
 	var ok := true
 	ok = await _check_menu() and ok
 	ok = await _check_quiz() and ok

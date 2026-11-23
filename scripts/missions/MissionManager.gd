@@ -9,6 +9,10 @@ signal mission_completed(mission_id: String)
 
 enum State { LOCKED, AVAILABLE, ACTIVE, COMPLETED, FAILED }
 
+## Todas as missões começam BLOQUEADAS: o CampaignManager libera as de cada
+## capítulo quando ele começa (unlock_mission). Assim o jogador segue a curva
+## de dificuldade e não abre, por exemplo, o teste de invasão (m15) no início.
+##
 ## Definição das missões. Cada missão tem os campos pedidos no escopo:
 ## id, título, descrição, objetivo, local, estado, recompensa em XP e
 ## dificuldade. "concept" é o conceito de cibersegurança ensinado, e
@@ -20,7 +24,7 @@ var missions: Dictionary = {
 		"description": "Um morador abriu um e-mail e seu computador começou a apresentar comportamentos estranhos.",
 		"objective": "Leia o e-mail no computador da casa (use 'files' e 'read' no terminal).",
 		"location": "Casa (qualquer uma)",
-		"state": State.AVAILABLE,
+		"state": State.LOCKED,
 		"xp": 100,
 		"difficulty": "Fácil",
 		"concept": "Phishing",
@@ -32,7 +36,7 @@ var missions: Dictionary = {
 		"description": "O sistema antigo da empresa exportou o cadastro de usuários. A equipe quer saber quais senhas estão fracas.",
 		"objective": "Na empresa, use a Estação 1: audite o cadastro (passcheck) e aponte os problemas com 'report'.",
 		"location": "Empresa (Estação 1)",
-		"state": State.AVAILABLE,
+		"state": State.LOCKED,
 		"xp": 100,
 		"difficulty": "Fácil",
 		"concept": "Senhas",
@@ -44,7 +48,7 @@ var missions: Dictionary = {
 		"description": "Uma atualização do banco de dados chegou. Antes de instalar, é preciso conferir se nenhum arquivo foi alterado no caminho.",
 		"objective": "Na empresa, use a Estação 2: confira os arquivos com 'sha256sum' e aponte o adulterado.",
 		"location": "Empresa (Estação 2)",
-		"state": State.AVAILABLE,
+		"state": State.LOCKED,
 		"xp": 150,
 		"difficulty": "Média",
 		"concept": "Hash",
@@ -56,7 +60,7 @@ var missions: Dictionary = {
 		"description": "Uma mensagem interceptada está cifrada e ninguém sabe a chave.",
 		"objective": "No Centro de Tecnologia, use a Estação 1: decifre a mensagem com 'caesar' e reporte o plano.",
 		"location": "Centro de Tecnologia (Estação 1)",
-		"state": State.AVAILABLE,
+		"state": State.LOCKED,
 		"xp": 150,
 		"difficulty": "Média",
 		"concept": "Criptografia",
@@ -68,7 +72,7 @@ var missions: Dictionary = {
 		"description": "Dois e-mails do \"suporte\" chegaram juntos. Um deles é golpe.",
 		"objective": "No Centro de Tecnologia, use a Estação 2: compare os e-mails e aponte os sinais de phishing.",
 		"location": "Centro de Tecnologia (Estação 2)",
-		"state": State.AVAILABLE,
+		"state": State.LOCKED,
 		"xp": 200,
 		"difficulty": "Média",
 		"concept": "Phishing",
@@ -80,7 +84,7 @@ var missions: Dictionary = {
 		"description": "A empresa suspeita que um dispositivo não autorizado está na rede local.",
 		"objective": "Na empresa, use o Servidor: digite 'scan' para mapear a rede e 'connect <ip>' no dispositivo suspeito.",
 		"location": "Empresa (Servidor)",
-		"state": State.AVAILABLE,
+		"state": State.LOCKED,
 		"xp": 200,
 		"difficulty": "Média",
 		"concept": "Redes",
@@ -92,7 +96,7 @@ var missions: Dictionary = {
 		"description": "O Centro de Tecnologia recebeu várias tentativas de conexão e precisa de regras de firewall.",
 		"objective": "No Centro de Tecnologia, use o computador de Firewall: digite 'firewall status' e depois 'firewall allow/block <porta>' para cada conexão.",
 		"location": "Centro de Tecnologia (Firewall)",
-		"state": State.AVAILABLE,
+		"state": State.LOCKED,
 		"xp": 250,
 		"difficulty": "Difícil",
 		"concept": "Firewall",
@@ -104,7 +108,7 @@ var missions: Dictionary = {
 		"description": "O servidor da loja registrou vários acessos e a equipe quer saber se algo suspeito aconteceu.",
 		"objective": "Na Loja Eletrônica, use o Registro de Acessos: digite 'logs' e depois 'report <linha>'.",
 		"location": "Loja Eletrônica (Registro de Acessos)",
-		"state": State.AVAILABLE,
+		"state": State.LOCKED,
 		"xp": 200,
 		"difficulty": "Média",
 		"concept": "Logs",
@@ -116,7 +120,7 @@ var missions: Dictionary = {
 		"description": "O sistema de login da loja parece aceitar entradas estranhas sem travar.",
 		"objective": "Na Loja Eletrônica, use o Sistema de Login: digite 'login <alguma coisa>' e tente burlar a autenticação.",
 		"location": "Loja Eletrônica (Sistema de Login)",
-		"state": State.AVAILABLE,
+		"state": State.LOCKED,
 		"xp": 250,
 		"difficulty": "Difícil",
 		"concept": "SQL Injection",
@@ -128,7 +132,7 @@ var missions: Dictionary = {
 		"description": "O sistema de comentários da loja publica qualquer coisa sem checar o conteúdo.",
 		"objective": "Na Loja Eletrônica, use o Sistema de Comentários: digite 'postar <mensagem>' e teste um conteúdo perigoso.",
 		"location": "Loja Eletrônica (Sistema de Comentários)",
-		"state": State.AVAILABLE,
+		"state": State.LOCKED,
 		"xp": 250,
 		"difficulty": "Difícil",
 		"concept": "XSS",
@@ -140,7 +144,7 @@ var missions: Dictionary = {
 		"description": "O wi-fi de uma casa está lento e a moradora desconfia que alguém está usando a rede dela.",
 		"objective": "Na Casa 6, use o computador: leia o manual do roteador, entre com 'login <usuário> <senha>' e troque a senha com 'passwd <nova senha>'.",
 		"location": "Casa 6 (Roteador)",
-		"state": State.AVAILABLE,
+		"state": State.LOCKED,
 		"xp": 200,
 		"difficulty": "Média",
 		"concept": "Credenciais padrão",
@@ -152,7 +156,7 @@ var missions: Dictionary = {
 		"description": "A vizinha da Casa 2 recebeu um e-mail do \"banco\" e quer saber se pode confiar nele.",
 		"objective": "Na Casa 2, use o computador: leia o e-mail com 'cat email.eml' e aponte pelo menos 3 indícios de fraude com 'report <indício>'.",
 		"location": "Casa 2 (E-mail)",
-		"state": State.AVAILABLE,
+		"state": State.LOCKED,
 		"xp": 150,
 		"difficulty": "Média",
 		"concept": "Cabeçalhos de e-mail",
@@ -164,7 +168,7 @@ var missions: Dictionary = {
 		"description": "O morador da Casa 3 recebeu seis mensagens de uma vez e não sabe em quais confiar.",
 		"objective": "Na Casa 3, use o computador: leia 'cat inbox.txt', abra cada mensagem com 'cat msg1.eml' etc. e aponte os golpes com 'report <número>'.",
 		"location": "Casa 3 (Caixa de entrada)",
-		"state": State.AVAILABLE,
+		"state": State.LOCKED,
 		"xp": 200,
 		"difficulty": "Média",
 		"concept": "Phishing em massa",
@@ -176,7 +180,7 @@ var missions: Dictionary = {
 		"description": "A LojaFácil avisou que vazou dados de clientes, e o morador da Casa 4 usa a mesma senha em tudo.",
 		"objective": "Na Casa 4, use o computador: leia o aviso, filtre o log com 'grep <termo> acessos_email.log' e aponte pelo menos 4 achados com 'report <achado>'.",
 		"location": "Casa 4 (E-mail)",
-		"state": State.AVAILABLE,
+		"state": State.LOCKED,
 		"xp": 250,
 		"difficulty": "Difícil",
 		"concept": "Reutilização de senhas",
@@ -188,7 +192,7 @@ var missions: Dictionary = {
 		"description": "A Orion Logística contratou um teste de invasão autorizado: mostrar até onde um atacante chegaria a partir do site da empresa.",
 		"objective": "No Terminal Público da praça: leia as notas do teste, avance de máquina em máquina até a flag e entregue o relatório com 'relatorio'.",
 		"location": "Praça Central (Terminal Público)",
-		"state": State.AVAILABLE,
+		"state": State.LOCKED,
 		"xp": 400,
 		"difficulty": "Difícil",
 		"concept": "Movimento lateral",
@@ -200,7 +204,7 @@ var missions: Dictionary = {
 		"description": "A DataSoft quer saber o que um visitante qualquer consegue descobrir sobre o site da empresa.",
 		"objective": "Na DataSoft, Estação 1: use 'curl' no site (192.168.1.50), siga as pistas do que ele mostra e encontre um arquivo que não deveria estar público.",
 		"location": "DataSoft (Estação 1)",
-		"state": State.AVAILABLE,
+		"state": State.LOCKED,
 		"xp": 250,
 		"difficulty": "Média",
 		"concept": "Exposição de arquivos",
@@ -212,7 +216,7 @@ var missions: Dictionary = {
 		"description": "A DataSoft emprestou um acesso comum a um estagiário e quer saber até onde ele chegaria.",
 		"objective": "Na DataSoft, Estação 2: leia o chamado, entre na máquina com 'ssh usuário@máquina', procure o que ficou esquecido (inclusive arquivos ocultos com 'ls -a') e chegue à flag do servidor de arquivos.",
 		"location": "DataSoft (Estação 2)",
-		"state": State.AVAILABLE,
+		"state": State.LOCKED,
 		"xp": 300,
 		"difficulty": "Difícil",
 		"concept": "Segredos no histórico",
@@ -277,6 +281,32 @@ func get_active_mission() -> Dictionary:
 		if mission["state"] == State.ACTIVE:
 			return mission
 	return {}
+
+
+## Libera uma missão bloqueada (fica DISPONÍVEL). Usado pelo CampaignManager
+## quando o capítulo dela começa. Missões já liberadas ficam como estão.
+func unlock_mission(mission_id: String) -> void:
+	if missions.has(mission_id) and get_state(mission_id) == State.LOCKED:
+		missions[mission_id]["state"] = State.AVAILABLE
+
+
+## Volta uma missão DISPONÍVEL (ainda não aceita) para BLOQUEADA. Só serve
+## para acertar saves antigos, de quando todas as missões começavam liberadas.
+func lock_mission(mission_id: String) -> void:
+	if missions.has(mission_id) and get_state(mission_id) == State.AVAILABLE:
+		missions[mission_id]["state"] = State.LOCKED
+
+
+## Libera todas as missões de uma vez. Só para testes (tools/verify_*.gd) e
+## depuração: no jogo, quem libera é o CampaignManager, capítulo a capítulo.
+func unlock_all() -> void:
+	for mission_id in missions.keys():
+		unlock_mission(String(mission_id))
+
+
+## true se a missão já foi liberada (disponível, em andamento ou concluída).
+func is_unlocked(mission_id: String) -> bool:
+	return missions.has(mission_id) and get_state(mission_id) != State.LOCKED
 
 
 ## Aceita/inicia uma missão que esteja disponível.

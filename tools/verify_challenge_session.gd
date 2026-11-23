@@ -13,7 +13,14 @@ func _initialize() -> void:
 	var ok := true
 
 	session.reset()
-	ok = _check("m07 comeca AVAILABLE", missions.get_state("m07") == missions.State.AVAILABLE) and ok
+	# Missões comecam bloqueadas (o capitulo libera): o desafio nao conclui nada.
+	ok = _check("m07 comeca LOCKED", missions.get_state("m07") == missions.State.LOCKED) and ok
+	session.begin("c_firewall")
+	ok = _check("missao bloqueada: begin nao aceita a missao", missions.get_state("m07") == missions.State.LOCKED) and ok
+	ok = _check("missao bloqueada: complete devolve false e nao paga XP", not session.complete("c_firewall") and game.total_xp_earned == 0 and not missions.is_completed("m07")) and ok
+	session.reset()
+	missions.unlock_all()
+	ok = _check("m07 liberada fica AVAILABLE", missions.get_state("m07") == missions.State.AVAILABLE) and ok
 	session.begin("c_firewall")
 	ok = _check("begin ativa a missao", missions.is_active("m07")) and ok
 	session.record_attempt("c_firewall", false)
@@ -77,6 +84,7 @@ func _initialize() -> void:
 	session.reset()
 	phone.reset()
 	missions.reset()
+	missions.unlock_all()
 	ok = _check("m01: sem missao em andamento nao conclui", not session.complete_plain_mission("m01")) and ok
 	missions.start_mission("m01")
 	xp_before = game.total_xp_earned
@@ -88,6 +96,7 @@ func _initialize() -> void:
 	session.reset()
 	phone.reset()
 	missions.reset()
+	missions.unlock_all()
 	missions.start_mission("m01")
 	phone.reveal_next_clue("m01")
 	phone.reveal_next_clue("m01")

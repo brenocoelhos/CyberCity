@@ -89,6 +89,7 @@ func _check_arrow() -> bool:
 	campaign.play_opening()
 	dialogue.force_close()
 	ok = _check("seta: capitulo 1 comecou, guia a m01", MissionTarget.mission_to_guide() == "m01") and ok
+	missions.unlock_mission("m11")
 	missions.start_mission("m11")
 	ok = _check("seta: missao em andamento tem prioridade", MissionTarget.mission_to_guide() == "m11") and ok
 	missions.reset()
@@ -409,6 +410,7 @@ func _check_phone_tools() -> bool:
 	var caesar_open_at_start: bool = menu.CAESAR_REQUIRES_MISSION == ""
 	ok = _check("celular: o Cesar so abre antes da missao se o requisito estiver vazio", inputs.size() == (4 if caesar_open_at_start else 2)) and ok
 
+	missions.unlock_mission("m04")
 	missions.start_mission("m04")
 	missions.complete_mission("m04")
 	menu._open_app("tools")

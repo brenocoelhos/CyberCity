@@ -119,9 +119,8 @@ func _initialize() -> void:
 	for house_name in ["Casa5"]:
 		var p: Dictionary = houses[house_name]
 		ok = _check("%s: so historia (NPC com falas, sem computador, sem missao)" % house_name, String(p.get("interior_npc_name", "")) != "" and PackedStringArray(p.get("interior_npc_lines", PackedStringArray())).size() >= 1 and String(p.get("interior_computer_challenge", "")) == "" and String(p.get("interior_npc_mission", "")) == "" and not p.has("mission_ids")) and ok
-	# PROVISORIO: a Casa 5 esta liberada para testar o duelo. Quando a historia
-	# definir como o jogador chega la, trocar por "trancada ate a missao X".
-	ok = _check("Casa 5 e a casa do duelo e esta liberada para teste", bool(houses["Casa5"].get("interior_boss_fight", false)) and not bool(houses["Casa5"].get("starts_locked", false))) and ok
+	# A Casa 5 (duelo) fica trancada ate o capitulo final comecar.
+	ok = _check("Casa 5 e a casa do duelo e abre so no capitulo final", bool(houses["Casa5"].get("interior_boss_fight", false)) and bool(houses["Casa5"].get("starts_locked", false)) and String(houses["Casa5"].get("unlock_chapter", "")) == "final") and ok
 	var challenge_ids: Array = root.get_node("ChallengeData").CHALLENGES.keys()
 	ok = _check("o desafio do computador da Casa 6 existe", houses["Casa6"].get("interior_computer_challenge") in challenge_ids) and ok
 	ok = _check("o desafio do computador da Casa 2 existe", houses["Casa2"].get("interior_computer_challenge") in challenge_ids) and ok
@@ -154,6 +153,9 @@ func _initialize() -> void:
 	var previous_peak: int = 0
 	var curve_ok: bool = true
 	for chapter_id in campaign.chapters.keys():
+		# O capitulo final (duelo) nao tem missoes: fica fora da curva.
+		if Array(campaign.chapters[chapter_id]["missions"]).is_empty():
+			continue
 		var peak: int = 0
 		for mission_id in campaign.chapters[chapter_id]["missions"]:
 			seen[mission_id] = int(seen.get(mission_id, 0)) + 1
@@ -166,8 +168,10 @@ func _initialize() -> void:
 	for mission_id in missions_manager.missions.keys():
 		if int(seen.get(mission_id, 0)) != 1:
 			each_once = false
-	ok = _check("campanha: cada uma das 17 missoes esta em exatamente um capitulo", each_once and campaign.chapters.size() == 7) and ok
-	ok = _check("campanha: os capitulos seguem a curva de dificuldade (m15, a invasao, e o ultimo)", curve_ok and campaign.chapters["ch7"]["missions"] == ["m15"]) and ok
+	ok = _check("campanha: cada uma das 17 missoes esta em exatamente um capitulo", each_once and campaign.chapters.size() == 8) and ok
+	var chapter_ids: Array = campaign.chapters.keys()
+	ok = _check("campanha: os capitulos seguem a curva de dificuldade (m15, a invasao, e a ultima missao)", curve_ok and campaign.chapters["ch7"]["missions"] == ["m15"] and chapter_ids[6] == "ch7") and ok
+	ok = _check("campanha: o capitulo final (duelo) vem por ultimo e nao tem missoes", chapter_ids[-1] == campaign.FINAL_CHAPTER and Array(campaign.chapters[campaign.FINAL_CHAPTER]["missions"]).is_empty()) and ok
 
 	transition.interior_config = {}
 	print("RESULTADO: ", "TUDO OK" if ok else "FALHOU")

@@ -18,6 +18,12 @@ func _ready() -> void:
 
 
 func _on_interact() -> void:
+	# Missão de um capítulo que ainda não começou: o computador não abre.
+	var mission_id: String = String(ChallengeData.get_challenge(challenge_id).get("mission", ""))
+	if mission_id != "" and not MissionManager.is_unlocked(mission_id):
+		SoundManager.play("error")
+		HUD.show_notice("Ainda não", "Este computador faz parte de um capítulo que ainda não começou. Siga as missões do celular.")
+		return
 	# Desafio de quiz (perguntas de múltipla escolha) abre direto o quiz,
 	# sem passar pelo terminal e pelo comando 'desafio'.
 	if String(ChallengeData.get_challenge(challenge_id).get("type", "")) == "quiz":

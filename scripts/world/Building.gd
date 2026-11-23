@@ -14,6 +14,9 @@ extends StaticBody2D
 @export_file("*.tscn") var interior_path := "res://scenes/interiors/HouseInterior.tscn"
 @export var starts_locked := false
 @export var unlock_mission := ""
+## Destranca quando este capítulo começar (ids em CampaignManager.chapters).
+## A Casa 5 usa "final": abre só no capítulo do duelo.
+@export var unlock_chapter := ""
 @export var entrance_x: float = 0.0
 ## Missões que acontecem dentro deste prédio. Quando uma delas é do
 ## capítulo atual (ou está em andamento), aparece um "!" sobre o prédio.
@@ -50,6 +53,7 @@ func _ready() -> void:
 		$Door.building_title = building_name
 		$Door.locked = starts_locked
 		$Door.unlock_after_mission = unlock_mission
+		$Door.unlock_after_chapter = unlock_chapter
 		$Door.interior_config = _build_interior_config()
 		MissionManager.mission_started.connect(_on_missions_changed)
 		MissionManager.mission_completed.connect(_on_missions_changed)
@@ -105,6 +109,9 @@ func _update_marker() -> void:
 			continue
 		if MissionManager.is_active(mission_id) or CampaignManager.is_mission_in_current_chapter(mission_id):
 			show_marker = true
+	# A casa do hacker ganha o "!" no capítulo final.
+	if interior_boss_fight and CampaignManager.is_final_chapter_active():
+		show_marker = true
 	var marker: Label = $MissionMarker
 	marker.visible = show_marker
 	# A porta também avisa: amarela, coluna de luz alta e "!" logo acima dela.

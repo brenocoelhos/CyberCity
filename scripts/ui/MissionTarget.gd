@@ -5,8 +5,13 @@ extends RefCounted
 ## desenhar nada (o desenho está em MissionArrow.gd).
 
 
+## Alvo especial do capítulo final: a casa do hacker (não é uma missão).
+const FINAL_TARGET := "final"
+
+
 ## Missão a guiar: a primeira em andamento; sem nenhuma, a primeira ainda não
-## concluída do capítulo atual. "" se não há para onde ir.
+## concluída do capítulo atual; no capítulo final, FINAL_TARGET (a Casa 5).
+## "" se não há para onde ir.
 static func mission_to_guide() -> String:
 	var active: Dictionary = MissionManager.get_active_mission()
 	if not active.is_empty():
@@ -15,6 +20,8 @@ static func mission_to_guide() -> String:
 		for mission_id in CampaignManager.chapters[chapter_id]["missions"]:
 			if not MissionManager.is_completed(String(mission_id)) and CampaignManager.is_mission_in_current_chapter(String(mission_id)):
 				return String(mission_id)
+	if CampaignManager.is_final_chapter_active():
+		return FINAL_TARGET
 	return ""
 
 
@@ -31,6 +38,16 @@ static func find_target(scene: Node, mission_id: String) -> Node2D:
 	var candidates: Array[Node2D] = []
 
 	var buildings: Node = scene.get_node_or_null("Buildings")
+	if mission_id == FINAL_TARGET:
+		# Capítulo final: o prédio marcado com "Interior boss fight" (Casa 5).
+		if buildings != null:
+			for building in buildings.get_children():
+				if "interior_boss_fight" in building and building.interior_boss_fight:
+					candidates.append(building)
+		if candidates.is_empty():
+			return scene.get_node_or_null("ExitDoor") as Node2D
+		return _nearest(scene, candidates)
+
 	if buildings != null:
 		for building in buildings.get_children():
 			if "mission_ids" in building and mission_id in building.mission_ids:

@@ -172,6 +172,11 @@ func complete(challenge_id: String) -> bool:
 	var challenge: Dictionary = ChallengeData.get_challenge(challenge_id)
 	if challenge.is_empty() or is_completed(challenge_id):
 		return false
+	# Missão ainda bloqueada (capítulo não começou): não conclui nem paga nada,
+	# senão o desafio "acabaria" sem a missão e ela nunca mais fecharia.
+	var mission_id: String = String(challenge.get("mission", ""))
+	if mission_id != "" and not MissionManager.is_unlocked(mission_id):
+		return false
 
 	# Garante que a missão está ativa (e o tempo começou), mesmo que o
 	# desafio tenha sido concluído sem passar por begin().

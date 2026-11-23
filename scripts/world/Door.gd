@@ -13,6 +13,10 @@ extends Area2D
 ## indicada for concluída (demonstra o desbloqueio de áreas).
 @export var unlock_after_mission: String = ""
 
+## Se preenchido, esta porta destrava quando o capítulo indicado começar
+## (ids em CampaignManager.chapters, ex.: "final" para a Casa 5).
+@export var unlock_after_chapter: String = ""
+
 ## O que o interior deve ter (preenchido pelo Building). Ver SceneTransition.
 var interior_config: Dictionary = {}
 
@@ -111,6 +115,8 @@ func _draw_marker() -> void:
 
 func _update_lock_state() -> void:
 	if unlock_after_mission != "" and MissionManager.is_completed(unlock_after_mission):
+		locked = false
+	if unlock_after_chapter != "" and CampaignManager.is_chapter_started(unlock_after_chapter):
 		locked = false
 
 

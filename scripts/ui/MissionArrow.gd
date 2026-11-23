@@ -38,7 +38,7 @@ func _process(delta: float) -> void:
 func is_enabled() -> bool:
 	if not GameManager.is_tool_unlocked("mission_arrow") or not Settings.mission_arrow:
 		return false
-	return not (DialogueManager.is_active() or TerminalManager.is_active() or ChallengeManager.is_active() or GameMenu.is_active() or HUD.is_popup_active())
+	return not (DialogueManager.is_active() or TerminalManager.is_active() or ChallengeManager.is_active() or GameMenu.is_active() or HUD.is_popup_active() or BossManager.is_busy())
 
 
 func _refresh_target() -> void:
