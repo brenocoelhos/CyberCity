@@ -51,6 +51,21 @@ if [ "${#testes[@]}" -eq 0 ]; then
 fi
 
 echo "Godot: $GODOT_BIN"
+
+# Numa copia nova do projeto (sem a pasta .godot) nada foi importado ainda, e
+# os testes falhariam com "erro de script" por faltar imagens e sons. Importa
+# uma vez antes (o mesmo que abrir o projeto no editor).
+if [ ! -d .godot/imported ]; then
+	echo "Primeira vez: importando imagens e sons (pode levar alguns minutos)..."
+	# O codigo de saida nao serve: o Godot 4.7 as vezes fecha com erro depois de
+	# importar tudo. O que vale e a pasta .godot/imported existir no fim.
+	timeout "$TEMPO_MAX" "$GODOT_BIN" --headless --path . --import >/dev/null 2>&1
+	if [ ! -d .godot/imported ]; then
+		echo "A importacao falhou. Abra o projeto no editor do Godot uma vez e rode de novo."
+		exit 2
+	fi
+fi
+
 echo "Rodando ${#testes[@]} teste(s)..."
 echo
 
