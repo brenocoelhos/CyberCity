@@ -152,9 +152,6 @@ z_index = 1
 [node name="Decor" type="Node2D" parent="."]
 y_sort_enabled = true
 
-[node name="Decor" type="Node2D" parent="."]
-y_sort_enabled = true
-
 [node name="Bed" parent="Decor" instance=ExtResource("bed_scene")]
 position = Vector2(66, 118)
 
