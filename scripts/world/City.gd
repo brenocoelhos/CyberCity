@@ -277,7 +277,7 @@ func _setup_city_map() -> void:
 	panel.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	panel.tooltip_text = "Clique para abrir o mapa grande (tecla M)"
 	panel.gui_input.connect(_on_minimap_input)
-	$UI/MinimapPanel/MinimapLabel.text = "MAPA  ·  clique ou M"
+	$UI/MinimapPanel/MinimapLabel.text = "MAPA · M"
 
 func _on_minimap_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
@@ -336,11 +336,14 @@ func _build_plaza() -> void:
 	monument.position = Vector2(992,272)
 	monument.set_script(load("res://scripts/world/PlazaMonument.gd"))
 	add_child(monument)
-	for entry in [["planter",Vector2(816,208)],["planter",Vector2(1168,208)],
-		["bench",Vector2(816,304)],["bench",Vector2(1168,304)],
-		["planter",Vector2(816,368)],["planter",Vector2(1136,368)],
-		["kiosk",Vector2(864,208)],
-		["shelter",Vector2(816,656)],["kiosk",Vector2(1168,656)],
+	# Praça: piso, canteiros, bancos, painéis e luzes (PlazaDesign.gd).
+	var plaza := Node2D.new()
+	plaza.set_script(preload("res://scripts/world/PlazaDesign.gd"))
+	add_child(plaza)
+	move_child(plaza, $CityShape.get_index() + 1)
+	plaza.setup(self)
+	# Objetos do quarteirão do Centro de Tecnologia.
+	for entry in [["shelter",Vector2(816,656)],["kiosk",Vector2(1168,656)],
 		["bench",Vector2(832,752)],["bench",Vector2(1152,752)],
 		["planter",Vector2(864,704)],["planter",Vector2(1120,704)]]:
 		var prop := Sprite2D.new()

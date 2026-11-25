@@ -144,3 +144,18 @@ Menu **Projeto → Exportar...**, preset **Windows Desktop**. Ele gera um único
   versões 3x (`assets/environment/cyber/tech_center.png` e `cyber/hd/*.png`).
   `City._use_hd_props` troca poste, árvore, banco, floreira, ponto de ônibus,
   quiosque, lixeira e flores por essas versões, sem mudar o tamanho na tela.
+
+## HUD discreto e Praça Central nova
+
+- **HUD** (`scenes/ui/HUD.tscn`, `scripts/ui/GlassPanel.gd`): painéis de vidro
+  escuro semitransparente, quase sem bordas e com pouco neon. Local + relógio
+  num painel compacto (topo esquerdo), missão num cartão pequeno, nível/XP numa
+  barra fina (base esquerda), celular como botão pequeno com TAB (base direita)
+  e minimapa menor (topo direito).
+- **Praça Central** (`scripts/world/PlazaDesign.gd`, `PlazaBed.gd`,
+  `PlazaMonument.gd`): layout simétrico, piso de pedra com variação de tom,
+  círculo em volta do monumento, caminho de entrada com bordas de neon, canteiros
+  elevados com árvores, flores e faixa de luz, painéis holográficos, bancos com
+  luz, halos nos postes e nos terminais e um monumento holográfico animado
+  (anéis que pulsam, feixe de luz e cristal flutuante). Terminais, Guia e
+  interações continuam os mesmos; os caminhos até eles ficam livres.
