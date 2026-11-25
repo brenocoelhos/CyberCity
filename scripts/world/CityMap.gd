@@ -360,15 +360,22 @@ func _add_label(text: String, anchor: Vector2, color: Color, below: bool, side: 
 	var default_y: float = y
 	var step: float = size.y + 4.0
 	var rect := Rect2(Vector2(x, y), size)
-	for attempt in range(8):
-		var free := true
-		for other in _placed:
-			if rect.grow(3.0).intersects(other):
-				free = false
-				break
+	var view := Rect2(Vector2.ZERO, Vector2(VIEW_SIZE))
+	var direction: float = step if (below or side) else -step
+	for attempt in range(16):
+		var free := view.grow(-2.0).encloses(rect)
+		if free:
+			for other in _placed:
+				if rect.grow(3.0).intersects(other):
+					free = false
+					break
 		if free:
 			break
-		rect.position.y += step if (below or side) else -step
+		rect.position.y += direction
+		# Saiu pela borda de baixo (ou de cima): tenta do outro lado do ponto.
+		if rect.end.y > view.end.y - 2.0 or rect.position.y < 2.0:
+			direction = -direction
+			rect.position.y = default_y + direction
 	pill.position = rect.position
 	pill.size = size
 	_placed.append(rect)

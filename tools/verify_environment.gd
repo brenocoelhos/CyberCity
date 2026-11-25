@@ -27,7 +27,7 @@ func _run() -> void:
 	# A base visual de todos os postes pertence a uma calcada.
 	for prop in city.get_node("Decor").get_children():
 		if prop is Sprite2D and str(prop.name).begins_with("Lamp"):
-			var base: Vector2 = prop.position + prop.offset + Vector2(0,prop.texture.get_height()/2.0-1)
+			var base: Vector2 = prop.position + (prop.offset + Vector2(0,prop.texture.get_height()/2.0-1)) * prop.scale
 			assert(ground.get_cell_atlas_coords(ground.local_to_map(base)) == Vector2i(0,1))
 	assert(city.get_node("RearBuildings").get_child_count() == 72)
 	var player: CharacterBody2D = city.get_node("Player")

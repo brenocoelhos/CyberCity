@@ -91,6 +91,7 @@ func _ready() -> void:
 	_build_plaza()
 	_join_frontages()
 	_fill_city_blocks()
+	_use_hd_props()
 	_build_map_bounds()
 	_apply_pending_spawn()
 	var camera: Camera2D = player.get_node("Camera2D")
@@ -106,6 +107,29 @@ func _ready() -> void:
 	var intro := IntroCall.new()
 	add_child(intro)
 	intro.play()
+
+## Troca os objetos da rua (poste, árvore, banco, floreira, ponto de ônibus,
+## quiosque, lixeira, flores) pela versão em alta resolução de
+## assets/environment/cyber/hd/ (3x, gerada por tools/upscale_city_props.py).
+## O tamanho na tela continua o mesmo: escala 1/3 e filtro suave.
+const HD_DENSITY := 3.0
+
+
+func _use_hd_props() -> void:
+	for sprite in find_children("*", "Sprite2D", true, false):
+		if sprite.texture == null or sprite.region_enabled:
+			continue
+		var path: String = sprite.texture.resource_path
+		if not path.begins_with("res://assets/environment/cyber/") or path.contains("/hd/"):
+			continue
+		var hd_path := "res://assets/environment/cyber/hd/" + path.get_file()
+		if not ResourceLoader.exists(hd_path):
+			continue
+		sprite.texture = load(hd_path)
+		sprite.scale /= HD_DENSITY
+		sprite.offset *= HD_DENSITY
+		sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+
 
 func _process(_delta: float) -> void:
 	_update_minimap_dot()

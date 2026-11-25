@@ -136,19 +136,27 @@ max_value = 1.0
 show_percentage = false
 
 [node name="Stations" type="Control" parent="."]
-anchors_preset = 0
-offset_left = 1264.0
+layout_mode = 1
+anchor_left = 1
+anchor_top = 0
+anchor_right = 1
+anchor_bottom = 0
+offset_left = -16.0
+offset_right = -16.0
 offset_top = 16.0
-offset_right = 1264.0
 offset_bottom = 84.0
 mouse_filter = 2
 
 [node name="Info" type="Control" parent="."]
-anchors_preset = 0
+layout_mode = 1
+anchor_left = 0
+anchor_top = 1
+anchor_right = 0
+anchor_bottom = 1
 offset_left = 16.0
-offset_top = 632.0
 offset_right = 316.0
-offset_bottom = 688.0
+offset_top = -88.0
+offset_bottom = -32.0
 mouse_filter = 2
 
 [node name="Frame" type="Control" parent="Info"]
@@ -191,10 +199,15 @@ max_value = 100.0
 show_percentage = false
 
 [node name="PhoneButton" type="Button" parent="."]
-offset_left = 1104.0
-offset_top = 624.0
-offset_right = 1264.0
-offset_bottom = 688.0
+layout_mode = 1
+anchor_left = 1
+anchor_top = 1
+anchor_right = 1
+anchor_bottom = 1
+offset_left = -176.0
+offset_right = -16.0
+offset_top = -96.0
+offset_bottom = -32.0
 focus_mode = 0
 mouse_default_cursor_shape = 2
 theme_type_variation = &"FlatButton"
@@ -274,12 +287,16 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="Notification" type="Control" parent="."]
-visible = false
-anchors_preset = 0
-offset_left = 462.0
+layout_mode = 1
+anchor_left = 0.5
+anchor_top = 0
+anchor_right = 0.5
+anchor_bottom = 0
+offset_left = -178.0
+offset_right = 202.0
 offset_top = 14.0
-offset_right = 842.0
 offset_bottom = 82.0
+visible = false
 mouse_filter = 2
 
 [node name="Frame" type="Control" parent="Notification"]
@@ -324,11 +341,15 @@ text = ""
 text_overrun_behavior = 3
 
 [node name="CompletePanel" type="Control" parent="."]
-anchors_preset = 0
-offset_left = 290.0
-offset_top = 170.0
-offset_right = 990.0
-offset_bottom = 520.0
+layout_mode = 1
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -350.0
+offset_right = 350.0
+offset_top = -190.0
+offset_bottom = 160.0
 
 [node name="Frame" type="Control" parent="CompletePanel"]
 anchors_preset = 15

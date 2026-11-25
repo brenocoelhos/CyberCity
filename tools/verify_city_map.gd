@@ -36,7 +36,8 @@ func _initialize() -> void:
 	# --- etiquetas ---
 	var names: Array = []
 	var pills: Array = []
-	_collect(map._markers, names, pills)
+	var names_pill: Array = []
+	_collect(map._markers, names, pills, names_pill)
 	for wanted in ["Casa 1", "Casa 2", "Casa 3", "Casa 4", "Casa 5", "Casa 6", "TechCorp", "DataSoft", "Centro Tech", "Loja", "Terminal Público", "Salvar o jogo", "Você"]:
 		var found := false
 		for text in names:
@@ -55,6 +56,7 @@ func _initialize() -> void:
 	for i in range(pills.size()):
 		if not view.encloses(pills[i]):
 			outside = true
+			print("    fora: ", names_pill[i], " ", pills[i])
 		for j in range(i + 1, pills.size()):
 			if (pills[i] as Rect2).intersects(pills[j]):
 				overlap = true
@@ -96,12 +98,13 @@ func _initialize() -> void:
 
 
 ## Junta os textos das etiquetas e o retângulo de cada "pílula" de lugar.
-func _collect(node: Node, names: Array, pills: Array) -> void:
+func _collect(node: Node, names: Array, pills: Array, names_pill: Array = []) -> void:
 	for child in node.get_children():
 		if child is PanelContainer:
 			var label := child.get_child(0) as Label
 			names.append(label.text)
 			pills.append(Rect2(child.position, child.size))
+			names_pill.append(label.text)
 		elif child is Label:
 			names.append((child as Label).text)
 

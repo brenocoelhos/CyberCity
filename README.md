@@ -131,3 +131,16 @@ placar do jogador.
 Menu **Projeto → Exportar...**, preset **Windows Desktop**. Ele gera um único
 `build/CyberCity.exe` (sem as pastas `tools/`, `docs/` e `assets/source/`).
 É preciso ter os *Export Templates* do Godot 4.7 instalados.
+
+## Tela cheia e objetos da rua em alta resolução
+
+- O jogo abre em **tela cheia sem bordas** e ocupa a tela toda em qualquer
+  proporção (16:9, 16:10, ultrawide 21:9...): `window/stretch/aspect="expand"`.
+  **F11** ou **Alt+Enter** alternam tela cheia/janela; a escolha fica salva
+  (Opções → "Tela cheia (F11)"). HUD, minimapa, diálogo, celular, terminal e
+  tela de desafio ficam presos às bordas ou ao centro da tela.
+- **Centro de Tecnologia e objetos da rua nítidos**: `tools/upscale_city_props.py`
+  amplia os recortes da arte original com super-resolução (EDSR/OpenCV) e gera
+  versões 3x (`assets/environment/cyber/tech_center.png` e `cyber/hd/*.png`).
+  `City._use_hd_props` troca poste, árvore, banco, floreira, ponto de ônibus,
+  quiosque, lixeira e flores por essas versões, sem mudar o tamanho na tela.

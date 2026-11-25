@@ -59,7 +59,7 @@ horizontal_alignment = 2
 
 [node name="FullscreenCheck" type="CheckButton" parent="VBox"]
 layout_mode = 2
-text = "Tela cheia"
+text = "Tela cheia (F11)"
 
 [node name="BackButton" type="Button" parent="VBox"]
 custom_minimum_size = Vector2(0, 40)

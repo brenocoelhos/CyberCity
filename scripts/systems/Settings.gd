@@ -9,14 +9,29 @@ const SETTINGS_PATH := "user://settings.cfg"
 
 ## Volume geral de 0.0 (mudo) a 1.0 (máximo).
 var master_volume: float = 1.0
-var fullscreen: bool = false
+## O jogo abre em tela cheia (sem bordas). F11 ou Alt+Enter alternam a
+## qualquer momento; a escolha fica salva.
+var fullscreen: bool = true
 ## Seta de missão ligada (só aparece depois de liberada pelo nível).
 var mission_arrow: bool = true
 
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	_load()
+	# Testes automáticos (rodados com --script) continuam em janela.
+	if OS.get_cmdline_args().has("--script"):
+		fullscreen = false
 	_apply()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not (event is InputEventKey and event.pressed and not event.echo):
+		return
+	var key := event as InputEventKey
+	if key.keycode == KEY_F11 or (key.keycode == KEY_ENTER and key.alt_pressed):
+		set_fullscreen(not fullscreen)
+		get_viewport().set_input_as_handled()
 
 
 func set_master_volume(value: float) -> void:
@@ -51,7 +66,7 @@ func _load() -> void:
 	if config.load(SETTINGS_PATH) != OK:
 		return
 	master_volume = clampf(float(config.get_value("audio", "master_volume", 1.0)), 0.0, 1.0)
-	fullscreen = bool(config.get_value("video", "fullscreen", false))
+	fullscreen = bool(config.get_value("video", "fullscreen", true))
 	mission_arrow = bool(config.get_value("gameplay", "mission_arrow", true))
 
 
