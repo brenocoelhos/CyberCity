@@ -27,6 +27,11 @@ const PROP_LIGHTS := {
 	"crystals": [Color(0.7, 0.4, 1.0), 50.0, 0.5],
 	"holo_rug": [Color(0.3, 0.8, 1.0), 80.0, 0.25],
 	"rack": [Color(0.3, 1.0, 0.6), 45.0, 0.2],
+	"rack_tall": [Color(0.3, 0.9, 1.0), 60.0, 0.25],
+	"desk_triple": [Color(0.3, 0.8, 1.0), 110.0, 0.35],
+	"server_console": [Color(0.55, 0.45, 1.0), 100.0, 0.35],
+	"dev_desk": [Color(0.3, 0.8, 1.0), 80.0, 0.3],
+	"banner": [Color(0.7, 0.4, 1.0), 60.0, 0.35],
 }
 
 var _glow_texture: GradientTexture2D

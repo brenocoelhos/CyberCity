@@ -24,11 +24,7 @@ func _ready() -> void:
 ## (o chão vai de (32, 32) a (416, 288)). Cada bloco é a área no chão que
 ## fica bloqueada; o desenho em 3/4 é feito por RoomBlock.gd.
 const ROOM_SHAPES := {
-	# Central de comando: cantos de baixo recortados (formato de "T").
-	"OfficeInterior": [
-		[Vector2(32, 224), Vector2(100, 224), Vector2(100, 288), Vector2(32, 288)],
-		[Vector2(352, 224), Vector2(416, 224), Vector2(416, 288), Vector2(352, 288)],
-	],
+	# Escritório (TechCorp/DataSoft): retangular, como a referência.
 	# Laboratório: cantos de baixo em diagonal (sala hexagonal).
 	"TechCenterInterior": [
 		[Vector2(32, 190), Vector2(130, 288), Vector2(32, 288)],

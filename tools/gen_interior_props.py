@@ -571,6 +571,117 @@ def wardrobe():
     return img
 
 
+def desk_triple():
+    """Estação de trabalho completa: mesa larga com três monitores."""
+    img, d = new(112, 64)
+    box(d, 2, 34, 109, 48, METAL, light=METAL_H, dark=METAL_D)  # tampo
+    d.line([4, 47, 107, 47], fill=CYAN)
+    box(d, 6, 48, 13, 62, METAL_D)
+    box(d, 98, 48, 105, 62, METAL_D)
+    box(d, 40, 48, 71, 60, METAL_D, light=METAL)  # gaveteiro central
+    d.line([44, 54, 67, 54], fill=OUTLINE)
+    for i, (x0, kind) in enumerate([(8, "lines"), (40, "planet"), (72, "graph")]):
+        y0 = 6 if i == 1 else 9
+        glow(img, x0, y0, x0 + 30, y0 + 20, CYAN, 3, 55)
+        d = ImageDraw.Draw(img)
+        box(d, x0, y0, x0 + 31, y0 + 21, METAL_D)
+        screen(d, x0 + 2, y0 + 2, x0 + 29, y0 + 19, kind)
+        d.rectangle([x0 + 14, y0 + 22, x0 + 17, 35], fill=OUTLINE)
+    box(d, 38, 37, 74, 42, METAL_D)  # teclado
+    for k in range(40, 72, 3):
+        d.point((k, 39), fill=CYAN_D)
+    box(d, 80, 37, 86, 42, METAL_D)  # mouse
+    box(d, 16, 36, 24, 43, (60, 64, 90, 255))  # caneca
+    return img
+
+
+def office_chair():
+    img, d = new(32, 36)
+    box(d, 6, 2, 25, 18, FABRIC, light=FABRIC_L, dark=FABRIC_D)  # encosto
+    d.line([9, 16, 22, 16], fill=CYAN)
+    box(d, 4, 17, 27, 25, FABRIC_L, light=(90, 96, 140, 255), dark=FABRIC_D)  # assento
+    d.rectangle([14, 26, 17, 30], fill=METAL_D)
+    for x in (5, 15, 25):
+        d.rectangle([x, 31, x + 2, 33], fill=METAL)
+    return img
+
+
+def server_console():
+    """Console do servidor: bancada com dois monitores e painel de controle."""
+    img, d = new(96, 64)
+    box(d, 2, 30, 93, 50, METAL, light=METAL_H, dark=METAL_D)
+    d.line([4, 49, 91, 49], fill=PURPLE)
+    box(d, 6, 50, 90, 62, METAL_D, light=METAL)  # base fechada
+    for x in range(12, 86, 8):
+        d.rectangle([x, 54, x + 4, 56], fill=(40, 200, 120, 255) if (x // 8) % 3 else MAGENTA)
+    for x0, kind in [(14, "lines"), (52, "graph")]:
+        glow(img, x0, 3, x0 + 29, 23, CYAN, 3, 55)
+        d = ImageDraw.Draw(img)
+        box(d, x0, 2, x0 + 30, 24, METAL_D)
+        screen(d, x0 + 2, 4, x0 + 28, 22, kind)
+        d.rectangle([x0 + 13, 25, x0 + 17, 31], fill=OUTLINE)
+    # painel de controle (botões e chaves)
+    box(d, 20, 33, 76, 44, SCREEN_D)
+    for i, x in enumerate(range(24, 72, 6)):
+        d.rectangle([x, 36, x + 3, 38], fill=[CYAN, GREEN, MAGENTA, CYAN_H][i % 4])
+        d.line([x, 41, x + 3, 41], fill=CYAN_D)
+    return img
+
+
+def rack_tall():
+    img, d = new(44, 92)
+    box(d, 2, 2, 41, 89, METAL_D, light=METAL, dark=OUTLINE)
+    for y in range(8, 84, 10):
+        box(d, 6, y, 37, y + 7, (16, 22, 34, 255))
+        for x in range(9, 22, 3):
+            d.point((x, y + 3), fill=CYAN if (x + y) % 2 else GREEN)
+        d.line([24, y + 3, 34, y + 3], fill=CYAN_D)
+    glow(img, 4, 4, 39, 87, CYAN, 2, 40)
+    return img
+
+
+def banner():
+    """Estandarte roxo da empresa (preso na parede)."""
+    img, d = new(32, 60)
+    d.rectangle([2, 2, 29, 4], fill=METAL_H)
+    pts = [(4, 5), (27, 5), (27, 50), (16, 57), (4, 50)]
+    d.polygon(pts, fill=(90, 40, 170, 255), outline=OUTLINE)
+    d.line([6, 6, 6, 49], fill=(130, 70, 220, 255))
+    # logo: hexágono com ponto
+    cx, cy = 16, 24
+    hexp = [(cx + 7 * math.cos(math.radians(a)), cy + 7 * math.sin(math.radians(a))) for a in range(30, 390, 60)]
+    d.polygon(hexp, outline=PURPLE_L)
+    d.rectangle([cx - 1, cy - 1, cx + 1, cy + 1], fill=CYAN_H)
+    glow(img, 10, 18, 22, 30, PURPLE, 3, 60)
+    return img
+
+
+def coffee_table():
+    img, d = new(48, 24)
+    box(d, 2, 4, 45, 15, METAL, light=METAL_H, dark=METAL_D)
+    box(d, 8, 6, 39, 12, SCREEN_D)
+    d.line([10, 9, 37, 9], fill=CYAN)
+    d.rectangle([6, 16, 9, 22], fill=METAL_D)
+    d.rectangle([38, 16, 41, 22], fill=METAL_D)
+    return img
+
+
+def dev_desk():
+    """Mesa do Dev. Jr. (canto da sala): um monitor e um gráfico."""
+    img, d = new(72, 56)
+    box(d, 2, 28, 69, 42, METAL, light=METAL_H, dark=METAL_D)
+    d.line([4, 41, 67, 41], fill=CYAN)
+    box(d, 6, 42, 12, 54, METAL_D)
+    box(d, 59, 42, 65, 54, METAL_D)
+    for x0, kind in [(6, "lines"), (38, "graph")]:
+        glow(img, x0, 4, x0 + 27, 22, CYAN, 3, 50)
+        d = ImageDraw.Draw(img)
+        box(d, x0, 3, x0 + 28, 23, METAL_D)
+        screen(d, x0 + 2, 5, x0 + 26, 21, kind)
+        d.rectangle([x0 + 12, 24, x0 + 16, 29], fill=OUTLINE)
+    return img
+
+
 def tv():
     return wall_screen("planet", 112, 60)
 
@@ -586,6 +697,8 @@ def main():
         "arcade": arcade(), "holo_rug": holo_rug(), "bed": bed(), "nightstand": nightstand(),
         "toilet": toilet(), "sink": sink(), "shower": shower(), "fridge": fridge(), "stove": stove(),
         "kitchen_counter": kitchen_counter(), "dining_table": dining_table(), "wardrobe": wardrobe(),
+        "desk_triple": desk_triple(), "office_chair": office_chair(), "server_console": server_console(),
+        "rack_tall": rack_tall(), "banner": banner(), "coffee_table": coffee_table(), "dev_desk": dev_desk(),
     }
     for name, img in items.items():
         save(img, name)
