@@ -1,8 +1,9 @@
 extends CanvasLayer
 ## HUD.gd — Autoload
-## Interface permanente do jogo, no estilo "painel sci-fi":
-##   - canto superior esquerdo: o local atual (prédio ou cidade) e o card
-##     MISSÃO ATUAL, com o objetivo e o progresso do capítulo;
+## Interface permanente do jogo, discreta: painéis de vidro escuro
+## semitransparente (GlassPanel.gd), quase sem bordas e com pouco neon.
+##   - canto superior esquerdo: local atual + relógio num painel compacto e,
+##     embaixo, um cartão pequeno com a missão e o progresso do capítulo;
 ##   - canto superior direito (dentro dos prédios): uma aba para cada
 ##     computador da sala, com o alvo da missão destacado;
 ##   - canto inferior esquerdo: nível e barra de XP;
@@ -10,7 +11,7 @@ extends CanvasLayer
 ## Também mostra a tela de "DESAFIO CONCLUÍDO" com o conceito aprendido
 ## (parte importante do lado educativo do projeto).
 
-const CyberFrame := preload("res://scripts/ui/CyberFrame.gd")
+const GlassPanel := preload("res://scripts/ui/GlassPanel.gd")
 const CyberIcon := preload("res://scripts/ui/CyberIcon.gd")
 const MissionTarget := preload("res://scripts/ui/MissionTarget.gd")
 const UiStyle := preload("res://scripts/ui/UiStyle.gd")
@@ -35,8 +36,8 @@ const ICON_COLOR := Color(0.55, 0.9, 1.0)
 var _clock_time: Label
 var _clock_date: Label
 
-const TAB_SIZE := Vector2(126, 66)
-const TAB_GAP := 8.0
+const TAB_SIZE := Vector2(100, 48)
+const TAB_GAP := 6.0
 const MAX_TABS := 4
 
 @onready var location_icon: CyberIcon = $Location/Icon
@@ -94,48 +95,49 @@ func _ready() -> void:
 	_refresh()
 
 
-## Visual "neon vivo": ícones ciano, ícone de losango na missão, barras em
-## degradê ciano→roxo e o relógio com a data ao lado do cartão do local.
+## Cores: ícones ciano, barras finas em degradê ciano→roxo e o relógio
+## dentro do mesmo painel do local (lado direito).
 func _apply_vivid_style() -> void:
 	for icon in find_children("*", "Control", true, false):
 		if icon is CyberIcon and icon.get_parent() != phone_button:
 			icon.color = ICON_COLOR
 	($Mission/Icon as CyberIcon).kind = CyberIcon.Kind.DIAMOND
 	var gradient := Gradient.new()
-	gradient.colors = PackedColorArray([Color(0.2, 0.85, 1.0), Color(0.62, 0.35, 1.0)])
+	gradient.colors = PackedColorArray([Color(0.25, 0.85, 1.0), Color(0.6, 0.4, 1.0)])
 	var texture := GradientTexture2D.new()
 	texture.gradient = gradient
 	texture.width = 64
 	texture.height = 4
 	var fill := StyleBoxTexture.new()
 	fill.texture = texture
+	var track := StyleBoxFlat.new()
+	track.bg_color = Color(0.6, 0.75, 1.0, 0.14)
 	for bar in [xp_bar, mission_bar]:
 		bar.add_theme_stylebox_override("fill", fill)
+		bar.add_theme_stylebox_override("background", track)
 
-	# Relógio: sol, hora e data (do computador).
+	# Relógio: sol pequeno, hora e data (do computador).
 	var clock := Control.new()
 	clock.name = "Clock"
 	clock.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	clock.position = Vector2(318, 14)
-	clock.size = Vector2(132, 52)
-	add_child(clock)
-	var frame: CyberFrame = CyberFrame.new()
-	frame.set_anchors_preset(Control.PRESET_FULL_RECT)
-	clock.add_child(frame)
+	clock.position = Vector2(192, 0)
+	clock.size = Vector2(84, 38)
+	$Location.add_child(clock)
 	var sun: CyberIcon = CyberIcon.new()
 	sun.kind = CyberIcon.Kind.SUN
-	sun.color = Color(1.0, 0.82, 0.3)
-	sun.position = Vector2(10, 12)
-	sun.size = Vector2(28, 28)
+	sun.color = Color(1.0, 0.82, 0.35)
+	sun.position = Vector2(0, 11)
+	sun.size = Vector2(16, 16)
 	clock.add_child(sun)
 	_clock_time = Label.new()
 	_clock_time.theme_type_variation = &"HudTitle"
-	_clock_time.add_theme_font_size_override("font_size", 20)
-	_clock_time.position = Vector2(44, 4)
+	_clock_time.add_theme_font_size_override("font_size", 14)
+	_clock_time.position = Vector2(22, 2)
 	clock.add_child(_clock_time)
 	_clock_date = Label.new()
-	_clock_date.theme_type_variation = &"HudSmall"
-	_clock_date.position = Vector2(46, 29)
+	_clock_date.add_theme_font_size_override("font_size", 10)
+	_clock_date.add_theme_color_override("font_color", Color(0.62, 0.7, 0.88))
+	_clock_date.position = Vector2(22, 20)
 	clock.add_child(_clock_date)
 	_update_clock()
 	var timer := Timer.new()
@@ -248,11 +250,7 @@ func _build_station_tabs() -> void:
 		tab.position = Vector2(-(count - i) * (TAB_SIZE.x + TAB_GAP) + TAB_GAP, 0)
 		stations.add_child(tab)
 
-		var frame: CyberFrame = CyberFrame.new()
-		frame.cut_top_left = 10.0
-		frame.cut_bottom_right = 10.0
-		frame.accents = false
-		frame.dots = 0
+		var frame: GlassPanel = GlassPanel.new()
 		frame.set_anchors_preset(Control.PRESET_FULL_RECT)
 		tab.add_child(frame)
 
@@ -260,17 +258,18 @@ func _build_station_tabs() -> void:
 		var icon: CyberIcon = CyberIcon.new()
 		icon.kind = _station_icon(name_text)
 		icon.color = ICON_COLOR
-		icon.position = Vector2((TAB_SIZE.x - 30.0) * 0.5, 8)
-		icon.size = Vector2(30, 28)
+		icon.position = Vector2((TAB_SIZE.x - 20.0) * 0.5, 6)
+		icon.size = Vector2(20, 18)
 		tab.add_child(icon)
 
 		var label := Label.new()
-		label.theme_type_variation = &"HudText"
+		label.add_theme_font_size_override("font_size", 11)
+		label.add_theme_color_override("font_color", Color(0.85, 0.9, 1.0))
 		label.text = name_text
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-		label.position = Vector2(4, 38)
-		label.size = Vector2(TAB_SIZE.x - 8.0, 20)
+		label.position = Vector2(4, 26)
+		label.size = Vector2(TAB_SIZE.x - 8.0, 18)
 		tab.add_child(label)
 
 		tab.gui_input.connect(_on_tab_gui_input.bind(computer))
@@ -331,7 +330,7 @@ func _update_tab_highlight() -> void:
 		return
 	var target: Node = MissionTarget.find_target(get_tree().current_scene, MissionTarget.mission_to_guide())
 	for computer in _tab_frames.keys():
-		var frame: CyberFrame = _tab_frames[computer]
+		var frame: GlassPanel = _tab_frames[computer]
 		if is_instance_valid(frame):
 			frame.highlighted = computer == target
 
