@@ -16,7 +16,9 @@ permissions:
   contents: write
 
 env:
-  GODOT_VERSION: "4.7"
+  # A mesma versão usada no editor pelo time (4.7.2), para o .exe da release
+  # sair igual ao que foi testado.
+  GODOT_VERSION: "4.7.2"
 
 jobs:
   windows:
@@ -40,7 +42,13 @@ jobs:
 
       - name: Exportar
         run: |
+          # O Godot 4.7 em modo headless às vezes fecha com erro no meio da
+          # primeira importação; a segunda passada termina o que faltou.
           ./godot --headless --path . --import || true
+          ./godot --headless --path . --import || true
+          # Antes de exportar, o teste que acusa mudanças dentro de instâncias
+          # sem "Filhos Editáveis" (a exportação as descarta).
+          ./godot --headless --path . --script res://tools/verify_editable_children.gd
           mkdir -p build
           ./godot --headless --path . --export-release "Windows Desktop" build/CyberCity.exe
           test -s build/CyberCity.exe
