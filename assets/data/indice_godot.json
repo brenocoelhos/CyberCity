@@ -67,5 +67,10 @@
   "CAPÍTULO FINAL — O INCIDENTE␟Um incidente atinge vários sistemas da cidade ao mesmo tempo.": "res://assets/audio/voices/narrador_campanha/campanha_final_001.mp3",
   "CAPÍTULO FINAL — O INCIDENTE␟Usando tudo que você aprendeu — senhas, hash, criptografia, phishing, redes, firewall, logs, SQL Injection e XSS — a equipe consegue conter o incidente.": "res://assets/audio/voices/narrador_campanha/campanha_final_002.mp3",
   "CAPÍTULO FINAL — O INCIDENTE␟CASO ENCERRADO.": "res://assets/audio/voices/narrador_campanha/campanha_final_003.mp3",
-  "CAPÍTULO FINAL — O INCIDENTE␟Obrigado por jogar Cyber City!": "res://assets/audio/voices/narrador_campanha/campanha_final_005.mp3"
+  "CAPÍTULO FINAL — O INCIDENTE␟Obrigado por jogar Cyber City!": "res://assets/audio/voices/narrador_campanha/campanha_final_005.mp3",
+  "*␟Você ainda não está pronto para esta missão.": "res://assets/audio/voices/npc_comum/npc_nao_pronto_001.mp3",
+  "*␟Termine as missões do capítulo atual e volte a falar comigo depois.": "res://assets/audio/voices/npc_comum/npc_nao_pronto_002.mp3",
+  "CAPÍTULO FINAL — O HACKER␟A Central rastreou a origem dos ataques: tudo sai de um computador na Casa 5.": "res://assets/audio/voices/narrador_campanha/campanha_final_intro_001.mp3",
+  "CAPÍTULO FINAL — O HACKER␟Você já usou tudo o que é preciso para enfrentar quem está por trás deles.": "res://assets/audio/voices/narrador_campanha/campanha_final_intro_002.mp3",
+  "CAPÍTULO FINAL — O HACKER␟Vá até a Casa 5. A porta agora está aberta.": "res://assets/audio/voices/narrador_campanha/campanha_final_intro_003.mp3"
 }

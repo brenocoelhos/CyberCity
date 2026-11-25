@@ -9,6 +9,7 @@ for arq in "$ORIGEM"/*.mp3; do
   nome=$(basename "$arq")
   case "$nome" in
     campanha_*) pasta=narrador_campanha ;;
+    npc_nao_pronto_*) pasta=npc_comum ;;
     guia_praca_*|casa_0?_*|techcorp_funcionario_*|centro_pesquisadora_*|loja_desenvolvedora_*|sistema_boss_*|boss_hacker_*)
       pasta=$(echo "$nome" | sed 's/_[0-9]*\.mp3$//') ;;
     central_*) pasta=central ;;

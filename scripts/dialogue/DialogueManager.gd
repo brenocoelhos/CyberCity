@@ -65,6 +65,10 @@ func _play_current_voice() -> void:
 			and line.ends_with(". Seu nome entra no registro oficial."):
 		key = speaker + VOICE_KEY_SEPARATOR + "Entendido, agente %s. Seu nome entra no registro oficial."
 		audio_path = String(_voice_index.get(key, ""))
+	# Falas genéricas (ditas por qualquer NPC) ficam no índice com "*" no
+	# lugar do nome, ex.: "missão ainda não liberada".
+	if audio_path == "":
+		audio_path = String(_voice_index.get("*" + VOICE_KEY_SEPARATOR + line, ""))
 	if audio_path != "" and ResourceLoader.exists(audio_path):
 		var audio: AudioStream = load(audio_path) as AudioStream
 		if audio != null:

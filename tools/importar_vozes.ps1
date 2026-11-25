@@ -8,7 +8,7 @@ $pastas = @{
   "casa_03_morador_" = "casa_03_morador"; "casa_04_vizinho_" = "casa_04_vizinho"; "casa_06_moradora_" = "casa_06_moradora";
   "techcorp_funcionario_" = "techcorp_funcionario"; "centro_pesquisadora_" = "centro_pesquisadora";
   "loja_desenvolvedora_" = "loja_desenvolvedora"; "central_" = "central"; "sistema_boss_" = "sistema_boss";
-  "boss_hacker_" = "boss_hacker"; "campanha_" = "narrador_campanha"
+  "boss_hacker_" = "boss_hacker"; "campanha_" = "narrador_campanha"; "npc_nao_pronto_" = "npc_comum"
 }
 $total = 0
 foreach ($arq in Get-ChildItem -Path $Origem -Filter "*.mp3") {
