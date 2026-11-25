@@ -60,7 +60,7 @@ const CHALLENGES := {
 			{"hit": false, "keywords": ["elisa", "7v$kp2!xr8#m"], "message": "A senha da elisa segue a política: aleatória, com letras, números e símbolos. Teste com 'passcheck'."},
 		],
 		"hints": [
-			"Na Estação 1 da empresa, leia 'politica_senhas.txt' e 'cadastro_exportado.txt' (comandos 'ls' e 'cat').",
+			"Na Estação 1 da TechCorp, leia 'politica_senhas.txt' e 'cadastro_exportado.txt' (comandos 'ls' e 'cat').",
 			"Teste cada senha com 'passcheck <senha>' e compare com o perfil da pessoa: a ferramenta não sabe o nome do gato nem o ano de cada um. Aponte com 'report <usuário>'.",
 			"São três senhas fracas: uma com o nome do animal + ano, uma sequência numérica e uma que passa no verificador mas é só nome + ano. E releia a regra 5: como esse arquivo guarda as senhas?",
 		],
@@ -89,7 +89,7 @@ const CHALLENGES := {
 			{"hit": false, "keywords": ["hashes_oficiais", "leia_me"], "message": "Esse arquivo é a referência (o que o fornecedor publicou), não um dos arquivos da atualização."},
 		],
 		"hints": [
-			"Na Estação 2 da empresa, comece por 'cat leia_me.txt' e 'cat hashes_oficiais.txt'.",
+			"Na Estação 2 da TechCorp, comece por 'cat leia_me.txt' e 'cat hashes_oficiais.txt'.",
 			"Rode 'sha256sum schema.sql', 'sha256sum atualizar.sh' e 'sha256sum usuarios.csv' e compare cada resultado com a lista oficial, caractere por caractere no começo e no fim.",
 			"Um dos três dá um hash diferente. Abra esse arquivo com 'cat' e procure a linha que não deveria estar num script de atualização (algo que baixa e executa coisas da internet).",
 		],

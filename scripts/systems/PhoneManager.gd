@@ -23,10 +23,10 @@ signal clue_revealed(mission_id: String)
 const CONTACTS := {
 	"m01": "Morador",
 	"m02": "Morador",
-	"m03": "DataSoft Sistemas",
+	"m03": "TechCorp Ltda.",
 	"m04": "Centro de Tecnologia",
 	"m05": "Centro de Tecnologia",
-	"m06": "DataSoft Sistemas",
+	"m06": "TechCorp Ltda.",
 	"m07": "Centro de Tecnologia",
 	"m08": "Loja Eletrônica",
 	"m09": "Loja Eletrônica",
