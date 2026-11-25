@@ -1,0 +1,52 @@
+# Gera o jogo para Windows e anexa o CyberCity-Windows.zip na release.
+# Roda sozinho quando uma release é publicada, ou à mão em
+# Actions → "Build Windows da release" → Run workflow (informando a tag).
+name: Build Windows da release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag da release (ex.: v1.1.0)"
+        required: true
+
+permissions:
+  contents: write
+
+env:
+  GODOT_VERSION: "4.7"
+
+jobs:
+  windows:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name || inputs.tag }}
+
+      - name: Baixar Godot e o modelo de exportação do Windows
+        run: |
+          wget -q "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          unzip -q "Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          mv "Godot_v${GODOT_VERSION}-stable_linux.x86_64" godot
+          wget -q "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_export_templates.tpz"
+          mkdir -p "$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable"
+          unzip -q -j "Godot_v${GODOT_VERSION}-stable_export_templates.tpz" \
+            templates/windows_release_x86_64.exe templates/windows_release_x86_64_console.exe templates/version.txt \
+            -d "$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable"
+          rm -f *.tpz *.zip
+
+      - name: Exportar
+        run: |
+          ./godot --headless --path . --import || true
+          mkdir -p build
+          ./godot --headless --path . --export-release "Windows Desktop" build/CyberCity.exe
+          test -s build/CyberCity.exe
+          cd build && zip -9 -q CyberCity-Windows.zip CyberCity.exe
+
+      - name: Anexar na release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name || inputs.tag }}" build/CyberCity-Windows.zip --clobber
